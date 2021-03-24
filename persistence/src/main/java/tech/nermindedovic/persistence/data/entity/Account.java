@@ -30,7 +30,7 @@ public class Account {
     private String userName;
 
     @Column(name = AccountAttributes.BALANCE)
-    private double accountBalance;
+    private long accountBalance;
 
 
 }

@@ -33,5 +33,16 @@ public class Transaction {
     private String memo;
 
 
+    @Column
+    private char transactionType;
+
+    @Column
+    private long previousBalance;
+
+
+    @Column
+    private long newBalance;
+
+
 
 }

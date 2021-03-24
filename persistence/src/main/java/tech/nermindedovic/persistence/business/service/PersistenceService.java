@@ -3,16 +3,15 @@ package tech.nermindedovic.persistence.business.service;
 import com.sun.istack.NotNull;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
+import tech.nermindedovic.persistence.business.doman.Creditor;
+import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PersistenceService {
@@ -62,64 +61,57 @@ public class PersistenceService {
 
 
 
+    // == FUNDS TRANSFER ==
+
 
     /**
-     * picks up from xmlProcessor.
-     * PRECONDITION: xml must have successfully binded.
-     * POSTCONDITION: will return true if successful or else false
-     * @param
+     * STARTING POINT FOR TRANSFER FUNDS.
+     *
+     * PRECONDITION  : XML processing service should have successfully been able to bind the xml message into a transferMessage
+     * POSTCONDITION : DB will have created ledger transaction records for both parties and update each balance for user.
+     *
      *
      *
      */
-    public boolean validateTransferMessage(@NotNull final TransferMessage transferMessage) {
-        Map<String, Long> validUsers = usersFound(transferMessage);
+    public void validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage) {
 
-        if (validUsers.isEmpty() || errorsPresent(transferMessage)) {
-            return false;
-        }
-        createAndPersistRecords(validUsers, transferMessage);
-        return true;
+        validateTransferMessage(transferMessage);
+        processTransferMessage(transferMessage);
 
     }
 
 
     /**
-     * Returns K:V pairs for valid account.
-     * Keys = Debtor or Creditor
-     * Value = accountNumber
+     * Validates input prior to processing.
+     * Ensure data is accurate. Will be used to make changes to db.
+     * @param transferMessage
+     * @return
      *
-     * Done in order to know if the one user found is a creditor or a debtor
+     */
+    private void validateTransferMessage(final TransferMessage transferMessage) throws Exception {
+
+        if (errorsPresent(transferMessage) || areValidParties(transferMessage)) throw new Exception("Invalid Account(s) / Invalid msg. DENIED ");
+        try {
+            processTransferMessage(transferMessage);
+        } catch (Exception e) {
+
+        }
+
+    }
+
+
+
+
+
+    /**
+     * PRECONDITION:    both parties have been VALIDATED.
+     * POSTCONDITION:   transaction record has been created for both parties respectively. each party will have their balance updated
      * @param transferMessage
      * @return
      */
-    private Map<String, Long> usersFound(final TransferMessage transferMessage) {
-        Map<String, Long> map = new HashMap<>();
-
-        accountRepository.findById(transferMessage.getDebtor().getAccountNumber())
-                .ifPresent(account -> map.put("Debtor", account.getAccountNumber()));
-
-
-        accountRepository.findById(transferMessage.getCreditor().getAccountNumber())
-                .ifPresent(account -> map.put("Creditor", account.getAccountNumber()));
-
-
-        return Collections.unmodifiableMap(map);
-
-    }
-
-
-    /**
-     * Will go through entries (max = 2)
-     * @param validUsers
-     * @param transferMessage
-     */
-    private void createAndPersistRecords(Map<String, Long> validUsers, final TransferMessage transferMessage) {
-        for (Map.Entry<String, Long> entry : validUsers.entrySet()) {
-            if (entry.getKey() == "Debtor")
-                createAndPersistDebtorRecord(entry.getValue(), transferMessage);
-            else
-                createAndPersistCreditorRecord(entry.getValue(), transferMessage);
-        }
+    private void processTransferMessage(final TransferMessage transferMessage) throws Exception {
+        processDebtorParty(transferMessage);
+        processCreditorParty(transferMessage);
     }
 
 
@@ -127,45 +119,88 @@ public class PersistenceService {
 
 
 
+    private void processDebtorParty(final TransferMessage transferMessage) throws Exception {
+        Account debtor = accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).get();
+        long prevBal = debtor.getAccountBalance();
+        long newBalance = prevBal - transferMessage.getAmount();
+
+        if (newBalance < 0) throw new Exception("Debtor will be in the negative upon making this transfer. DENIED.");
+
+        Transaction transaction = new Transaction();
+        transaction.setAccountNumber(debtor.getAccountNumber());
+        transaction.setPartyAccountNumber(transferMessage.getCreditor().getAccountNumber());
+        transaction.setAmount(transferMessage.getAmount());
+        transaction.setDate(transferMessage.getDate());
+        transaction.setMemo(transferMessage.getMemo());
+        transaction.setTransactionType('D');
+
+        transaction.setPreviousBalance(prevBal);
+        transaction.setNewBalance(newBalance);
+
+        debtor.setAccountBalance(newBalance);
+        accountRepository.save(debtor);
+
+        transactionRepository.save(transaction);
+    }
 
 
 
 
-    /**
-     * PRECONDITION: Both creditor and debtor are in our db. Creditor cannot update balance with value <=0.
-     * POSTCONDITION: new tranaction will persist for creditor, balance on account updated.
-     * @param accountNumber
-     * @param balanceMessage
-     * @return
-     */
 
-    private Optional<Transaction> createAndPersistDebtorRecord(long accountNumber, TransferMessage balanceMessage) {
+
+
+
+    private void processCreditorParty(final TransferMessage transferMessage) {
+        Account creditor = accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).get();
+        long prevBal = creditor.getAccountBalance();
+        long newBal = prevBal + transferMessage.getAmount();
+
+        Transaction transaction = new Transaction();
+        transaction.setAccountNumber(creditor.getAccountNumber());
+        transaction.setPartyAccountNumber(transferMessage.getDebtor().getAccountNumber());
+        transaction.setAmount(transferMessage.getAmount());
+        transaction.setDate(transferMessage.getDate());
+        transaction.setMemo(transaction.getMemo());
+        transaction.setTransactionType('C');
+
+        transaction.setPreviousBalance(prevBal);
+        transaction.setNewBalance(newBal);
+
+        creditor.setAccountBalance(newBal);
+        accountRepository.save(creditor);
+
+        transactionRepository.save(transaction);
 
     }
 
-    private Optional<Transaction> createAndPersistCreditorRecord(long accountNumber, TransferMessage balanceMessage) {
-
-    }
 
 
 
 
-    /**
-     *
-     * PRECONDITION : user is valid. -> based on int ret by usersFound()
-     *
-     * BALANCE IN DB IS DOUBLE. NEED TO CHANGE.
-     * @param accountNumber
-     * @return
-     */
-    private double retrieveBalanceFromValidUser(long accountNumber) {
-        Account validAccount = accountRepository.findById(accountNumber).get();
-        return validAccount.getAccountBalance();
-    }
 
-    private void recordTransaction(Transaction transaction) {
 
-    }
+
+
+
+
+//        accountRepository.findById(transferMessage.getDebtor().getAccountNumber())
+//                .ifPresent(account -> map.put("Debtor", account.getAccountNumber()));
+//
+//
+//        accountRepository.findById(transferMessage.getCreditor().getAccountNumber())
+//                .ifPresent(account -> map.put("Creditor", account.getAccountNumber()));
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -181,6 +216,26 @@ public class PersistenceService {
      */
     private boolean errorsPresent(final TransferMessage transferMessage) {
         return transferMessage.getAmount() <= 0;
+    }
+
+
+
+
+
+
+
+    /**
+     * PRECONDITION: transferMessage will be free of errors outside of validating parties
+     * POSTCONDITION: will return true if both parties valid, else false
+     * Ensures BOTH parties have a relationship with this bank.
+     *
+     *
+     * @param transferMessage
+     * @return
+     */
+    private boolean areValidParties(final TransferMessage transferMessage) {
+        return accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).isPresent() &&
+                accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).isPresent();
     }
 
 
