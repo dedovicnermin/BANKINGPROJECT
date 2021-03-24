@@ -11,3 +11,13 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: true
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      group-id: persistence
+  test:
+    topic: embedded-test-topic
+
+  balance:
+    request:
+      topic: balance.update.request
