@@ -32,7 +32,6 @@ public class AccountRepoTest {
 
     @Test
     void givenNonExisting_whenRetrieving_emptyOptional_test() {
-
         Optional<Account> optionalAccount = repository.findById(1999L);
         assertFalse(optionalAccount.isPresent());
     }

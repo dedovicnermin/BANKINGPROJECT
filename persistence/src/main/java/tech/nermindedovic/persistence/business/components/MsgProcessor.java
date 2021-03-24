@@ -19,12 +19,10 @@ public class MsgProcessor {
 
 
     /**
-     *
      * @param xml
      * @return Pass the string down to xml processor to be bind, validated, and brought back as xml
      * @throws JsonProcessingException
      */
-
     public String processBalanceRequest(String xml) throws JsonProcessingException {
         String balanceMessage = xmlProcessor.bindAndValidateBalanceRequest(xml);
         return balanceMessage;

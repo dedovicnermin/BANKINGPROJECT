@@ -22,6 +22,10 @@ public class XMLProcessor {
     }
 
 
+
+
+
+
     /**
      * @param xml string passed from the balance request topic sub
      * @return balance message or throw error for invalid xml string passed via kafka
@@ -32,9 +36,13 @@ public class XMLProcessor {
         return convertToXml(balanceMessage);
     }
 
+
+
     public String convertToXml(final BalanceMessage balanceMessage) throws JsonProcessingException {
         return xMapper.writeValueAsString(balanceMessage);
     }
+
+
 
     public String convertEmptyBalanceMessage(BalanceMessage balanceMessage) throws JsonProcessingException {
         return xMapper.writeValueAsString(balanceMessage);
