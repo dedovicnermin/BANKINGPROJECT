@@ -1,0 +1,27 @@
+balance:
+  request:
+    topic: balance.update.request
+  response:
+    topic: balance.update.response
+funds:
+  transfer:
+    request:
+      topic: funds.transfer.request
+    response:
+      topic: funds.transfer.response
+server:
+  port: 8082
+spring:
+  datasource:
+    password: postgres
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/BANK
+    username: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      groupId: persistence
+
