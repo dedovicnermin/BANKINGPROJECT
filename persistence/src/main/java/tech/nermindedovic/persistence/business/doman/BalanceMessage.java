@@ -16,4 +16,7 @@ public class BalanceMessage {
     private boolean errors;
 
 
+    public boolean getErrors() {
+        return errors;
+    }
 }

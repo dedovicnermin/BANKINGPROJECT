@@ -1,5 +1,6 @@
 package tech.nermindedovic.persistence.business.service;
 
+import com.sun.istack.NotNull;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.data.entity.Account;
@@ -37,7 +38,7 @@ public class PersistenceService {
      * last phase of processing, leaf node.
      *
      */
-    public void validateBalanceMessage(BalanceMessage balanceMessage) {
+    public void validateBalanceMessage(@NotNull final BalanceMessage balanceMessage) {
         Optional<Account> account = accountRepository.findById(balanceMessage.getAccountNumber());
 
         balanceMessage.setErrors(true);
