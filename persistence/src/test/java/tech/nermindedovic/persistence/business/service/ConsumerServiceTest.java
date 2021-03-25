@@ -10,10 +10,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
+import tech.nermindedovic.persistence.business.doman.Creditor;
+import tech.nermindedovic.persistence.business.doman.Debtor;
+import tech.nermindedovic.persistence.business.doman.TransferMessage;
+import tech.nermindedovic.persistence.data.entity.Transaction;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
+
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
@@ -55,6 +62,38 @@ class ConsumerServiceTest {
         String actual = consumerService.handleBalanceRequest(invalid);
         assertThat(xmlOfEmptyMsg).isEqualTo(actual);
 
+    }
+
+    @Test
+    void onHandleFundsTransfer_withValidData_shouldNotThrow() throws JsonProcessingException, InvalidTransferMessageException {
+        TransferMessage tm = new TransferMessage(12,new Creditor(123,456),new Debtor(567, 890),new Date(), 25, "My memo");
+        String xml = mapper.writeValueAsString(tm);
+
+        doNothing().when(msgProcessor).processTransferRequest(xml);
+
+        consumerService.handleFundsTransferRequest(xml);
+        assertDoesNotThrow(() -> new RuntimeException());
+
+
+
+    }
+
+    @Test
+    void onHandleFundsTransfer_withInvalidXML_shouldThrowRunTimeException() throws JsonProcessingException, InvalidTransferMessageException {
+        String xml = "<ERROR></ERROR>";
+        doThrow(JsonProcessingException.class).when(msgProcessor).processTransferRequest(xml);
+
+        assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
+    }
+
+    @Test
+    void onHandleFundsTransfer_withInvalidTMData_shouldThrowRunTimeException() throws JsonProcessingException, InvalidTransferMessageException {
+        TransferMessage transferMessage = new TransferMessage(1,new Creditor(123,456), new Debtor(567,667), new Date(), 0, "memoTest");
+        String xml = mapper.writeValueAsString(transferMessage);
+
+        doThrow(InvalidTransferMessageException.class).when(msgProcessor).processTransferRequest(xml);
+
+        assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
     }
 
 

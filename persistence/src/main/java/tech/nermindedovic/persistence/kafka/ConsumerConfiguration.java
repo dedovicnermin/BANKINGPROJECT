@@ -14,6 +14,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties;
 
 
 import java.util.HashMap;
@@ -50,6 +51,8 @@ public class ConsumerConfiguration {
     /**
      * ConcurrentKafkaListenerCOntainerFactory to create containers for methods annotated with @KafkaListener
      * KafkaListenerContainer recieves all the messages from my topics on a single thread. the above delegates
+     *
+     * container props .setAckOnError defaults to true.
      * @return
      */
     @Bean
@@ -57,6 +60,9 @@ public class ConsumerConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setReplyTemplate(kafkaTemplate());
+
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+
         return factory;
     }
 

@@ -7,8 +7,8 @@ public class InvalidTransferMessageException extends Exception {
         super(message);
     }
 
-    public InvalidTransferMessageException(String message, Throwable err) {
-        super(message, err);
-    }
+//    public InvalidTransferMessageException(String message, Throwable err) {
+//        super(message, err);
+//    }
 
 }

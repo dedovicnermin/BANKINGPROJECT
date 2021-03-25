@@ -9,7 +9,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
+import tech.nermindedovic.persistence.business.doman.Creditor;
+import tech.nermindedovic.persistence.business.doman.Debtor;
+import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
+
+import java.util.Date;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,6 +77,53 @@ class XMLProcessorTest {
         assertThat(xmlProcessor.convertEmptyBalanceMessage(balanceMessage)).isEqualTo(expected);
 
     }
+
+
+
+
+    @Test
+    void test_processingTransfer_withInvalidXML_shouldThrowJsonException() {
+        String xml = "<ERROR>err</ERROR>";
+        assertThrows(JsonProcessingException.class, () -> xmlProcessor.bindAndProcessTransferRequest(xml));
+    }
+
+    @Test
+    void test_processingTransfer_withInvalidTransferMsg_shouldThrowInvalidTransferMessageException() throws JsonProcessingException, InvalidTransferMessageException {
+        Debtor debtor = new Debtor(123, 456);
+        Creditor creditor = new Creditor(456,789);
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), -10, "for love");
+
+        String xml = mapper.writeValueAsString(transferMessage);
+        TransferMessage real = mapper.readValue(xml, TransferMessage.class);
+
+        doThrow(InvalidTransferMessageException.class).when(persistenceService).validateAndProcessTransferMessage(real);
+
+        assertThrows(InvalidTransferMessageException.class, () -> xmlProcessor.bindAndProcessTransferRequest(xml));
+
+    }
+
+
+    @Test
+    void test_processingTransfer_withValidMsg_shouldReturnWithoutException() throws JsonProcessingException, InvalidTransferMessageException {
+        Debtor debtor = new Debtor(123, 456);
+        Creditor creditor = new Creditor(456,789);
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), 10, "for war");
+
+        String xml = mapper.writeValueAsString(transferMessage);
+        TransferMessage real = mapper.readValue(xml, TransferMessage.class);
+
+        doNothing().when(persistenceService).validateAndProcessTransferMessage(real);
+
+        xmlProcessor.bindAndProcessTransferRequest(xml);
+
+        assertDoesNotThrow(() -> InvalidTransferMessageException.class);
+        assertDoesNotThrow(() -> JsonProcessingException.class);
+    }
+
+
+
+
+
 
 
     private BalanceMessage createBalanceMsg(long accountNumber, long routingNum, String balance, boolean errors) {

@@ -51,7 +51,7 @@ public class PersistenceService {
         balanceMessage.setErrors(true);
 
         account.ifPresent(account1 -> {
-            balanceMessage.setBalance(String.format("%.2f", account1.getAccountBalance()));
+            balanceMessage.setBalance(String.format("%d", account1.getAccountBalance()));
             balanceMessage.setErrors(false);
         });
 
@@ -73,15 +73,9 @@ public class PersistenceService {
      *
      *
      */
-    public boolean validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage)  {
-        try {
-            validateTransferMessage(transferMessage);
-            processTransferMessage(transferMessage);
-        } catch (Exception exceptionFromValidation) {
-            exceptionFromValidation.printStackTrace();
-            return false;
-        }
-        return true;
+    public void validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage) throws InvalidTransferMessageException {
+        validateTransferMessage(transferMessage);
+        processTransferMessage(transferMessage);
     }
 
 
@@ -124,8 +118,7 @@ public class PersistenceService {
     private void enterTransaction(final TransferMessage transferMessage) {
         Transaction transaction = new Transaction();
 
-        transaction.setDebtorAccountNumber(transferMessage.getDebtor().getAccountNumber());
-        transaction.setCreditorAccountNumber(transferMessage.getCreditor().getAccountNumber());
+        setAccountNumbers(transferMessage.getDebtor(), transferMessage.getCreditor(), transaction);
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
         transaction.setMemo(transferMessage.getMemo());
@@ -193,8 +186,7 @@ public class PersistenceService {
      * @throws InvalidTransferMessageException
      */
     private void debtorCanTransferAmount(final Debtor debtor, long amount) throws InvalidTransferMessageException {
-        long balance = accountRepository.findById(debtor.getAccountNumber()).get()
-                .getAccountBalance();
+        long balance = accountRepository.findById(debtor.getAccountNumber()).get().getAccountBalance();
         if (cannotMakePayment(balance,amount)) {
             throw new InvalidTransferMessageException("Debtor cannot make this payment with the current balance.");
         }
@@ -209,6 +201,11 @@ public class PersistenceService {
      */
     private boolean cannotMakePayment(final long debtorBalance,final long amount) {
         return debtorBalance - amount < 0;
+    }
+
+    private void setAccountNumbers(final Debtor debtor, final Creditor creditor, Transaction transaction) {
+        transaction.setDebtorAccountNumber(debtor.getAccountNumber());
+        transaction.setCreditorAccountNumber(creditor.getAccountNumber());
     }
 
 }

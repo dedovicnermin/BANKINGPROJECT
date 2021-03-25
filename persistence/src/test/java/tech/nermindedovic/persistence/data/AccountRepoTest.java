@@ -22,11 +22,12 @@ public class AccountRepoTest {
 
     @Test
     void givenAccount_whenSave_thenGetOk() {
-        Account account = new Account(1L,1L, "Bob", 200.00);
+        Account account = new Account(1L,1L, "Bob", 200);
         repository.save(account);
 
         Account account1 = repository.findById(1L).get();
         assertEquals("Bob", account1.getUserName());
+        assertEquals(account.getRoutingNumber(), account1.getRoutingNumber());
     }
 
 
