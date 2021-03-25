@@ -10,6 +10,7 @@ import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import java.util.*;
 
@@ -33,8 +34,7 @@ public class PersistenceService {
 
 
 
-
-
+    // == BALANCE UPDATE ==
 
 
     /**
@@ -73,11 +73,15 @@ public class PersistenceService {
      *
      *
      */
-    public void validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage) {
-
-        validateTransferMessage(transferMessage);
-        processTransferMessage(transferMessage);
-
+    public boolean validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage)  {
+        try {
+            validateTransferMessage(transferMessage);
+            processTransferMessage(transferMessage);
+        } catch (Exception exceptionFromValidation) {
+            exceptionFromValidation.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
 
@@ -88,16 +92,13 @@ public class PersistenceService {
      * @return
      *
      */
-    private void validateTransferMessage(final TransferMessage transferMessage) throws Exception {
-
-        if (errorsPresent(transferMessage) || areValidParties(transferMessage)) throw new Exception("Invalid Account(s) / Invalid msg. DENIED ");
-        try {
-            processTransferMessage(transferMessage);
-        } catch (Exception e) {
-
-        }
-
+    private void validateTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+        amountIsValid(transferMessage.getAmount());
+        accountsAreValid(transferMessage);
+        debtorCanTransferAmount(transferMessage.getDebtor(), transferMessage.getAmount());
     }
+
+
 
 
 
@@ -105,117 +106,60 @@ public class PersistenceService {
 
     /**
      * PRECONDITION:    both parties have been VALIDATED.
-     * POSTCONDITION:   transaction record has been created for both parties respectively. each party will have their balance updated
+     * POSTCONDITION:   transaction record saved / balances updated
      * @param transferMessage
      * @return
      */
-    private void processTransferMessage(final TransferMessage transferMessage) throws Exception {
-        processDebtorParty(transferMessage);
-        processCreditorParty(transferMessage);
+    private void processTransferMessage(final TransferMessage transferMessage) {
+        updateBalance(transferMessage.getDebtor(), transferMessage.getCreditor(), transferMessage.getAmount());
+        enterTransaction(transferMessage);
     }
 
 
-
-
-
-
-    private void processDebtorParty(final TransferMessage transferMessage) throws Exception {
-        Account debtor = accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).get();
-        long prevBal = debtor.getAccountBalance();
-        long newBalance = prevBal - transferMessage.getAmount();
-
-        if (newBalance < 0) throw new Exception("Debtor will be in the negative upon making this transfer. DENIED.");
-
+    /**
+     * PRECONDITION:    transferMessage contains no errors
+     * POSTCONDITION:   new transaction created/persisted
+     * @param transferMessage
+     */
+    private void enterTransaction(final TransferMessage transferMessage) {
         Transaction transaction = new Transaction();
-        transaction.setAccountNumber(debtor.getAccountNumber());
-        transaction.setPartyAccountNumber(transferMessage.getCreditor().getAccountNumber());
+
+        transaction.setDebtorAccountNumber(transferMessage.getDebtor().getAccountNumber());
+        transaction.setCreditorAccountNumber(transferMessage.getCreditor().getAccountNumber());
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
         transaction.setMemo(transferMessage.getMemo());
-        transaction.setTransactionType('D');
-
-        transaction.setPreviousBalance(prevBal);
-        transaction.setNewBalance(newBalance);
-
-        debtor.setAccountBalance(newBalance);
-        accountRepository.save(debtor);
 
         transactionRepository.save(transaction);
     }
-
-
-
-
-
-
-
-
-    private void processCreditorParty(final TransferMessage transferMessage) {
-        Account creditor = accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).get();
-        long prevBal = creditor.getAccountBalance();
-        long newBal = prevBal + transferMessage.getAmount();
-
-        Transaction transaction = new Transaction();
-        transaction.setAccountNumber(creditor.getAccountNumber());
-        transaction.setPartyAccountNumber(transferMessage.getDebtor().getAccountNumber());
-        transaction.setAmount(transferMessage.getAmount());
-        transaction.setDate(transferMessage.getDate());
-        transaction.setMemo(transaction.getMemo());
-        transaction.setTransactionType('C');
-
-        transaction.setPreviousBalance(prevBal);
-        transaction.setNewBalance(newBal);
-
-        creditor.setAccountBalance(newBal);
-        accountRepository.save(creditor);
-
-        transactionRepository.save(transaction);
-
-    }
-
-
-
-
-
-
-
-
-
-
-
-//        accountRepository.findById(transferMessage.getDebtor().getAccountNumber())
-//                .ifPresent(account -> map.put("Debtor", account.getAccountNumber()));
-//
-//
-//        accountRepository.findById(transferMessage.getCreditor().getAccountNumber())
-//                .ifPresent(account -> map.put("Creditor", account.getAccountNumber()));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     /**
-     * Function suited for any simple validation to message prior to doing any communication with database.
-     *
-     * AMOUNT SHOULD BE POSITIVE
-     * @param transferMessage
-     * @return
+     * PRECONDITION: debtor/creditor are valid accounts. Debtor has enough to make this transfer
+     * POSTCONDITION: debtor/creditor will have balances updated according to role in transfer
+     * @param debtor
+     * @param creditor
+     * @param amount
      */
-    private boolean errorsPresent(final TransferMessage transferMessage) {
-        return transferMessage.getAmount() <= 0;
+    private void updateBalance(final Debtor debtor, final Creditor creditor,final long amount) {
+        Account debtorAccount = accountRepository.findById(debtor.getAccountNumber()).get();
+        debtorAccount.setAccountBalance(debtorAccount.getAccountBalance() - amount);
+        accountRepository.save(debtorAccount);
+
+        Account creditorAccount = accountRepository.findById(creditor.getAccountNumber()).get();
+        creditorAccount.setAccountBalance(creditorAccount.getAccountBalance() + amount);
+        accountRepository.save(creditorAccount);
+
+    }
+
+
+    /**
+     * Ensures the transfer amount is valid
+     * @param amount
+     * @throws InvalidTransferMessageException
+     */
+    private void amountIsValid(final long amount) throws InvalidTransferMessageException {
+        if (amount <= 0) throw new InvalidTransferMessageException("Transfer Message contains an invalid payment amount.");
     }
 
 
@@ -233,11 +177,48 @@ public class PersistenceService {
      * @param transferMessage
      * @return
      */
-    private boolean areValidParties(final TransferMessage transferMessage) {
-        return accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).isPresent() &&
-                accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).isPresent();
+    private void accountsAreValid(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+        if (!(accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).isPresent() &&
+                accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).isPresent())) {
+            throw new InvalidTransferMessageException("Both accounts could not be validated");
+        }
     }
 
 
+    /**
+     * PRECONDITION: debtor and creditor have valid acocunts. Amount is greater than 0
+     * POSTCONDITION: exception will be thrown or processing will continue
+     * @param debtor
+     * @param amount
+     * @throws InvalidTransferMessageException
+     */
+    private void debtorCanTransferAmount(final Debtor debtor, long amount) throws InvalidTransferMessageException {
+        long balance = accountRepository.findById(debtor.getAccountNumber()).get()
+                .getAccountBalance();
+        if (cannotMakePayment(balance,amount)) {
+            throw new InvalidTransferMessageException("Debtor cannot make this payment with the current balance.");
+        }
+
+    }
+
+    /**
+     * Negative funds check
+     * @param debtorBalance
+     * @param amount
+     * @return
+     */
+    private boolean cannotMakePayment(final long debtorBalance,final long amount) {
+        return debtorBalance - amount < 0;
+    }
 
 }
+
+
+
+//        accountRepository.findById(transferMessage.getDebtor().getAccountNumber())
+//                .ifPresent(account -> map.put("Debtor", account.getAccountNumber()));
+//
+//
+//        accountRepository.findById(transferMessage.getCreditor().getAccountNumber())
+//                .ifPresent(account -> map.put("Creditor", account.getAccountNumber()));
+

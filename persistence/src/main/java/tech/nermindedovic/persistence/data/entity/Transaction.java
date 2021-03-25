@@ -17,11 +17,14 @@ public class Transaction {
     private long transactionId;
 
 
-    @Column(name = TransactionAttributes.ACCT_NUM)
-    private long accountNumber;
 
-    @Column(name = TransactionAttributes.PARTY_ACCT)
-    private long partyAccountNumber;
+    @Column(name = TransactionAttributes.CREDITOR)
+    private long creditorAccountNumber;
+
+
+    @Column(name = TransactionAttributes.DEBTOR)
+    private long debtorAccountNumber;
+
 
     @Column(name = TransactionAttributes.AMOUNT)
     private long amount;
@@ -32,16 +35,6 @@ public class Transaction {
     @Column(name = TransactionAttributes.MEMO)
     private String memo;
 
-
-    @Column
-    private char transactionType;
-
-    @Column
-    private long previousBalance;
-
-
-    @Column
-    private long newBalance;
 
 
 
