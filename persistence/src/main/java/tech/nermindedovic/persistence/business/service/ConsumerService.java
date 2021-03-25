@@ -61,6 +61,8 @@ public class ConsumerService {
 
 
     // proposal - could add a error message field to the POJO for cleaner output on client side
+    //    @SendTo(value = "${balance.request.topic}")   -> Works but ends up in endless loop
+    //    @SendTo ->
 
 
 
