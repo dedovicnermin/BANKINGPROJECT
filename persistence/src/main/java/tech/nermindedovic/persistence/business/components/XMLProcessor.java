@@ -5,7 +5,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.sun.istack.NotNull;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
+import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 @Component
 public class XMLProcessor {
@@ -46,6 +48,15 @@ public class XMLProcessor {
 
     public String convertEmptyBalanceMessage(BalanceMessage balanceMessage) throws JsonProcessingException {
         return xMapper.writeValueAsString(balanceMessage);
+    }
+
+
+
+    public void bindAndProcessTransferRequest(final String xml) throws JsonProcessingException, InvalidTransferMessageException {
+        TransferMessage transferMessage = xMapper.readValue(xml, TransferMessage.class);
+        persistenceService.validateAndProcessTransferMessage(transferMessage);
+        return;
+
     }
 
 

@@ -1,6 +1,9 @@
 package tech.nermindedovic.persistence.data.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Generated;
+import lombok.NoArgsConstructor;
 import tech.nermindedovic.persistence.data.utils.TransactionAttributes;
 
 import javax.persistence.*;
@@ -8,6 +11,9 @@ import java.util.Date;
 
 @Entity
 @Data
+@Generated
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "TRANSACTIONS")
 public class Transaction {
 

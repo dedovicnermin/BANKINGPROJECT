@@ -24,8 +24,8 @@ import static org.hamcrest.Matchers.containsString;
 @Disabled
 
 @SpringBootTest
-@DirtiesContext
-@EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port"})
+//@DirtiesContext
+//@EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port"})
 public class EmbeddedKafkaIntegrationTest {
 
 //    @Autowired

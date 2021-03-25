@@ -1,7 +1,8 @@
 package tech.nermindedovic.persistence.data.utils;
 
 
-public class TransactionAttributes {
+public final class TransactionAttributes {
+    private TransactionAttributes() {}
 
     public static final String TRANSACTION_ID  = "TRANSACTION_ID";
     public static final String CREDITOR        = "CREDITOR_ACCOUNT";

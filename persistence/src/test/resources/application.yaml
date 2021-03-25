@@ -13,11 +13,21 @@ spring:
     show-sql: true
   kafka:
     consumer:
-      auto-offset-reset: earliest
+      auto-offset-reset: latest
       group-id: persistence
   test:
     topic: embedded-test-topic
 
-  balance:
+
+balance:
+  request:
+    topic: balance.update.request
+  response:
+    topic: balance.update.response
+funds:
+  transfer:
     request:
-      topic: balance.update.request
+      topic: funds.transfer.request
+    response:
+      topic: funds.transfer.response
+
