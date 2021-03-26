@@ -60,11 +60,12 @@ public class ConsumerService {
 //"${spring.kafka.consumer.groupId}"
     @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence")
     @SendTo
-    public void handleFundsTransferRequest(@Payload final String xml) {
-
+    public boolean handleFundsTransferRequest(@Payload final String xml) {
+        boolean test = false;
         try {
 
             processor.processTransferRequest(xml);
+            test = true;
 
         } catch (JsonProcessingException xmlE) {
             xmlE.printStackTrace();
@@ -74,7 +75,7 @@ public class ConsumerService {
             throw new RuntimeException("FAIL: COULD NOT VALIDATE TRANSFER MESSAGE");
         }
 
-        return;
+        return test;
 
     }
 
