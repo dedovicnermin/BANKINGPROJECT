@@ -12,6 +12,8 @@ import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Service
@@ -51,7 +53,7 @@ public class PersistenceService {
         balanceMessage.setErrors(true);
 
         account.ifPresent(account1 -> {
-            balanceMessage.setBalance(String.format("%d", account1.getAccountBalance()));
+            balanceMessage.setBalance(account1.getAccountBalance().toString());
             balanceMessage.setErrors(false);
         });
 
@@ -134,13 +136,13 @@ public class PersistenceService {
      * @param creditor
      * @param amount
      */
-    private void updateBalance(final Debtor debtor, final Creditor creditor,final long amount) {
+    private void updateBalance(final Debtor debtor, final Creditor creditor,final BigDecimal amount) {
         Account debtorAccount = accountRepository.findById(debtor.getAccountNumber()).get();
-        debtorAccount.setAccountBalance(debtorAccount.getAccountBalance() - amount);
+        debtorAccount.setAccountBalance(debtorAccount.getAccountBalance().subtract(amount).setScale(2, RoundingMode.HALF_EVEN));
         accountRepository.save(debtorAccount);
 
         Account creditorAccount = accountRepository.findById(creditor.getAccountNumber()).get();
-        creditorAccount.setAccountBalance(creditorAccount.getAccountBalance() + amount);
+        creditorAccount.setAccountBalance(creditorAccount.getAccountBalance().add(amount).setScale(2, RoundingMode.HALF_EVEN));
         accountRepository.save(creditorAccount);
 
     }
@@ -151,8 +153,8 @@ public class PersistenceService {
      * @param amount
      * @throws InvalidTransferMessageException
      */
-    private void amountIsValid(final long amount) throws InvalidTransferMessageException {
-        if (amount <= 0) throw new InvalidTransferMessageException("Transfer Message contains an invalid payment amount.");
+    private void amountIsValid(BigDecimal amount) throws InvalidTransferMessageException {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidTransferMessageException("Transfer Message contains an invalid payment amount.");
     }
 
 
@@ -185,8 +187,8 @@ public class PersistenceService {
      * @param amount
      * @throws InvalidTransferMessageException
      */
-    private void debtorCanTransferAmount(final Debtor debtor, long amount) throws InvalidTransferMessageException {
-        long balance = accountRepository.findById(debtor.getAccountNumber()).get().getAccountBalance();
+    private void debtorCanTransferAmount(final Debtor debtor, BigDecimal amount) throws InvalidTransferMessageException {
+        BigDecimal balance = accountRepository.findById(debtor.getAccountNumber()).get().getAccountBalance();
         if (cannotMakePayment(balance,amount)) {
             throw new InvalidTransferMessageException("Debtor cannot make this payment with the current balance.");
         }
@@ -199,8 +201,8 @@ public class PersistenceService {
      * @param amount
      * @return
      */
-    private boolean cannotMakePayment(final long debtorBalance,final long amount) {
-        return debtorBalance - amount < 0;
+    private boolean cannotMakePayment(final BigDecimal debtorBalance,final BigDecimal amount) {
+        return (debtorBalance.subtract(amount)).compareTo(BigDecimal.ZERO) <= 0;
     }
 
     private void setAccountNumbers(final Debtor debtor, final Creditor creditor, Transaction transaction) {

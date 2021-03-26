@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import tech.nermindedovic.persistence.data.utils.TransactionAttributes;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Entity
@@ -33,7 +34,7 @@ public class Transaction {
 
 
     @Column(name = TransactionAttributes.AMOUNT)
-    private long amount;
+    private BigDecimal amount;
 
     @Column(name = TransactionAttributes.DATE)
     private Date date;

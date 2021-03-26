@@ -8,7 +8,7 @@ import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 
 
-
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +22,7 @@ public class AccountRepoTest {
 
     @Test
     void givenAccount_whenSave_thenGetOk() {
-        Account account = new Account(1L,1L, "Bob", 200);
+        Account account = new Account(1L,1L, "Bob", new BigDecimal(200));
         repository.save(account);
 
         Account account1 = repository.findById(1L).get();
