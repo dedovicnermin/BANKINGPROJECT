@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+
+balance:
+  request:
+    topic: balance.update.request
+  response:
+    topic: balance.update.response
+funds:
+  transfer:
+    request:
+      topic: funds.transfer.request
+    response:
+      topic: funds.transfer.response
+
+
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: transformer
