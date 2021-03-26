@@ -71,9 +71,6 @@ public class PersistenceService {
      *
      * PRECONDITION  : XML processing service should have successfully been able to bind the xml message into a transferMessage
      * POSTCONDITION : DB will have created ledger transaction records for both parties and update each balance for user.
-     *
-     *
-     *
      */
     public void validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage) throws InvalidTransferMessageException {
         validateTransferMessage(transferMessage);
@@ -85,7 +82,7 @@ public class PersistenceService {
      * Validates input prior to processing.
      * Ensure data is accurate. Will be used to make changes to db.
      * @param transferMessage
-     * @return
+     *
      *
      */
     private void validateTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
@@ -104,7 +101,7 @@ public class PersistenceService {
      * PRECONDITION:    both parties have been VALIDATED.
      * POSTCONDITION:   transaction record saved / balances updated
      * @param transferMessage
-     * @return
+     *
      */
     private void processTransferMessage(final TransferMessage transferMessage) {
         updateBalance(transferMessage.getDebtor(), transferMessage.getCreditor(), transferMessage.getAmount());

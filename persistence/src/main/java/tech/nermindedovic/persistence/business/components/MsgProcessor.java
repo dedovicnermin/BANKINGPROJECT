@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
-import java.util.Optional;
+
 
 @Component
 public class MsgProcessor {
@@ -24,9 +24,8 @@ public class MsgProcessor {
      * @return Pass the string down to xml processor to be bind, validated, and brought back as xml
      * @throws JsonProcessingException
      */
-    public String processBalanceRequest(String xml) throws JsonProcessingException {
-        String balanceMessage = xmlProcessor.bindAndValidateBalanceRequest(xml);
-        return balanceMessage;
+    public String processBalanceRequest(final String xml) throws JsonProcessingException {
+        return xmlProcessor.bindAndValidateBalanceRequest(xml);
     }
 
     /**
@@ -36,14 +35,20 @@ public class MsgProcessor {
      * @return
      * @throws JsonProcessingException
      */
-    public String processFailedAttempt(BalanceMessage balanceMessage) throws JsonProcessingException {
+    public String processFailedAttempt(final BalanceMessage balanceMessage) throws JsonProcessingException {
         return xmlProcessor.convertEmptyBalanceMessage(balanceMessage);
     }
 
 
-    public void processTransferRequest(String xml) throws JsonProcessingException, InvalidTransferMessageException {
+    /**
+     * PRECONDITION: Received string on kafka
+     * Will bind to xml and continue processing if no errors arise
+     * @param xml
+     * @throws JsonProcessingException
+     * @throws InvalidTransferMessageException
+     */
+    public void processTransferRequest(final String xml) throws JsonProcessingException, InvalidTransferMessageException {
         xmlProcessor.bindAndProcessTransferRequest(xml);
-        return;
     }
 
 
