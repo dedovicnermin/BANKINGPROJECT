@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.Creditor;
@@ -15,6 +14,7 @@ import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -91,7 +91,7 @@ class XMLProcessorTest {
     void test_processingTransfer_withInvalidTransferMsg_shouldThrowInvalidTransferMessageException() throws JsonProcessingException, InvalidTransferMessageException {
         Debtor debtor = new Debtor(123, 456);
         Creditor creditor = new Creditor(456,789);
-        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), -10, "for love");
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), new BigDecimal(-10), "for love");
 
         String xml = mapper.writeValueAsString(transferMessage);
         TransferMessage real = mapper.readValue(xml, TransferMessage.class);
@@ -107,7 +107,7 @@ class XMLProcessorTest {
     void test_processingTransfer_withValidMsg_shouldReturnWithoutException() throws JsonProcessingException, InvalidTransferMessageException {
         Debtor debtor = new Debtor(123, 456);
         Creditor creditor = new Creditor(456,789);
-        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), 10, "for war");
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), new BigDecimal(10), "for war");
 
         String xml = mapper.writeValueAsString(transferMessage);
         TransferMessage real = mapper.readValue(xml, TransferMessage.class);
@@ -131,7 +131,7 @@ class XMLProcessorTest {
     }
 
 
-    private XmlMapper mapper = new XmlMapper();
+    private final XmlMapper mapper = new XmlMapper();
     private String toXml(BalanceMessage balanceMessage) throws JsonProcessingException {
         return mapper.writeValueAsString(balanceMessage);
     }

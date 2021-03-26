@@ -1,29 +1,37 @@
 package tech.nermindedovic.persistence.data;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TransactionRepoTest {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+
+
 
     @Test
     void givenTransaction_whenSave_thenOK() {
         Transaction transaction = new Transaction();
         transaction.setCreditorAccountNumber(12);
         transaction.setDebtorAccountNumber(1);
-        transaction.setAmount(100);
+        transaction.setAmount(new BigDecimal(100));
         transaction.setDate(new Date());
         transaction.setMemo("Memo");
 
@@ -37,7 +45,7 @@ public class TransactionRepoTest {
 
     @Test
     void test_allConstructorArgs_success() {
-        Transaction transaction = new Transaction(1,1,1,10,new Date(), "memo");
+        Transaction transaction = new Transaction(1,1,1,new BigDecimal(10),new Date(), "memo");
 
         Assertions.assertAll(() -> {
             assertThat(transaction).isNotNull();

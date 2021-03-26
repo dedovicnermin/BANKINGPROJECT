@@ -16,6 +16,7 @@ import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,7 +67,7 @@ class ConsumerServiceTest {
 
     @Test
     void onHandleFundsTransfer_withValidData_shouldNotThrow() throws JsonProcessingException, InvalidTransferMessageException {
-        TransferMessage tm = new TransferMessage(12,new Creditor(123,456),new Debtor(567, 890),new Date(), 25, "My memo");
+        TransferMessage tm = new TransferMessage(12,new Creditor(123,456),new Debtor(567, 890),new Date(), new BigDecimal(25), "My memo");
         String xml = mapper.writeValueAsString(tm);
 
         doNothing().when(msgProcessor).processTransferRequest(xml);
@@ -88,7 +89,7 @@ class ConsumerServiceTest {
 
     @Test
     void onHandleFundsTransfer_withInvalidTMData_shouldThrowRunTimeException() throws JsonProcessingException, InvalidTransferMessageException {
-        TransferMessage transferMessage = new TransferMessage(1,new Creditor(123,456), new Debtor(567,667), new Date(), 0, "memoTest");
+        TransferMessage transferMessage = new TransferMessage(1,new Creditor(123,456), new Debtor(567,667), new Date(), BigDecimal.ZERO, "memoTest");
         String xml = mapper.writeValueAsString(transferMessage);
 
         doThrow(InvalidTransferMessageException.class).when(msgProcessor).processTransferRequest(xml);

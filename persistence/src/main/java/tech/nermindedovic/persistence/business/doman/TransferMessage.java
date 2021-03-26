@@ -2,12 +2,13 @@ package tech.nermindedovic.persistence.business.doman;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.deser.std.NumberDeserializers;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.text.DateFormat;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -26,7 +27,8 @@ public class TransferMessage {
     private Date date;
 
 
-    private long amount;
+//    @JsonDeserialize(as = NumberDeserializers.BigDecimalDeserializer.class)
+    private BigDecimal amount;
 
     private String memo;
 

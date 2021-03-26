@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import tech.nermindedovic.persistence.data.utils.AccountAttributes;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ACCOUNTS")
@@ -30,7 +31,7 @@ public class Account {
     private String userName;
 
     @Column(name = AccountAttributes.BALANCE)
-    private long accountBalance;
+    private BigDecimal accountBalance;
 
 
 }
