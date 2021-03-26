@@ -57,7 +57,12 @@ public class ConsumerService {
         return response;
     }
 
-//"${spring.kafka.consumer.groupId}"
+    /**
+     * PRECONDITION: producer has sent an XML message for a funds transfer request
+     * POSTCONDITION: acknowledgment on pass (true) OR letting application B know that the message failed to process
+     * @param xml
+     * @return
+     */
     @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence")
     @SendTo
     public boolean handleFundsTransferRequest(@Payload final String xml) {

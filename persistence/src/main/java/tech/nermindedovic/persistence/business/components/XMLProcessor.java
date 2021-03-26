@@ -2,7 +2,6 @@ package tech.nermindedovic.persistence.business.components;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.sun.istack.NotNull;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
@@ -39,24 +38,39 @@ public class XMLProcessor {
     }
 
 
-
+    /**
+     * PRECONDITION: balanceRequest has been processed without errors. Heading back outbound to consumer service to reply
+     * POSTCONDITION: balanceRequest transformed into xml
+     * @param balanceMessage
+     * @return
+     * @throws JsonProcessingException
+     */
     public String convertToXml(final BalanceMessage balanceMessage) throws JsonProcessingException {
         return xMapper.writeValueAsString(balanceMessage);
     }
 
 
-
-    public String convertEmptyBalanceMessage(BalanceMessage balanceMessage) throws JsonProcessingException {
+    /**
+     * PRECONDITION: error in balanceMessage. New balanceMessage created/populated with errors set to true
+     * POSTCONDITION: generic balanceMessage converted to XML to be sent back to kafka
+     * @param balanceMessage
+     * @return
+     * @throws JsonProcessingException
+     */
+    public String convertEmptyBalanceMessage(final BalanceMessage balanceMessage) throws JsonProcessingException {
         return xMapper.writeValueAsString(balanceMessage);
     }
 
 
-
+    /**
+     *
+     * @param xml
+     * @throws JsonProcessingException
+     * @throws InvalidTransferMessageException
+     */
     public void bindAndProcessTransferRequest(final String xml) throws JsonProcessingException, InvalidTransferMessageException {
         TransferMessage transferMessage = xMapper.readValue(xml, TransferMessage.class);
         persistenceService.validateAndProcessTransferMessage(transferMessage);
-        return;
-
     }
 
 
