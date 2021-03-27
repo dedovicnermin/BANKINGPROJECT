@@ -12,6 +12,7 @@ import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.GenericMessageListener;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
@@ -32,79 +33,130 @@ public class KafkaConfiguration {
     private String GROUP_ID;
 
 
-    @Bean
-    public ReplyingKafkaTemplate<String, String, String> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, String> pf, KafkaMessageListenerContainer<String, String> container) {
-        return new ReplyingKafkaTemplate<>(pf, container);
-    }
-
-    /**
-     * Listener container to be set up in replyingKafkaTemplate
-     * @return
-     */
-    @Bean
-    public KafkaMessageListenerContainer<String, String> replyContainer(ConsumerFactory<String, String> consumerFactory) {
-        ContainerProperties containerProperties = new ContainerProperties("balance.update.response");
-        return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
-    }
-
-
-    @Bean
-    public ProducerFactory<String, String> producerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
-    }
-
-    @Bean
-    public Map<String, Object> producerConfigs() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
-        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return configs;
-    }
 
 
 
 
-
-
-
-
-
-
-
-
-    @Bean
-    public Map<String, Object> balanceRequestConsumerConfigs() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
-        configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-
-        return configs;
-    }
-
-    @Bean
-    public ConsumerFactory<String, String> balanceMessageConsumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(balanceRequestConsumerConfigs());
-    }
-
-    @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> balanceMessageKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(balanceMessageConsumerFactory());
-        factory.setReplyTemplate(balanceKafkaTemplate());
-        return factory;
-    }
 
 
     /**
      *
-     * @return template responding to BalanceMessage requests
+     * CONFIG FOR REST -> TRANSFORMER COMMUNICATION
+     * REST sending a BalanceMessage over. Once Transformer gets a response from Persistence,
+     * Transformer will reply to REST with the response handed to transformer from persistence.
      */
+
+
+    /**
+     * Consumer configuration.
+     * Rest will be sending a replyingKafkaTemplate to our consumer.
+     * Have in set up consumer to deserialize the BalanceMessage for it to be processed and returned
+     *
+     */
+
     @Bean
-    public KafkaTemplate<String, String> balanceKafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+    public Map<String, Object> balanceRequestFromRestConsumerConfig() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
+        configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        return configs;
     }
+
+
+
+
+
+    @Bean
+    public ConsumerFactory<String, BalanceMessage> balanceMessageRESTRequestConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(balanceRequestFromRestConsumerConfig());
+    }
+
+
+
+    /**
+     *
+     * Spits out containers for methods with @KafkaListener
+     * Container expects a BalanceMessage to be sent over from REST app
+     * Set reply template for returning response to REST
+     */
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> concurrentKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setReplyTemplate(balanceRequestResponseToREST());
+        factory.setConsumerFactory(balanceMessageRESTRequestConsumerFactory());
+        return factory;
+    }
+
+
+
+
+//    @Bean
+//    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, BalanceMessage>> requestFromRESTListenerContainerFactory() {
+//        ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
+//        factory.setConsumerFactory(balanceMessageRESTRequestConsumerFactory());
+//        factory.setReplyTemplate(balanceRequestResponseToREST());
+//
+//        return factory;
+//    }
+
+
+
+
+
+    @Bean
+    public KafkaMessageListenerContainer<String, BalanceMessage> restReplyContainer(ConsumerFactory<String, BalanceMessage> cf) {
+        ContainerProperties containerProperties = new ContainerProperties("balance.transformer.request");
+        containerProperties.setGroupId("transformer");
+        return new KafkaMessageListenerContainer<>(cf, containerProperties);
+
+
+    }
+
+
+
+
+
+
+    @Bean
+    public Map<String, Object> producerReplyingToRestConfigs() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
+        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        return configs;
+    }
+
+
+
+
+    @Bean
+    public ProducerFactory<String, BalanceMessage> restBalanceResponseProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerReplyingToRestConfigs());
+    }
+
+
+
+    @Bean
+    public KafkaTemplate<String, BalanceMessage>  balanceRequestResponseToREST() {
+        return new KafkaTemplate<>(restBalanceResponseProducerFactory());
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

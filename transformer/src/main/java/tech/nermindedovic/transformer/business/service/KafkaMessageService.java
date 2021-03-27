@@ -4,19 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
 import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.transformer.components.MessageTransformer;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 
 import java.util.concurrent.ExecutionException;
+
 
 @Service
 public class KafkaMessageService {
@@ -31,9 +29,9 @@ public class KafkaMessageService {
 
     // == balance request listener
 
-    @KafkaListener(topics = "balance.transform.update.request")
+    @KafkaListener(topics = "balance.transformer.request", containerFactory = "concurrentKafkaListenerContainerFactory")
     @SendTo
-    public BalanceMessage listen(BalanceMessage balanceMessage) {
+    public BalanceMessage listen(BalanceMessage balanceMessage) throws JsonProcessingException, InterruptedException {
 
         try {
             String xml = transformer.balancePojoToXML(balanceMessage);
@@ -42,27 +40,29 @@ public class KafkaMessageService {
 
             RequestReplyFuture<String, String, String> sendAndReceive = template.sendAndReceive(record);
 
-            //confirm if producer produced successfully
-            SendResult<String, String> sendResult = sendAndReceive.getSendFuture().get();
-
             //get the consumer record
             ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
 
-            BalanceMessage balanceMessageReturn = transformer.balanceXMLToPojo(consumerRecord.value());
+            return transformer.balanceXMLToPojo(consumerRecord.value());
 
-            return balanceMessageReturn;
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
+            return balanceMessage;
         }
 
 
-        return balanceMessage;
     }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
