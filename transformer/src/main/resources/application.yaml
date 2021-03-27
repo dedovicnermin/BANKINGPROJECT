@@ -19,6 +19,7 @@ spring:
   kafka:
     producer:
       bootstrap-servers: localhost:9092
+
     consumer:
       bootstrap-servers: localhost:9092
       group-id: transformer

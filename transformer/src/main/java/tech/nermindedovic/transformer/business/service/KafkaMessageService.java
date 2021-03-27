@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -22,14 +23,18 @@ public class KafkaMessageService {
     // == dependencies ==
     private MessageTransformer transformer;
     private ReplyingKafkaTemplate<String, String, String> template;
+//    private KafkaTemplate<String, BalanceMessage> responseToRestTemplate;
 
     // == constructor ==
-    public KafkaMessageService(final MessageTransformer messageTransformer, ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {transformer = messageTransformer; template = kafkaTemplate;}
+    public KafkaMessageService(final MessageTransformer messageTransformer,
+                               ReplyingKafkaTemplate<String, String, String> kafkaTemplate,
+                               KafkaTemplate<String,BalanceMessage> replyTemplate) {
+        transformer = messageTransformer; template = kafkaTemplate;}
 
 
     // == balance request listener
 
-    @KafkaListener(topics = "balance.transformer.request", containerFactory = "concurrentKafkaListenerContainerFactory")
+    @KafkaListener(topics = "balance.transformer.request")
     @SendTo
     public BalanceMessage listen(BalanceMessage balanceMessage) throws JsonProcessingException, InterruptedException {
 
