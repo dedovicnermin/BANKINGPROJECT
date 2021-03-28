@@ -42,7 +42,8 @@ public class ConsumerService {
      * @throws JsonProcessingException
      */
     @KafkaListener(topics = "${balance.request.topic}", groupId = "persistence")
-    @SendTo(value = "${balance.response.topic}")
+//    @SendTo(value = "${balance.response.topic}")
+    @SendTo
     public String handleBalanceRequest(@NotNull final String xml) throws JsonProcessingException {
         String response = null;
         try {
