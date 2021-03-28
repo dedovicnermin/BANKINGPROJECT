@@ -1,7 +1,6 @@
 package tech.nermindedovic.transformer.components;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;

@@ -17,9 +17,12 @@ funds:
 
 spring:
   kafka:
+
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: "localhost:9092"
+
 
     consumer:
-      bootstrap-servers: localhost:9092
-      group-id: transformer
+      bootstrap-servers: "localhost:9092"
+      auto-offset-reset: latest
+

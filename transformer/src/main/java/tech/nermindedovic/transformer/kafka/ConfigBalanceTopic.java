@@ -8,12 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.listener.*;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 
@@ -26,8 +24,8 @@ public class ConfigBalanceTopic {
     @Value("${spring.kafka.consumer.bootstrap-servers}")
     private String BROKER;
 
-    @Value("${spring.kafka.consumer.group-id}")
-    private String GROUP_ID;
+
+    private static final String GROUP_ID = "transformer";
 
 
 
@@ -37,7 +35,9 @@ public class ConfigBalanceTopic {
     public Map<String, Object> prodConfigForPojo() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configs.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
         return configs;
     }
     @Bean
@@ -50,21 +50,34 @@ public class ConfigBalanceTopic {
         return new KafkaTemplate<>(balanceMessageProducerFactory());
     }
 
-//    @Bean
-//    public ReplyingKafkaTemplate<String, String, String> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, String> pf, KafkaMessageListenerContainer<String, String> container) {
-//        return new ReplyingKafkaTemplate<>(pf, container);
-//    }
 
-    /**
-     * Listener container to be set up in replyingKafkaTemplate
-     * @return
-     */
-//    @Bean
-//    public KafkaMessageListenerContainer<String, String> balanceReplyContainer(ConsumerFactory<String, String> consumerFactory) {
-//        ContainerProperties containerProperties = new ContainerProperties("balance.update.response");
-////        containerProperties.setGroupId("transformer");
-//        return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
-//    }
+
+
+
+    @Bean
+    public ConsumerFactory<String, BalanceMessage> consumerFactory() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
+        configs.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+
+        return new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), new JsonDeserializer<>(BalanceMessage.class));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory() {
+        ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setGroupId(GROUP_ID);
+        factory.setReplyTemplate(balanceMessageKafkaTemplate());
+
+        return factory;
+    }
+
+
+
+
 
 
 
@@ -73,7 +86,7 @@ public class ConfigBalanceTopic {
                                                                                ConcurrentKafkaListenerContainerFactory<String, String> factory) {
         ConcurrentMessageListenerContainer<String, String> replyContainer = factory.createContainer("balance.update.response");
         replyContainer.getContainerProperties().setMissingTopicsFatal(false);
-        replyContainer.getContainerProperties().setGroupId("transformer");
+        replyContainer.getContainerProperties().setGroupId(GROUP_ID);
         return new ReplyingKafkaTemplate<>(pf, replyContainer);
     }
 
@@ -127,22 +140,5 @@ public class ConfigBalanceTopic {
         return new DefaultKafkaConsumerFactory<>(bm_stringConsumerConfigs());
     }
 
-//    @Bean
-//    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> balanceMessageReplyKafkaListenerContainerFactory() {
-//        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
-//        factory.setConsumerFactory(balanceMessageResponseConsumerFactory());
-//        factory.setReplyTemplate(balanceKafkaTemplate());
-//        return factory;
-//    }
-
-
-    /**
-     *
-     * @return template responding to BalanceMessage requests
-     */
-//    @Bean
-//    public KafkaTemplate<String, String> balanceKafkaTemplate() {
-//        return new KafkaTemplate<>(producerFactory());
-//    }
 
 }

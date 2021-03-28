@@ -25,7 +25,7 @@ public class TransferMessage {
     private Date date;
 
 
-//    @JsonDeserialize(as = NumberDeserializers.BigDecimalDeserializer.class)
+
     private BigDecimal amount;
 
     private String memo;
