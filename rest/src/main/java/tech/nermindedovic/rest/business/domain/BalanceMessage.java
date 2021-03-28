@@ -1,5 +1,6 @@
-package tech.nermindedovic.transformer.pojos;
+package tech.nermindedovic.rest.business.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +14,8 @@ public class BalanceMessage {
 
     private long accountNumber;
     private long routingNumber;
+
+
 
     private String balance;
     private boolean errors;

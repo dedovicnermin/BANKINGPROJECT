@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer.pojos;
+package tech.nermindedovic.rest.business.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -25,7 +25,7 @@ public class TransferMessage {
     private Date date;
 
 
-
+//    @JsonDeserialize(as = NumberDeserializers.BigDecimalDeserializer.class)
     private BigDecimal amount;
 
     private String memo;

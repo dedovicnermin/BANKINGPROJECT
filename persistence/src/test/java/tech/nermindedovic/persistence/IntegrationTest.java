@@ -8,13 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import tech.nermindedovic.persistence.business.components.MsgProcessor;
-import tech.nermindedovic.persistence.business.components.XMLProcessor;
 import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.service.ConsumerService;
-import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
@@ -40,14 +37,7 @@ public class IntegrationTest {
     @Autowired
     ConsumerService consumerService;
 
-    @Autowired
-    MsgProcessor msgProcessor;
 
-    @Autowired
-    XMLProcessor xmlProcessor;
-
-    @Autowired
-    PersistenceService persistenceService;
 
 
 
