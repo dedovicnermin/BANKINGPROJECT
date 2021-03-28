@@ -20,32 +20,47 @@ import java.util.concurrent.ExecutionException;
 public class KafkaMessageService {
 
     // == dependencies ==
-    private MessageTransformer transformer;
-    private ReplyingKafkaTemplate<String, String, String> template;
+    private final MessageTransformer transformer;
+    private final ReplyingKafkaTemplate<String, String, String> template;
+
+
+
+    // == fields ==
+    private static final String GROUP_ID = "transformer";
+
+    private static final String REQ_TO_PERSISTENCE_TOPIC = "balance.update.request";
+    private static final String RES_FROM_PERSISTENCE_TOPIC = "balance.update.response";
+    private static final String REQ_FROM_REST_TOPIC = "balance.transformer.request";
+
+
 
 
     // == constructor ==
-    public KafkaMessageService(final MessageTransformer messageTransformer,
-                               ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
-        transformer = messageTransformer; template = kafkaTemplate;}
+    public KafkaMessageService(final MessageTransformer messageTransformer, final ReplyingKafkaTemplate<String, String, String> kafkaTemplate) {
+        transformer = messageTransformer; template = kafkaTemplate;
+    }
 
 
-    // == balance request listener
-
-    @KafkaListener(topics = "balance.transformer.request", containerFactory = "factory", groupId = "transformer")
+    /**
+     *
+     * @param balanceMessage object sent by REST application
+     * @return balanceMessage response object to REST, after getting a response from Persistence application
+     * @throws JsonProcessingException
+     * @throws InterruptedException
+     */
+    @KafkaListener(topics = REQ_FROM_REST_TOPIC, containerFactory = "factory", groupId = GROUP_ID)
     @SendTo
     public BalanceMessage listen(final BalanceMessage balanceMessage) throws JsonProcessingException, InterruptedException {
 
         try {
             String xml = transformer.balancePojoToXML(balanceMessage);
-            ProducerRecord<String, String> record = new ProducerRecord<>("balance.update.request", xml);
-            record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, "balance.update.response".getBytes()));
 
+            ProducerRecord<String, String> record = new ProducerRecord<>(REQ_TO_PERSISTENCE_TOPIC, xml);
+            record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, RES_FROM_PERSISTENCE_TOPIC.getBytes()));
             RequestReplyFuture<String, String, String> sendAndReceive = template.sendAndReceive(record);
 
-            //get the consumer record
-            ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
 
+            ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
             return transformer.balanceXMLToPojo(consumerRecord.value());
 
         } catch (ExecutionException e) {
