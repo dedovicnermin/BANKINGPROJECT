@@ -77,6 +77,27 @@ public class ConsumerConfiguration {
     }
 
 
+    /**
+     * Listener container factory for nonReplying consumer - funds transfer.
+     * Manual acknowledgment
+     * @return
+     */
+
+    @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> nonReplying_ListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+        return factory;
+    }
+
+
+
+
+
+    
+
+
 
 
 }

@@ -31,7 +31,7 @@ public class ConfigBalanceTopic {
     /**
      * Configuration for communication with REST application.
      * Producing JSON representation of BalanceMessage
-     * TypeInfoHeaders set to false to leave object type up to the reciever
+     * TypeInfoHeaders set to false to leave object type up to the receiver
      * @return producer configuration stored in a HashMap
      */
     @Bean

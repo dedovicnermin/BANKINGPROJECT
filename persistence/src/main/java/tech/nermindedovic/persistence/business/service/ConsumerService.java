@@ -1,14 +1,11 @@
 package tech.nermindedovic.persistence.business.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.sun.istack.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.listener.KafkaListenerErrorHandler;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
@@ -23,10 +20,12 @@ public class ConsumerService {
 
     // == dependency ==
     private final MsgProcessor processor;
+    private final KafkaTemplate<String, String> stringKafkaTemplate;
 
     // == dependency ==
-    public ConsumerService(MsgProcessor msgProcessor ) {
+    public ConsumerService(MsgProcessor msgProcessor, KafkaTemplate<String, String> template) {
         this.processor = msgProcessor;
+        this.stringKafkaTemplate = template;
     }
 
 
@@ -44,14 +43,18 @@ public class ConsumerService {
     @KafkaListener(topics = "${balance.request.topic}", groupId = "persistence")
 //    @SendTo(value = "${balance.response.topic}")
     @SendTo
-    public String handleBalanceRequest(@NotNull final String xml) throws JsonProcessingException {
+    public String handleBalanceRequest(@NotNull final String xml)  {
         String response = null;
         try {
             response = processor.processBalanceRequest(xml);
         } catch (JsonProcessingException e) {
             log.info(e.getMessage());
             BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", true);
-            response = processor.processFailedAttempt(balanceMessage);
+            try {
+                response = processor.processFailedAttempt(balanceMessage);
+            } catch (JsonProcessingException jsonProcessingException) {
+                jsonProcessingException.printStackTrace();
+            }
         }
 
         log.info(response);
@@ -60,42 +63,37 @@ public class ConsumerService {
 
     /**
      * PRECONDITION: producer has sent an XML message for a funds transfer request
-     * POSTCONDITION: acknowledgment on pass (true) OR letting application B know that the message failed to process
+     * POSTCONDITION: producer commits transaction
      * @param xml
      * @return
      */
-    @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence")
-    @SendTo
-    public boolean handleFundsTransferRequest(@Payload final String xml) {
-        boolean test = false;
+    @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
+    public void handleFundsTransferRequest(@NotNull final String xml) {
+        String errors = null;
+        log.info(xml);
         try {
-
             processor.processTransferRequest(xml);
-            test = true;
-
         } catch (JsonProcessingException xmlE) {
-            xmlE.printStackTrace();
-            throw new RuntimeException("FAIL : COULD NOT BIND TO XML");
+            errors = xmlE.getMessage();
+            log.error(errors);
         } catch (InvalidTransferMessageException e) {
-            e.printStackTrace();
-            throw new RuntimeException("FAIL: COULD NOT VALIDATE TRANSFER MESSAGE");
+            errors = e.getMessage();
+            log.error(errors);
         }
 
-        return test;
+        if (errors != null) {
+            produceErrorMessage(errors);
+        }
+
+
 
     }
 
-    //try and accept. throw new runtime if failed
 
-
-
-
-
-
-
-
-    //    @SendTo(value = "${balance.request.topic}")   -> Works but ends up in endless loop
-    //    @SendTo ->
+    private void produceErrorMessage(String errorMessage) {
+        log.info("producing error message to funds.transfer.error ...");
+        stringKafkaTemplate.send("funds.transfer.error", errorMessage);
+    }
 
 
 
