@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.pojos.TransferMessage;
 
 @Component
 public class MessageTransformer {
@@ -21,6 +22,15 @@ public class MessageTransformer {
     public BalanceMessage balanceXMLToPojo(final String xml) throws JsonProcessingException {
         return xmlMapper.readValue(xml, BalanceMessage.class);
     }
+
+
+
+    public String transferPojoToXML(final TransferMessage transferMessage) throws JsonProcessingException {
+        return xmlMapper.writeValueAsString(transferMessage);
+    }
+
+
+
 
 
 
