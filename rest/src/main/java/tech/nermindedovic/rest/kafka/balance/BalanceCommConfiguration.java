@@ -1,4 +1,4 @@
-package tech.nermindedovic.rest.kafka;
+package tech.nermindedovic.rest.kafka.balance;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -30,6 +30,7 @@ public class BalanceCommConfiguration {
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configs.put(ProducerConfig.RETRIES_CONFIG, 15);
         configs.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
 
 
