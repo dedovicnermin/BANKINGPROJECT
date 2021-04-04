@@ -16,7 +16,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
-import javax.swing.text.Keymap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
