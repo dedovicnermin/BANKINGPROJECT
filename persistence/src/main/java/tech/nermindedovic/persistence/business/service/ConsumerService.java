@@ -75,7 +75,7 @@ public class ConsumerService {
         try {
             processor.processTransferRequest(xml);
         } catch (InvalidTransferMessageException e) {
-            errors = Optional.of(e.getMessage());
+            errors = Optional.of(e.getMessage() + "\nFor TransferMessage: " + xml);
         }
 
         errors.ifPresent(this::produceErrorMessage);

@@ -96,23 +96,6 @@ public class ConsumerConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
-//        factory.setErrorHandler((thrownException, data) -> {
-//            log.error("Exception in consumerConfig is {} and the record is {}", thrownException.getMessage(), data);
-//            kafkaTemplate().send("", data.toString());
-//        });
-
-        factory.setRetryTemplate(retryTemplate());
-        factory.setRecoveryCallback((context -> {
-            if (context.getLastThrowable().getCause() instanceof JDBCConnectionException){
-                //recovery logic
-
-            } else {
-                log.error("Inside the non recoverable logic");
-                throw new InvalidTransferMessageException(context.getLastThrowable().getMessage());
-            }
-            return null;
-        }));
-
 
 
 
@@ -120,22 +103,39 @@ public class ConsumerConfiguration {
     }
 
 
-    @Bean
-    public RetryTemplate retryTemplate() {
-        RetryTemplate retryTemplate = new RetryTemplate();
-        retryTemplate().setRetryPolicy(simpleRetryPolicy());
-        return  retryTemplate;
-    }
+    //        factory.setErrorHandler((thrownException, data) -> {
+//            log.error("Exception in consumerConfig is {} and the record is {}", thrownException.getMessage(), data);
+//            kafkaTemplate().send("", data.toString());
+//        });
+//
+//        factory.setRetryTemplate(retryTemplate());
+//        factory.setRecoveryCallback((context -> {
+//            if (context.getLastThrowable().getCause() instanceof JDBCConnectionException){
+//                //recovery logic
+//
+//            } else {
+//                log.error("Inside the non recoverable logic");
+//                throw new InvalidTransferMessageException(context.getLastThrowable().getMessage());
+//            }
+//            return null;
+//        }));
 
-
-    @Bean
-    public RetryPolicy simpleRetryPolicy() {
-        Map<Class<? extends Throwable>, Boolean> exceptionsMap = new HashMap<>();
-        exceptionsMap.put(InvalidTransferMessageException.class, false);
-        exceptionsMap.put(JDBCConnectionException.class, true);
-        exceptionsMap.put(SQLException.class, false);
-        return new SimpleRetryPolicy(5, exceptionsMap, true);
-    }
+//    @Bean
+//    public RetryTemplate retryTemplate() {
+//        RetryTemplate retryTemplate = new RetryTemplate();
+//        retryTemplate().setRetryPolicy(simpleRetryPolicy());
+//        return  retryTemplate;
+//    }
+//
+//
+//    @Bean
+//    public RetryPolicy simpleRetryPolicy() {
+//        Map<Class<? extends Throwable>, Boolean> exceptionsMap = new HashMap<>();
+//        exceptionsMap.put(InvalidTransferMessageException.class, false);
+//        exceptionsMap.put(JDBCConnectionException.class, true);
+//        exceptionsMap.put(SQLException.class, false);
+//        return new SimpleRetryPolicy(5, exceptionsMap, true);
+//    }
 
 
 
