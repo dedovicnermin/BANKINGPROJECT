@@ -87,9 +87,9 @@ class MsgProcessorTest {
     void test_onInvalidXMLString_throwsJsonException() throws JsonProcessingException, InvalidTransferMessageException {
         String xml = "<ERROR></ERROR>";
 
-        doThrow(JsonProcessingException.class).when(xmlProcessor).bindAndProcessTransferRequest(xml);
+        doThrow(InvalidTransferMessageException.class).when(xmlProcessor).bindAndProcessTransferRequest(xml);
 
-        assertThrows(JsonProcessingException.class, () -> msgProcessor.processTransferRequest(xml));
+        assertThrows(InvalidTransferMessageException.class, () -> msgProcessor.processTransferRequest(xml));
     }
 
 

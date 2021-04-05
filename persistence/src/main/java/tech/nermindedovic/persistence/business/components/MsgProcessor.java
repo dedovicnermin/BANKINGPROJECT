@@ -47,7 +47,7 @@ public class MsgProcessor {
      * @throws JsonProcessingException
      * @throws InvalidTransferMessageException
      */
-    public void processTransferRequest(final String xml) throws JsonProcessingException, InvalidTransferMessageException {
+    public void processTransferRequest(final String xml) throws InvalidTransferMessageException {
         xmlProcessor.bindAndProcessTransferRequest(xml);
     }
 

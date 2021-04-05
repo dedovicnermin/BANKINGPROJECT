@@ -1,10 +1,12 @@
 package tech.nermindedovic.persistence.kafka;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.hibernate.exception.JDBCConnectionException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -15,12 +17,18 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.retry.RetryPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@Slf4j
 public class ConsumerConfiguration {
 
 
@@ -50,7 +58,7 @@ public class ConsumerConfiguration {
 
     /**
      * ConcurrentKafkaListenerCOntainerFactory to create containers for methods annotated with @KafkaListener
-     * KafkaListenerContainer recieves all the messages from my topics on a single thread. the above delegates
+     * KafkaListenerContainer recieves all the messages from my topics on a single thread.
      *
      * container props .setAckOnError defaults to true.
      * @return
@@ -88,8 +96,48 @@ public class ConsumerConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+//        factory.setErrorHandler((thrownException, data) -> {
+//            log.error("Exception in consumerConfig is {} and the record is {}", thrownException.getMessage(), data);
+//            kafkaTemplate().send("", data.toString());
+//        });
+
+        factory.setRetryTemplate(retryTemplate());
+        factory.setRecoveryCallback((context -> {
+            if (context.getLastThrowable().getCause() instanceof JDBCConnectionException){
+                //recovery logic
+
+            } else {
+                log.error("Inside the non recoverable logic");
+                throw new InvalidTransferMessageException(context.getLastThrowable().getMessage());
+            }
+            return null;
+        }));
+
+
+
+
         return factory;
     }
+
+
+    @Bean
+    public RetryTemplate retryTemplate() {
+        RetryTemplate retryTemplate = new RetryTemplate();
+        retryTemplate().setRetryPolicy(simpleRetryPolicy());
+        return  retryTemplate;
+    }
+
+
+    @Bean
+    public RetryPolicy simpleRetryPolicy() {
+        Map<Class<? extends Throwable>, Boolean> exceptionsMap = new HashMap<>();
+        exceptionsMap.put(InvalidTransferMessageException.class, false);
+        exceptionsMap.put(JDBCConnectionException.class, true);
+        exceptionsMap.put(SQLException.class, false);
+        return new SimpleRetryPolicy(15, exceptionsMap, true);
+    }
+
+
 
 
 

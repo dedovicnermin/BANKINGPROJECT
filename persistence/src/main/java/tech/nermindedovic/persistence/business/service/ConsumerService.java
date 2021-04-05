@@ -12,6 +12,8 @@ import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
+import java.util.Optional;
+
 
 @Service
 @Slf4j
@@ -41,7 +43,6 @@ public class ConsumerService {
      * @throws JsonProcessingException
      */
     @KafkaListener(topics = "${balance.request.topic}", groupId = "persistence")
-//    @SendTo(value = "${balance.response.topic}")
     @SendTo
     public String handleBalanceRequest(@NotNull final String xml)  {
         String response = null;
@@ -69,24 +70,15 @@ public class ConsumerService {
      */
     @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleFundsTransferRequest(@NotNull final String xml) {
-        String errors = null;
+        Optional<String> errors = Optional.empty();
         log.info(xml);
         try {
             processor.processTransferRequest(xml);
-        } catch (JsonProcessingException xmlE) {
-            errors = xmlE.getMessage();
-            log.error(errors);
         } catch (InvalidTransferMessageException e) {
-            errors = e.getMessage();
-            log.error(errors);
+            errors = Optional.of(e.getMessage());
         }
 
-        if (errors != null) {
-            produceErrorMessage(errors);
-        }
-
-
-
+        errors.ifPresent(this::produceErrorMessage);
     }
 
 

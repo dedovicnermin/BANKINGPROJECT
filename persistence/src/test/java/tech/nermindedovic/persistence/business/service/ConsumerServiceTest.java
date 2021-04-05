@@ -94,7 +94,7 @@ class ConsumerServiceTest {
 
         doThrow(InvalidTransferMessageException.class).when(msgProcessor).processTransferRequest(xml);
 
-        assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
+        assertThrows(InvalidTransferMessageException.class, () -> consumerService.handleFundsTransferRequest(xml));
     }
 
 

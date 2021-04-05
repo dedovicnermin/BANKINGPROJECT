@@ -68,9 +68,14 @@ public class XMLProcessor {
      * @throws JsonProcessingException
      * @throws InvalidTransferMessageException
      */
-    public void bindAndProcessTransferRequest(final String xml) throws JsonProcessingException, InvalidTransferMessageException {
-        TransferMessage transferMessage = xMapper.readValue(xml, TransferMessage.class);
-        persistenceService.validateAndProcessTransferMessage(transferMessage);
+    public void bindAndProcessTransferRequest(final String xml) throws InvalidTransferMessageException {
+        try {
+            TransferMessage transferMessage = xMapper.readValue(xml, TransferMessage.class);
+            persistenceService.validateAndProcessTransferMessage(transferMessage);
+        } catch (JsonProcessingException exception) {
+            throw new InvalidTransferMessageException("Invalid message format - could not bind xml to TransferMessage.class");
+        }
+
     }
 
 

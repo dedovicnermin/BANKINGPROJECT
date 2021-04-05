@@ -80,15 +80,7 @@ public class IntegrationTest {
 
 
 
-    @Test
-    void test_onProcessTransferRequest_withInvalidUsers_shouldThrow_RunTimeException() throws JsonProcessingException {
-        Creditor creditor = new Creditor(1, 123);
-        Debtor debtor = new Debtor(2, 456);
-        TransferMessage transferMessage = new TransferMessage(1, creditor, debtor,new Date(),new BigDecimal("25"),  "MEMO");
-        String xml = mapper.writeValueAsString(transferMessage);
 
-        Assertions.assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
-    }
 
     public XmlMapper mapper = new XmlMapper();
 

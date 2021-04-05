@@ -19,12 +19,10 @@ import java.math.BigDecimal;
 public class Account {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = AccountAttributes.ACCT_NUM)
     private long accountNumber;
 
     @Column(name = AccountAttributes.ROUT_NUM)
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private long routingNumber;
 
     @Column(name = AccountAttributes.NAME)
