@@ -82,20 +82,12 @@ class ConsumerServiceTest {
     @Test
     void onHandleFundsTransfer_withInvalidXML_shouldThrowRunTimeException() throws JsonProcessingException, InvalidTransferMessageException {
         String xml = "<ERROR></ERROR>";
-        doThrow(JsonProcessingException.class).when(msgProcessor).processTransferRequest(xml);
+        doThrow(InvalidTransferMessageException.class).when(msgProcessor).processTransferRequest(xml);
 
         assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
     }
 
-    @Test
-    void onHandleFundsTransfer_withInvalidTMData_shouldThrowRunTimeException() throws JsonProcessingException, InvalidTransferMessageException {
-        TransferMessage transferMessage = new TransferMessage(1,new Creditor(123,456), new Debtor(567,667), new Date(), BigDecimal.ZERO, "memoTest");
-        String xml = mapper.writeValueAsString(transferMessage);
 
-        doThrow(InvalidTransferMessageException.class).when(msgProcessor).processTransferRequest(xml);
-
-        assertThrows(InvalidTransferMessageException.class, () -> consumerService.handleFundsTransferRequest(xml));
-    }
 
 
     private XmlMapper mapper = new XmlMapper();

@@ -134,7 +134,7 @@ public class ConsumerConfiguration {
         exceptionsMap.put(InvalidTransferMessageException.class, false);
         exceptionsMap.put(JDBCConnectionException.class, true);
         exceptionsMap.put(SQLException.class, false);
-        return new SimpleRetryPolicy(15, exceptionsMap, true);
+        return new SimpleRetryPolicy(5, exceptionsMap, true);
     }
 
 
