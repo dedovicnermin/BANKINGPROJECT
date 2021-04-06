@@ -1,5 +1,6 @@
 package tech.nermindedovic.persistence.business.service;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -98,33 +99,45 @@ class PersistenceServiceTest {
 
     @Test
     void test_validateAndProcessTransferMessage_onValidTransferMessage_shouldUpdateBalanceAndInsertTransaction() throws InvalidTransferMessageException {
+        // given
         Creditor creditor = new Creditor(5, 55555);
         Debtor debtor = new Debtor(3,3333);
-
         Account creditorAccount = new Account(creditor.getAccountNumber(), creditor.getRoutingNumber(), "CREDITOR",new BigDecimal(100));
         Account debtorAccount = new Account(debtor.getAccountNumber(), debtor.getRoutingNumber(), "DEBTOR", new BigDecimal(100));
-
         TransferMessage transferMessage = new TransferMessage(12, creditor,debtor, new Date(), new BigDecimal(5), "For lunch");
 
-        when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> {
-            return  Optional.of(debtorAccount);
-        });
+        // when
+        when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(debtorAccount));
 
         when(accountRepository.findById(creditor.getAccountNumber())).thenAnswer(invocationOnMock -> {
-            return  Optional.of(creditorAccount);
+            return Optional.of(creditorAccount);
         });
 
+        // then
+        persistenceService.validateAndProcessTransferMessage(transferMessage);
+        assertDoesNotThrow(() -> InvalidTransferMessageException.class);
+    }
 
+
+    @Disabled("Not throwing on duplicate transferMessage")
+    @Test
+    void test_validateAndProcessTransferMessage_onDuplicateMessage_shouldThrowInvalidMessageException() throws InvalidTransferMessageException {
+        // given
+        Creditor creditor = new Creditor(1111, 1000000001);
+        Debtor debtor = new Debtor(222222, 1000002222);
+        Account creditorAccount = createAccount(creditor.getAccountNumber(), creditor.getRoutingNumber(), "BOB_DA_CREDITOR", new BigDecimal("500.00"));
+        Account debtorAccount = createAccount(debtor.getAccountNumber(), debtor.getRoutingNumber(), "BOGDAN", new BigDecimal("500.00"));
+        TransferMessage transferMessage = new TransferMessage(8080, creditor, debtor, new Date(), new BigDecimal("20.50"), "lunch time special");
+
+        // when
+        when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(debtorAccount));
+        when(accountRepository.findById(creditor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(creditorAccount));
 
         persistenceService.validateAndProcessTransferMessage(transferMessage);
 
-        assertDoesNotThrow(() -> InvalidTransferMessageException.class);
 
-
-
-
-
-
+        // then ++
+        assertThrows(InvalidTransferMessageException.class, () -> persistenceService.validateAndProcessTransferMessage(transferMessage));
     }
 
 
