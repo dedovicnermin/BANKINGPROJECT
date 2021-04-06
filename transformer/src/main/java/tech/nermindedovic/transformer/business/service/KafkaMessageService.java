@@ -85,7 +85,7 @@ public class KafkaMessageService {
 
     @KafkaListener(topics = "funds.transformer.request", containerFactory = "transferMessageListenerContainerFactory", groupId = GROUP_ID)
     public void listen(final TransferMessage transferMessage) {
-
+        log.info("Message recieved: " + transferMessage.toString());
         try {
             String xml = transformer.transferPojoToXML(transferMessage);
             ListenableFuture<SendResult<String, String>> future = stringKafkaTemplate.send("funds.transfer.request", xml);

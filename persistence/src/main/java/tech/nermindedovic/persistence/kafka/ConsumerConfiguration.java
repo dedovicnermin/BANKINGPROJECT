@@ -1,6 +1,7 @@
 package tech.nermindedovic.persistence.kafka;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -17,40 +18,44 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 
 
+
+
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@Slf4j
 public class ConsumerConfiguration {
 
 
     /**
-     * Config for balance
-     * Shouldnt need to specify bootstrap servers with config in application.yaml
-     *
+     * Config for consumers
      * @return
      */
     @Bean
-    public Map<String, Object> balance_consumerConfigs() {
+    public Map<String, Object> consumerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, "persistence");
+
         return configs;
     }
 
     /**
-     * pops out consumers
+     * consumer factory for both containers.
      * @return
      */
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(balance_consumerConfigs());
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     /**
-     * ConcurrentKafkaListenerCOntainerFactory to create containers for methods annotated with @KafkaListener
-     * KafkaListenerContainer recieves all the messages from my topics on a single thread. the above delegates
+     * ConcurrentKafkaListenerContainerFactory to create containers for methods annotated with @KafkaListener
+     * Contains container config for transfer message listener
      *
      * container props .setAckOnError defaults to true.
      * @return
@@ -60,26 +65,14 @@ public class ConsumerConfiguration {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setReplyTemplate(kafkaTemplate());
-
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
-
         return factory;
-    }
-
-    @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configs));
     }
 
 
     /**
-     * Listener container factory for nonReplying consumer - funds transfer.
-     * Manual acknowledgment
+     * Listener container config for nonReplying consumer - funds transfer.
+     * Ack on successful processing
      * @return
      */
 
@@ -93,11 +86,16 @@ public class ConsumerConfiguration {
 
 
 
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configs.put(ProducerConfig.RETRIES_CONFIG, 5);
 
-
-    
-
-
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configs));
+    }
 
 
 }

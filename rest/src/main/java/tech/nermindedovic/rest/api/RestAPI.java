@@ -1,76 +1,49 @@
 package tech.nermindedovic.rest.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.springframework.beans.factory.annotation.Qualifier;
+
 import org.springframework.http.MediaType;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
-import org.springframework.kafka.requestreply.RequestReplyFuture;
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.PostMapping;
-
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 import tech.nermindedovic.rest.business.domain.TransferMessage;
+import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
+import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
-import java.nio.ByteBuffer;
+import javax.validation.Valid;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 @Slf4j
 @RestController
 public class RestAPI {
 
-    AtomicInteger counter = new AtomicInteger(1);
-    private final ReplyingKafkaTemplate<String, BalanceMessage, BalanceMessage> replyingKafkaTemplate;
-    private final KafkaTemplate<String, TransferMessage> transferMessageTemplate;
 
-    public RestAPI(ReplyingKafkaTemplate<String, BalanceMessage, BalanceMessage> replyingKafkaTemplate, @Qualifier("transferTemplate")KafkaTemplate<String, TransferMessage> transferMessageKafkaTemplate) {
-        this.replyingKafkaTemplate = replyingKafkaTemplate;
-        this.transferMessageTemplate = transferMessageKafkaTemplate;
+    private BalanceProducer balanceProducer;
+    private TransferFundsProducer transferFundsProducer;
+
+    public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer) {
+        this.balanceProducer = balanceProducer;
+        this.transferFundsProducer = transferFundsProducer;
     }
 
 
     @PostMapping(value = "balance", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public BalanceMessage getBalanceUpdate(@RequestBody BalanceMessage balanceMessage) throws ExecutionException, InterruptedException {
-
-
-        ProducerRecord<String,BalanceMessage> record = new ProducerRecord<>("balance.transformer.request", balanceMessage);
-        record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, "balance.transformer.response".getBytes()));
-
-        RequestReplyFuture<String, BalanceMessage, BalanceMessage> sendAndReceive = replyingKafkaTemplate.sendAndReceive(record);
-
-        ConsumerRecord<String, BalanceMessage> consumerRecord = sendAndReceive.get();
-        BalanceMessage val = consumerRecord.value();
-
-        return val;
-//        return consumerRecord.value();
-
-
+    public BalanceMessage getBalanceUpdate(@RequestBody @Valid BalanceMessage balanceMessage) throws ExecutionException, InterruptedException {
+        return balanceProducer.sendAndReceive(balanceMessage);
     }
 
 
     @PostMapping(value = "funds/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String fundsTransferRequest(@RequestBody TransferMessage transferMessage)  {
+    public String fundsTransferRequest(@RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
+        ListenableFuture<SendResult<String, TransferMessage>> resultListenableFuture =
+                transferFundsProducer.sendTransferMessage(transferMessage);
 
-        ProducerRecord<String, TransferMessage> record = new ProducerRecord<>("funds.transformer.request", transferMessage);
-
-        try {
-            SendResult<String, TransferMessage> sendResult = transferMessageTemplate.send(record).get();
-            log.info(sendResult.toString());
-            return "Successfully transferred funds.";
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            return "ERROR";
-        }
-
-
+        boolean timestamped = resultListenableFuture.get().getRecordMetadata().hasTimestamp();
+        return timestamped ? "Funds transfer request sent." : "Error in sending funds transfer request";
     }
 
 
@@ -79,10 +52,8 @@ public class RestAPI {
 
 
 
-    public int getCounterValue() {
-        return counter.get();
-    }
 
 
+//          AtomicInteger counter = new AtomicInteger(1);
 //        record.headers().add(new RecordHeader(KafkaHeaders.CORRELATION_ID, ByteBuffer.allocateDirect(getCounterValue())));
 }

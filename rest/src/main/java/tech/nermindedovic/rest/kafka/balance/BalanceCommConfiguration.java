@@ -1,4 +1,4 @@
-package tech.nermindedovic.rest.kafka;
+package tech.nermindedovic.rest.kafka.balance;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -16,7 +16,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
-import javax.swing.text.Keymap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -30,6 +29,7 @@ public class BalanceCommConfiguration {
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configs.put(ProducerConfig.RETRIES_CONFIG, 15);
         configs.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
 
 

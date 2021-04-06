@@ -1,4 +1,4 @@
-package tech.nermindedovic.rest.kafka;
+package tech.nermindedovic.rest.kafka.transfer;
 
 
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -18,15 +18,16 @@ import java.util.Map;
 @Configuration
 public class TransferMessageConfiguration {
 
-
+    private static final String BROKER = "localhost:9092";
 
     @Bean
     public Map<String, Object> transferProducerConfig() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        props.put(ProducerConfig.RETRIES_CONFIG, 5);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(ProducerConfig.RETRIES_CONFIG, 15);
         props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
         return props;
     }
@@ -43,14 +44,6 @@ public class TransferMessageConfiguration {
     public KafkaTemplate<String, TransferMessage> transferMessageKafkaTemplate() {
         return new KafkaTemplate<>(transferProducerFactory());
     }
-
-
-
-
-
-
-
-
 
 
 

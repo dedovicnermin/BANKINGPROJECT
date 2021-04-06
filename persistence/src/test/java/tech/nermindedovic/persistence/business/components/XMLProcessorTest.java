@@ -84,7 +84,7 @@ class XMLProcessorTest {
     @Test
     void test_processingTransfer_withInvalidXML_shouldThrowJsonException() {
         String xml = "<ERROR>err</ERROR>";
-        assertThrows(JsonProcessingException.class, () -> xmlProcessor.bindAndProcessTransferRequest(xml));
+        assertThrows(InvalidTransferMessageException.class, () -> xmlProcessor.bindAndProcessTransferRequest(xml));
     }
 
     @Test

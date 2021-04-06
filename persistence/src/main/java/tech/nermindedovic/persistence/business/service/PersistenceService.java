@@ -1,6 +1,7 @@
 package tech.nermindedovic.persistence.business.service;
 
-import com.sun.istack.NotNull;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.Creditor;
@@ -12,6 +13,7 @@ import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -49,18 +51,12 @@ public class PersistenceService {
      */
     public void validateBalanceMessage(@NotNull final BalanceMessage balanceMessage) {
         Optional<Account> account = accountRepository.findById(balanceMessage.getAccountNumber());
-
         balanceMessage.setErrors(true);
-
         account.ifPresent(account1 -> {
             balanceMessage.setBalance(account1.getAccountBalance().toString());
             balanceMessage.setErrors(false);
         });
-
     }
-
-
-
 
 
     // == FUNDS TRANSFER ==
@@ -103,10 +99,13 @@ public class PersistenceService {
      * @param transferMessage
      *
      */
-    private void processTransferMessage(final TransferMessage transferMessage) {
-        updateBalance(transferMessage.getDebtor(), transferMessage.getCreditor(), transferMessage.getAmount());
+    private void processTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
         enterTransaction(transferMessage);
+        updateBalance(transferMessage.getDebtor(), transferMessage.getCreditor(), transferMessage.getAmount());
+
     }
+
+
 
 
     /**
@@ -114,15 +113,19 @@ public class PersistenceService {
      * POSTCONDITION:   new transaction created/persisted
      * @param transferMessage
      */
-    private void enterTransaction(final TransferMessage transferMessage) {
+    public void enterTransaction(final TransferMessage transferMessage) throws InvalidTransferMessageException {
         Transaction transaction = new Transaction();
-
+        transaction.setTransactionId(transferMessage.getMessage_id());
         setAccountNumbers(transferMessage.getDebtor(), transferMessage.getCreditor(), transaction);
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
         transaction.setMemo(transferMessage.getMemo());
+        try {
+            transactionRepository.save(transaction);
+        } catch (DataIntegrityViolationException e) {
+            throw new InvalidTransferMessageException(String.format("TransferMessage - %s has already been entered and is a duplicated entry.", transferMessage.toString()));
+        }
 
-        transactionRepository.save(transaction);
     }
 
 
@@ -134,13 +137,17 @@ public class PersistenceService {
      * @param amount
      */
     private void updateBalance(final Debtor debtor, final Creditor creditor,final BigDecimal amount) {
-        Account debtorAccount = accountRepository.findById(debtor.getAccountNumber()).get();
-        debtorAccount.setAccountBalance(debtorAccount.getAccountBalance().subtract(amount).setScale(2, RoundingMode.HALF_EVEN));
-        accountRepository.save(debtorAccount);
+        Optional<Account> debtorAccount = accountRepository.findById(debtor.getAccountNumber());
+        debtorAccount.ifPresent(account -> {
+            account.setAccountBalance(getUpdatedDebtorBalance(account, amount));
+            accountRepository.save(account);
+        });
 
-        Account creditorAccount = accountRepository.findById(creditor.getAccountNumber()).get();
-        creditorAccount.setAccountBalance(creditorAccount.getAccountBalance().add(amount).setScale(2, RoundingMode.HALF_EVEN));
-        accountRepository.save(creditorAccount);
+        Optional<Account> creditorAccount = accountRepository.findById(creditor.getAccountNumber());
+        creditorAccount.ifPresent(account -> {
+            account.setAccountBalance(getUpdatedCreditorBalance(account, amount));
+            accountRepository.save(account);
+        });
 
     }
 
@@ -157,9 +164,6 @@ public class PersistenceService {
 
 
 
-
-
-
     /**
      * PRECONDITION: transferMessage will be free of errors outside of validating parties
      * POSTCONDITION: will return true if both parties valid, else false
@@ -170,9 +174,17 @@ public class PersistenceService {
      * @return
      */
     private void accountsAreValid(final TransferMessage transferMessage) throws InvalidTransferMessageException {
-        if (!(accountRepository.findById(transferMessage.getCreditor().getAccountNumber()).isPresent() &&
-                accountRepository.findById(transferMessage.getDebtor().getAccountNumber()).isPresent())) {
-            throw new InvalidTransferMessageException("Both accounts could not be validated");
+        Optional<Account> creditor = accountRepository.findById(transferMessage.getCreditor().getAccountNumber());
+        Optional<Account> debtor = accountRepository.findById(transferMessage.getDebtor().getAccountNumber());
+
+        if (!(creditor.isPresent() && debtor.isPresent())) {
+            throw new InvalidTransferMessageException("Both accounts are not users of this bank.");
+        }
+
+        boolean routingNumbersMatch = (transferMessage.getCreditor().getRoutingNumber() == creditor.get().getRoutingNumber()) &&
+                (transferMessage.getDebtor().getRoutingNumber() == debtor.get().getRoutingNumber());
+        if (!routingNumbersMatch) {
+            throw new InvalidTransferMessageException("Both routing numbers could not be matched with data from database.");
         }
     }
 
@@ -207,14 +219,17 @@ public class PersistenceService {
         transaction.setCreditorAccountNumber(creditor.getAccountNumber());
     }
 
+
+
+    private BigDecimal getUpdatedDebtorBalance(final Account debtorAccount, final BigDecimal amount) {
+        return debtorAccount.getAccountBalance().subtract(amount).setScale(2, RoundingMode.HALF_EVEN);
+    }
+
+    private BigDecimal getUpdatedCreditorBalance(final Account creditorAccount, final BigDecimal amount) {
+        return creditorAccount.getAccountBalance().add(amount).setScale(2, RoundingMode.HALF_EVEN);
+    }
+
 }
 
 
-
-//        accountRepository.findById(transferMessage.getDebtor().getAccountNumber())
-//                .ifPresent(account -> map.put("Debtor", account.getAccountNumber()));
-//
-//
-//        accountRepository.findById(transferMessage.getCreditor().getAccountNumber())
-//                .ifPresent(account -> map.put("Creditor", account.getAccountNumber()));
 

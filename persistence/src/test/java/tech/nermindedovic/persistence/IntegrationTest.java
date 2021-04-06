@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.ThrowingSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Slf4j
+@EmbeddedKafka(partitions = 1, brokerProperties = {"listeners=PLAINTEXT://localhost:9092", "port=9092"})
 public class IntegrationTest {
 
     @Autowired
@@ -80,15 +82,7 @@ public class IntegrationTest {
 
 
 
-    @Test
-    void test_onProcessTransferRequest_withInvalidUsers_shouldThrow_RunTimeException() throws JsonProcessingException {
-        Creditor creditor = new Creditor(1, 123);
-        Debtor debtor = new Debtor(2, 456);
-        TransferMessage transferMessage = new TransferMessage(1, creditor, debtor,new Date(),new BigDecimal("25"),  "MEMO");
-        String xml = mapper.writeValueAsString(transferMessage);
 
-        Assertions.assertThrows(RuntimeException.class, () -> consumerService.handleFundsTransferRequest(xml));
-    }
 
     public XmlMapper mapper = new XmlMapper();
 
