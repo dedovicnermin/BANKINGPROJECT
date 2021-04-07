@@ -2,6 +2,7 @@ package tech.nermindedovic.transformer.pojos;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class TransferMessage {
 
+    @JsonProperty("messageId")
     private long message_id;
 
 
