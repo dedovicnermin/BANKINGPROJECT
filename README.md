@@ -55,6 +55,7 @@ Responsible for starting the chain of message driven events. Current endpoints:
 
 #### TransferMessage XML
 Skeleton of TransferMessage
+```
 <TransferMessage>
   <message/transaction id>
   <creditor>
@@ -69,4 +70,5 @@ Skeleton of TransferMessage
   <date>date of transaction</date>
   <memo>describing purpose of transaction</memo>
 </TransferMessage>      
+```
       
