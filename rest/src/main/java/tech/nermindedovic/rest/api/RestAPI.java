@@ -39,11 +39,8 @@ public class RestAPI {
 
     @PostMapping(value = "funds/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String fundsTransferRequest(@RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
-        ListenableFuture<SendResult<String, TransferMessage>> resultListenableFuture =
-                transferFundsProducer.sendTransferMessage(transferMessage);
-
-        boolean timestamped = resultListenableFuture.get().getRecordMetadata().hasTimestamp();
-        return timestamped ? "Funds transfer request sent." : "Error in sending funds transfer request";
+        String result = transferFundsProducer.sendTransferMessage(transferMessage);
+        return result;
     }
 
 
