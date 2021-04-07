@@ -1,7 +1,7 @@
 package tech.nermindedovic.persistence.business.service;
 
 
-import org.springframework.dao.DataIntegrityViolationException;
+
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.Creditor;
@@ -43,7 +43,7 @@ public class PersistenceService {
 
     /**
      * @param balanceMessage POJO of XML balance request message
-     * @return  void
+     *
      *
      * We are here bc the BalanceRequest has made it through the bind phase, indicating valid msg format
      * last phase of processing, leaf node.
@@ -114,18 +114,15 @@ public class PersistenceService {
      * @param transferMessage
      */
     public void enterTransaction(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessage_id()));
+
         Transaction transaction = new Transaction();
         transaction.setTransactionId(transferMessage.getMessage_id());
         setAccountNumbers(transferMessage.getDebtor(), transferMessage.getCreditor(), transaction);
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
         transaction.setMemo(transferMessage.getMemo());
-        try {
-            transactionRepository.save(transaction);
-        } catch (DataIntegrityViolationException e) {
-            throw new InvalidTransferMessageException(String.format("TransferMessage - %s has already been entered and is a duplicated entry.", transferMessage.toString()));
-        }
-
+        transactionRepository.save(transaction);
     }
 
 
@@ -227,6 +224,11 @@ public class PersistenceService {
 
     private BigDecimal getUpdatedCreditorBalance(final Account creditorAccount, final BigDecimal amount) {
         return creditorAccount.getAccountBalance().add(amount).setScale(2, RoundingMode.HALF_EVEN);
+    }
+
+
+    private boolean messageExists(final TransferMessage transferMessage) {
+        return transactionRepository.findById(transferMessage.getMessage_id()).isPresent();
     }
 
 }

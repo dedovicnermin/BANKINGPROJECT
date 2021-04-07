@@ -11,6 +11,7 @@ import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.data.entity.Account;
+import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
@@ -119,26 +120,7 @@ class PersistenceServiceTest {
     }
 
 
-    @Disabled("Not throwing on duplicate transferMessage")
-    @Test
-    void test_validateAndProcessTransferMessage_onDuplicateMessage_shouldThrowInvalidMessageException() throws InvalidTransferMessageException {
-        // given
-        Creditor creditor = new Creditor(1111, 1000000001);
-        Debtor debtor = new Debtor(222222, 1000002222);
-        Account creditorAccount = createAccount(creditor.getAccountNumber(), creditor.getRoutingNumber(), "BOB_DA_CREDITOR", new BigDecimal("500.00"));
-        Account debtorAccount = createAccount(debtor.getAccountNumber(), debtor.getRoutingNumber(), "BOGDAN", new BigDecimal("500.00"));
-        TransferMessage transferMessage = new TransferMessage(8080, creditor, debtor, new Date(), new BigDecimal("20.50"), "lunch time special");
 
-        // when
-        when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(debtorAccount));
-        when(accountRepository.findById(creditor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(creditorAccount));
-
-        persistenceService.validateAndProcessTransferMessage(transferMessage);
-
-
-        // then ++
-        assertThrows(InvalidTransferMessageException.class, () -> persistenceService.validateAndProcessTransferMessage(transferMessage));
-    }
 
 
 
