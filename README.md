@@ -53,7 +53,7 @@ Responsible for starting the chain of message driven events. Current endpoints:
 
 
 
-#### TransferMessage XML
+#### TransferMessage Object
 Skeleton of TransferMessage
 ```
 <TransferMessage>
