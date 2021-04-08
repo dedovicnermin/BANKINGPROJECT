@@ -51,6 +51,8 @@ public class KafkaErrHandler implements ErrorHandler {
 
         if (e instanceof SerializationException)
             seekSerializeException(e, consumer);
+
+        //else retry
     }
 
     @Override
