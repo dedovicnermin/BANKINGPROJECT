@@ -95,10 +95,7 @@ class TransformerProducerTest {
     }
 
 
-    /**
-     * With this, transferMessage still gets sent to broker, which is okay. However, when producer<String,String>, error does not get caught.
-     */
-//    @Disabled(value = "Have to figure out a way to handle error when listener container cannot deserialize record.")
+
     @Test
     void onInvalidTransferMessage_willSendToErrorTopic() {
         producer.send(new ProducerRecord<>("funds.transformer.request", "Should call error handler on listener container"));
