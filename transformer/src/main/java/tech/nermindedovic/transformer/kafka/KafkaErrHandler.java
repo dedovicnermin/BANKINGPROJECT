@@ -41,7 +41,7 @@ public class KafkaErrHandler implements ErrorHandler {
             consumer.seek(topicPartition, (offset + 1));
 
             log.info("Skipped message with offset {} from partition {}", offset, partition);
-            stringKafkaTemplate.send("funds.transfer.error", consumer.toString());
+            stringKafkaTemplate.send(TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS, consumer.toString());
         }
     }
 

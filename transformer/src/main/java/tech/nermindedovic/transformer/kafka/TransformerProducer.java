@@ -35,16 +35,16 @@ public class TransformerProducer {
     }
 
 
-    private static final String REQ_TO_PERSISTENCE_TOPIC = "balance.update.request";
-    private static final String RES_FROM_PERSISTENCE_TOPIC = "balance.update.response";
+
+
 
 
 
     public BalanceMessage sendAndReceiveBalanceMessage(BalanceMessage balanceMessage)  {
         try {
             String xml = transformer.balancePojoToXML(balanceMessage);
-            ProducerRecord<String, String> record = new ProducerRecord<>(REQ_TO_PERSISTENCE_TOPIC, xml);
-            record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, RES_FROM_PERSISTENCE_TOPIC.getBytes()));
+            ProducerRecord<String, String> record = new ProducerRecord<>(TransformerTopicNames.OUTBOUND_PERSISTENCE_BALANCE, xml);
+            record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE.getBytes()));
             RequestReplyFuture<String, String, String> sendAndReceive = replyingKafkaTemplate.sendAndReceive(record);
             ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
             return transformer.balanceXMLToPojo(consumerRecord.value());
@@ -60,10 +60,10 @@ public class TransformerProducer {
     public void sendTransferMessage(final TransferMessage transferMessage) {
         try {
             String xml = transformer.transferPojoToXML(transferMessage);
-            ListenableFuture<SendResult<String, String>> future = stringKafkaTemplate.send("funds.transfer.request", xml);
+            ListenableFuture<SendResult<String, String>> future = stringKafkaTemplate.send(TransformerTopicNames.OUTBOUND_PERSISTENCE_TRANSFER, xml);
             future.addCallback(createCallBack());
         } catch (JsonProcessingException e) {
-            stringKafkaTemplate.send("funds.transfer.error", "TRANSFORMER ERROR \n" + e.getMessage());
+            stringKafkaTemplate.send(TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS, "TRANSFORMER ERROR \n" + e.getMessage());
         }
     }
 
@@ -72,12 +72,13 @@ public class TransformerProducer {
         return new ListenableFutureCallback<SendResult<String, String>>() {
             @Override
             public void onFailure(Throwable throwable) {
+                log.error("Transfer CALLBACK : Error sending transfer message to broker (destination persistence)");
                 log.error(throwable.getMessage());
             }
 
             @Override
             public void onSuccess(SendResult<String, String> result) {
-                log.info("Transformer successfully sent transferMessage xml to broker");
+                log.info("Transfer CALLBACK : Transformer successfully sent transferMessage xml to broker");
             }
         };
     }

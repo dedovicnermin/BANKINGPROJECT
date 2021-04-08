@@ -58,7 +58,7 @@ public class ConfigBalanceTopic {
      * Template for replying to Rest message.
      * Not explicitly used in code but will be used by spring under the hood.
      * Infers that this is the template we'll be using in KafkaMessageService.java
-     * @return
+     * @return KafkaTemplate for response to Rest
      */
     @Bean
     public KafkaTemplate<String, BalanceMessage> balanceMessageKafkaTemplate() {
@@ -137,7 +137,7 @@ public class ConfigBalanceTopic {
      * Strapping the kafkaTemplate to the response listener
      * @param pf ProducerFactory
      * @param factory MessageListenerContainerFactory instance from the ReplyingKafkaTemplate
-     * @return
+     * @return  the expected response template
      */
     @Bean
     public KafkaTemplate<String, String> replyTemplate(ProducerFactory<String, String> pf, ConcurrentKafkaListenerContainerFactory<String, String> factory) {
@@ -176,7 +176,7 @@ public class ConfigBalanceTopic {
      * @return Map of consumer configuration
      */
     @Bean
-    public Map<String, Object> bm_stringConsumerConfigs() {
+    public Map<String, Object> balanceMessageStringConsumerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
@@ -193,7 +193,7 @@ public class ConfigBalanceTopic {
      */
     @Bean
     public ConsumerFactory<String, String> balanceMessageResponseConsumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(bm_stringConsumerConfigs());
+        return new DefaultKafkaConsumerFactory<>(balanceMessageStringConsumerConfigs());
     }
 
 

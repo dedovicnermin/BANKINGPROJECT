@@ -3,15 +3,6 @@ server:
 
 
 
-
-topic:
-  from:
-    rest: "balance.transformer.request"
-    persistence: "balance.update.response"
-  to:
-    rest: "balance.transformer.response"
-    persistence: "balance.update.request"
-
 spring:
   kafka:
     bootstrap-servers: "localhost:9092"

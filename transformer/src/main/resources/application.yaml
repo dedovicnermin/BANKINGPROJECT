@@ -4,13 +4,7 @@ server:
 
 
 
-topic:
-  from:
-    rest: "balance.transformer.request"
-    persistence: "balance.update.response"
-  to:
-    rest: "balance.transformer.response"
-    persistence: "balance.update.request"
+
 
 spring:
   kafka:
@@ -18,6 +12,8 @@ spring:
     consumer:
       auto-offset-reset: latest
       group-id: "transformer"
+
+
 
 
 
