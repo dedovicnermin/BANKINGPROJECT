@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tech.nermindedovic.rest.api.RestAPI;
 
+import tech.nermindedovic.rest.business.domain.BalanceMessage;
 import tech.nermindedovic.rest.business.domain.Creditor;
 import tech.nermindedovic.rest.business.domain.Debtor;
 import tech.nermindedovic.rest.business.domain.TransferMessage;
@@ -66,9 +67,50 @@ public class RestControllerUnitTest {
             .content(json))
                 .andExpect(status().isOk())
                 .andReturn()
-                .getRequest()
+                .getResponse()
                 .getContentAsString()
-                .contains("successfully");
+                .contains("successfully")
+            ;
+
+    }
+
+
+    @Test
+    void postTransferMessageEvent_withInvalidTransferMessage() throws Exception {
+        mockMvc.perform(post("/funds/transfer")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(""))
+                .andExpect(status().is4xxClientError());
+
+    }
+
+
+    @Test
+    void onValidBalanceMessage_returnsBalanceMessage() throws Exception {
+        BalanceMessage balanceMessage = new BalanceMessage(1111,2222,"", false);
+        BalanceMessage balanceMessageReturn = new BalanceMessage(1111,2222,"100.50", false);
+        String json = mapper.writeValueAsString(balanceMessage);
+
+        when(balanceProducer.sendAndReceive(balanceMessage)).thenReturn(balanceMessageReturn);
+
+        mockMvc.perform(post("/balance")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString()
+                .contains("100.50");
+
+    }
+
+
+    @Test
+    void onInvalidBalanceMessage_error() throws Exception {
+        mockMvc.perform(post("/balance")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""))
+                .andExpect(status().is4xxClientError());
 
     }
 }

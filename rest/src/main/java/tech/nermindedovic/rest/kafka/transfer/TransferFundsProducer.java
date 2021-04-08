@@ -2,7 +2,6 @@ package tech.nermindedovic.rest.kafka.transfer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -11,6 +10,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import tech.nermindedovic.rest.business.domain.TransferMessage;
 
+import javax.validation.constraints.NotNull;
 import java.util.concurrent.ExecutionException;
 
 @Component
@@ -24,12 +24,13 @@ public class TransferFundsProducer {
         this.transferMessageTemplate = transferMessageKafkaTemplate;
     }
 
-    public String sendTransferMessage(final TransferMessage transferMessage) throws ExecutionException, InterruptedException {
+    public String sendTransferMessage(@NotNull final TransferMessage transferMessage) throws ExecutionException, InterruptedException {
         ProducerRecord<String, TransferMessage> record = new ProducerRecord<>(TOPIC, transferMessage);
         ListenableFuture<SendResult<String, TransferMessage>> future = transferMessageTemplate.send(record);
         future.addCallback(createTransferCallBack());
         SendResult<String, TransferMessage> result = future.completable().get();
-        return result.getRecordMetadata().hasOffset() ? String.format("Message (%d) has been sent successfully.", result.getProducerRecord().value().getMessage_id()) : String.format("Message (%d) was not able to successfully send", result.getProducerRecord().value().getMessage_id());
+        long messageId = result.getProducerRecord().value().getMessage_id();
+        return result.getRecordMetadata().hasOffset() ? String.format("Message (%d) has been sent successfully.", messageId) : String.format("Message (%d) was not able to successfully send", messageId);
 
     }
 
