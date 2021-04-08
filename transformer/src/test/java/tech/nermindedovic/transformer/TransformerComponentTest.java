@@ -26,6 +26,8 @@ class TransformerComponentTest {
     @Autowired
     private MessageTransformer messageTransformer;
 
+    private XmlMapper mapper = new XmlMapper();
+
     /**
      * Testing balance message request transformation
      * @throws JsonProcessingException
@@ -85,6 +87,6 @@ class TransformerComponentTest {
         return new BalanceMessage(accountNumber, routingNumber, balance, errors);
     }
 
-    private XmlMapper mapper = new XmlMapper();
+
 
 }
