@@ -3,28 +3,28 @@ package tech.nermindedovic.transformer.kafka;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.transformer.business.service.KafkaMessageService;
-import tech.nermindedovic.transformer.components.MessageTransformer;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.pojos.Creditor;
 import tech.nermindedovic.transformer.pojos.Debtor;
@@ -35,23 +35,20 @@ import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
 @EmbeddedKafka(topics = {"funds.transfer.request", "funds.transfer.error"}, partitions = 1, ports = 9092)
-@DirtiesContext
+@DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
 class TransformerProducerTest {
 
     @Autowired
     KafkaMessageService kafkaMessageService;
 
 
-
-
-
     private Consumer<String, String> consumer;
+    private Producer<String, TransferMessage> producer;
+
 
 
     @BeforeEach
@@ -66,11 +63,21 @@ class TransformerProducerTest {
         TopicPartition partition1 = new TopicPartition("funds.transfer.request", 0);
         TopicPartition partition2 = new TopicPartition("funds.transfer.error", 0);
         consumer.assign(Arrays.asList(partition1, partition2));
+
+
+        Map<String, Object> properties2 = new HashMap<>();
+        properties2.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+        properties2.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties2.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        producer = new DefaultKafkaProducerFactory<>(properties2, new StringSerializer(), new JsonSerializer<TransferMessage>()).createProducer();
+
     }
 
     @AfterEach
     void shutdown() {
         consumer.close();
+        producer.close();
     }
 
     @Test
@@ -78,6 +85,20 @@ class TransformerProducerTest {
         TransferMessage transferMessage = createTransferMessage();
         kafkaMessageService.listen(transferMessage);
         assertThat(consumer.poll(Duration.ofMillis(3000))).hasSize(1);
+    }
+
+
+    /**
+     * With this, transferMessage still gets sent to broker, which is okay. However, when producer<String,String>, error does not get caught.
+     */
+    @Disabled(value = "Have to figure out a way to handle error when listener container cannot deserialize record.")
+    @Test
+    void onInvalidTransferMessage_willSendToErrorTopic() {
+        producer.send(new ProducerRecord<>("funds.transformer.request", new TransferMessage()));
+        producer.flush();
+
+        assertThat(consumer.poll(Duration.ofMillis(3000)).records("funds.transfer.error").iterator().hasNext()).isTrue();
+
     }
 
 

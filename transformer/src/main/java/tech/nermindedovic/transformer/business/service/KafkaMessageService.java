@@ -20,7 +20,7 @@ public class KafkaMessageService {
 
     // == fields ==
     private static final String GROUP_ID = "transformer";
-    private static final String REQ_FROM_REST_TOPIC = "balance.transformer.request";
+
 
 
 
