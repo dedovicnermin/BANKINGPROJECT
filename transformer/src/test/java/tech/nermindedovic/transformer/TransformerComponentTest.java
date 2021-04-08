@@ -2,6 +2,7 @@ package tech.nermindedovic.transformer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,22 @@ import tech.nermindedovic.transformer.pojos.Debtor;
 import tech.nermindedovic.transformer.pojos.TransferMessage;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Slf4j
 @SpringBootTest
-public class TransformerComponentTest {
+class TransformerComponentTest {
 
     @Autowired
     private MessageTransformer messageTransformer;
 
+    /**
+     * Testing balance message request transformation
+     * @throws JsonProcessingException
+     */
     @Test
     void test_onValidBalanceMessage_shouldNotThrowOn_XML_Transformation() throws JsonProcessingException {
         BalanceMessage balanceMessage = createBalanceMessage(1,159595, "0.00", false);
@@ -36,7 +43,10 @@ public class TransformerComponentTest {
 
 
 
-
+    /**
+     * Testing balance message response from rest
+     * @throws JsonProcessingException
+     */
     @Test
     void test_onValidXMLResponse_shouldNotThrow_on_xmlToPojo() throws JsonProcessingException {
         BalanceMessage balanceMessage = createBalanceMessage(1, 34234, "200.25", false);
@@ -44,7 +54,25 @@ public class TransformerComponentTest {
 
         assertThat(messageTransformer.balanceXMLToPojo(xml)).isEqualTo(balanceMessage);
         Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
+    }
 
+
+
+    @Test
+    void test_onValidTransferMessage_transformsToValidXML() throws JsonProcessingException {
+
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+        String dateString = dateFormat.format(date);
+
+        String xml = "<TransferMessage><messageId>1234</messageId><creditor><accountNumber>21345</accountNumber><routingNumber>3454</routingNumber></creditor><debtor><accountNumber>123455</accountNumber><routingNumber>45555</routingNumber></debtor><date>" + dateString + "</date><amount>10</amount><memo>memo string</memo></TransferMessage>";
+        assertThat(messageTransformer.transferPojoToXML(new TransferMessage(1234, new Creditor(21345,3454), new Debtor(123455, 45555), date, BigDecimal.TEN, "memo string"))).isEqualTo(xml);
+    }
+
+
+    @Test
+    void test_onInvalidTransferMessage_returnsNull() throws JsonProcessingException {
+        assertThat(messageTransformer.transferPojoToXML(null)).isEqualTo("<null/>");
     }
 
 
@@ -52,9 +80,6 @@ public class TransformerComponentTest {
 
 
 
-    private TransferMessage createTransferMessage(long message_id, Creditor creditor, Debtor debtor, double amount, String memo) {
-        return new TransferMessage(message_id, creditor, debtor, new Date(), new BigDecimal(String.valueOf(amount)),  memo);
-    }
 
     private BalanceMessage createBalanceMessage(long accountNumber, long routingNumber, String balance, boolean errors) {
         return new BalanceMessage(accountNumber, routingNumber, balance, errors);

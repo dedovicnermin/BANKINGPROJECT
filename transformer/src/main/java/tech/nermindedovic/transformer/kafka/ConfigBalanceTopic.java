@@ -25,7 +25,7 @@ public class ConfigBalanceTopic {
     private String BROKER;
 
     @Value("${spring.kafka.consumer.group-id}")
-    private String GROUPID;
+    private String GROUP;
 
 
     /**
@@ -37,7 +37,7 @@ public class ConfigBalanceTopic {
     @Bean
     public Map<String, Object> prodConfigForPojo() {
         Map<String, Object> configs = new HashMap<>();
-        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         configs.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
@@ -76,8 +76,8 @@ public class ConfigBalanceTopic {
     @Bean
     public ConsumerFactory<String, BalanceMessage> consumerFactory() {
         Map<String, Object> configs = new HashMap<>();
-        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUPID);
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         configs.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
 
 
@@ -95,7 +95,7 @@ public class ConfigBalanceTopic {
     public ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory() {
         ConcurrentKafkaListenerContainerFactory<String, BalanceMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.getContainerProperties().setGroupId(GROUPID);
+        factory.getContainerProperties().setGroupId(GROUP);
         factory.setReplyTemplate(balanceMessageKafkaTemplate());
 
         return factory;
@@ -127,7 +127,7 @@ public class ConfigBalanceTopic {
                                                                                ConcurrentKafkaListenerContainerFactory<String, String> factory) {
         ConcurrentMessageListenerContainer<String, String> replyContainer = factory.createContainer("balance.update.response");
         replyContainer.getContainerProperties().setMissingTopicsFatal(false);
-        replyContainer.getContainerProperties().setGroupId(GROUPID);
+        replyContainer.getContainerProperties().setGroupId(GROUP);
         return new ReplyingKafkaTemplate<>(pf, replyContainer);
     }
 
@@ -179,7 +179,7 @@ public class ConfigBalanceTopic {
     public Map<String, Object> bm_stringConsumerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
-        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUPID);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 

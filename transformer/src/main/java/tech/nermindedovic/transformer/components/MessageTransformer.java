@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.pojos.TransferMessage;
 
+import javax.validation.constraints.NotNull;
+
 @Component
 public class MessageTransformer {
 
@@ -13,6 +15,7 @@ public class MessageTransformer {
     // == dependencies ==
     // == ? would there be an advantage to making object into bean & autowiring?
     private final XmlMapper xmlMapper = new XmlMapper();
+
 
 
     public String balancePojoToXML(final BalanceMessage balanceMessage) throws JsonProcessingException {
@@ -28,15 +31,5 @@ public class MessageTransformer {
     public String transferPojoToXML(final TransferMessage transferMessage) throws JsonProcessingException {
         return xmlMapper.writeValueAsString(transferMessage);
     }
-
-
-
-
-
-
-
-
-
-
 
 }
