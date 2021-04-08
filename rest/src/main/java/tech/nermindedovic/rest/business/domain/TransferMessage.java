@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
@@ -21,16 +22,21 @@ import java.util.Date;
 @Builder
 public class TransferMessage {
 
-    @NotNull
+
     @JsonProperty("messageId")
     private long message_id;
 
     @Valid
+    @NotNull
+    @JsonProperty(required = true)
     private Creditor creditor;
 
     @Valid
+    @NotNull
+    @JsonProperty(required = true)
     private Debtor debtor;
 
+    @JsonProperty(required = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private Date date;
 

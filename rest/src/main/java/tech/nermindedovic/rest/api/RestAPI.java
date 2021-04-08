@@ -3,8 +3,6 @@ package tech.nermindedovic.rest.api;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.MediaType;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +12,7 @@ import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
 import javax.validation.Valid;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 
@@ -22,8 +21,8 @@ import java.util.concurrent.ExecutionException;
 public class RestAPI {
 
 
-    private BalanceProducer balanceProducer;
-    private TransferFundsProducer transferFundsProducer;
+    private final BalanceProducer balanceProducer;
+    private final TransferFundsProducer transferFundsProducer;
 
     public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer) {
         this.balanceProducer = balanceProducer;
@@ -38,9 +37,9 @@ public class RestAPI {
 
 
     @PostMapping(value = "funds/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String fundsTransferRequest(@RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
-        String result = transferFundsProducer.sendTransferMessage(transferMessage);
-        return result;
+    public String fundsTransferRequest( @RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
+        transferMessage.setMessage_id(UUID.randomUUID().getMostSignificantBits());
+        return transferFundsProducer.sendTransferMessage(transferMessage);
     }
 
 
@@ -50,7 +49,4 @@ public class RestAPI {
 
 
 
-
-//          AtomicInteger counter = new AtomicInteger(1);
-//        record.headers().add(new RecordHeader(KafkaHeaders.CORRELATION_ID, ByteBuffer.allocateDirect(getCounterValue())));
 }

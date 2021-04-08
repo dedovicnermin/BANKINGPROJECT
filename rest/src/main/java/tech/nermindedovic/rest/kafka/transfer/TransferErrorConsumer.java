@@ -10,7 +10,7 @@ public class TransferErrorConsumer {
 
     /**
      * Consumer configs autowired from yaml properties file.
-     * @param errorMessage
+     * @param errorMessage sent from persistence || transformer
      */
     @KafkaListener(topics = "funds.transfer.error")
     public void listen(String errorMessage) {
