@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.transformer.components.MessageTransformer;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.pojos.Creditor;
@@ -20,7 +22,9 @@ import java.util.Date;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-@SpringBootTest
+@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
+@EmbeddedKafka
+@DirtiesContext
 class TransformerComponentTest {
 
     @Autowired
