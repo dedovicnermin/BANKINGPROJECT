@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.pojos.TransferMessage;
 
-import javax.validation.constraints.NotNull;
+
 
 @Component
 public class MessageTransformer {

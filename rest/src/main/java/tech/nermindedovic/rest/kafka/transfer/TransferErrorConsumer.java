@@ -17,5 +17,4 @@ public class TransferErrorConsumer {
         log.error(errorMessage);
     }
 
-
 }
