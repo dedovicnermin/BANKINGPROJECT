@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.rest.business.domain.Creditor;
@@ -18,11 +19,14 @@ import java.util.concurrent.ExecutionException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = {TransferFundsProducer.class, TransferMessageConfiguration.class})
+@SpringBootTest(classes = {TransferFundsProducer.class, TransferMessageConfiguration.class}, properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@EmbeddedKafka(bootstrapServersProperty = "localhost:9092", topics = {"funds.transformer.request"})
+@EmbeddedKafka
 class TransferFundsProducerTest {
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Autowired
+    EmbeddedKafkaBroker embeddedKafkaBroker;
 
 
     @Autowired
