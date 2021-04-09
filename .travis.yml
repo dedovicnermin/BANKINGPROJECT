@@ -1,5 +1,7 @@
 language: java
-jdk: oraclejdk8
+dist: xenial
+jdk:
+  - oraclejdk8
 os: osx
 branches:
   only:
