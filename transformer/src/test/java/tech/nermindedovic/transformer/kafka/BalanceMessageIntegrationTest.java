@@ -1,88 +1,100 @@
 package tech.nermindedovic.transformer.kafka;
 
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import org.springframework.boot.test.mock.mockito.SpyBean;
+
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.KafkaMessageListenerContainer;
+import org.springframework.kafka.listener.MessageListener;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.kafka.test.utils.ContainerTestUtils;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tech.nermindedovic.transformer.business.service.KafkaMessageService;
 import tech.nermindedovic.transformer.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.pojos.TransferMessage;
 
-
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+
+@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
+@EmbeddedKafka(partitions = 1, ports = 8999)
+@ExtendWith({SpringExtension.class})
+@DirtiesContext
+class BalanceMessageIntegrationTest {
 
 
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Autowired
+    private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-@SpringBootTest
-@ExtendWith({MockitoExtension.class, SpringExtension.class})
-@EmbeddedKafka(topics = {"balance.transformer.request", "balance.transformer.response", "balance.update.request"}, partitions = 1, ports = 9092)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class BalanceMessageIntegrationTest {
+    private static final String INITIATION_TOPIC = TransformerTopicNames.INBOUND_REST_BALANCE;
+    private static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_PERSISTENCE_BALANCE;
+    private static final String REPLY_INBOUND_TOPIC = TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE;
 
-    @SpyBean
-    TransformerProducer transformerProducer;
-
-    private Producer<String, BalanceMessage> producer;
-    private Consumer<String, BalanceMessage> consumer;
+    @Autowired
+    KafkaMessageService kafkaMessageService;
+    XmlMapper mapper = new XmlMapper();
+    BlockingQueue<ConsumerRecord<String, String>> records;
+    KafkaMessageListenerContainer<String,String> container;
+    Producer<String, String> producer;
 
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerProps = new HashMap<>();
-        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        consumerProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        consumerProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BalanceMessage.class);
-        consumerProps.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, true);
-        consumerProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        consumerProps.put(JsonDeserializer.TYPE_MAPPINGS, BalanceMessage.class);
-
-        consumer = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new JsonDeserializer<BalanceMessage>()).createConsumer();
-
-        TopicPartition partition1 = new TopicPartition("balance.transformer.request", 0);
-        TopicPartition partition2 = new TopicPartition("balance.transformer.response", 0);
-        consumer.assign(Arrays.asList(partition1, partition2));
-
-
-        Map<String,Object> producerProps = new HashMap<>();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        producerProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
-
-        producer = new DefaultKafkaProducerFactory<>(producerProps, new StringSerializer(), new JsonSerializer<BalanceMessage>()).createProducer();
-
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
+        DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
+        ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
+        container = new KafkaMessageListenerContainer<>(consumerFactory,containerProperties);
+        records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String,String>) records::add);
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
     }
 
 
     @AfterEach
     void shutdown() {
-        consumer.close();
-        producer.close();
+        container.stop();
     }
 
+    @Disabled("How can I simulate consuming and producing back before calling the method that does the work")
+    @Test
+    void onValidBalanceMessage_sendsAndRecieves_BalanceMessageSuccess() throws InterruptedException {
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
+        producer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new StringSerializer()).createProducer();
 
+        BalanceMessage balanceMessage = createBalanceMessage();
+        ConsumerRecord<String, String> singleRecord = records.poll(10000, TimeUnit.MILLISECONDS);
+//        producer.send()
 
-
+        BalanceMessage response = kafkaMessageService.listen(balanceMessage);
+        assertThat(response).isNotNull();
+    }
 
 
 
