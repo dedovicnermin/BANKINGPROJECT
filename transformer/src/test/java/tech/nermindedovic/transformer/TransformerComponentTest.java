@@ -17,7 +17,9 @@ import tech.nermindedovic.transformer.pojos.TransferMessage;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Date;
+import java.util.TimeZone;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,6 +71,7 @@ class TransformerComponentTest {
 
         Date date = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+        ZoneId zoneId = ZoneId.of("America/Chicago");
         String dateString = dateFormat.format(date);
 
         String xml = "<TransferMessage><messageId>1234</messageId><creditor><accountNumber>21345</accountNumber><routingNumber>3454</routingNumber></creditor><debtor><accountNumber>123455</accountNumber><routingNumber>45555</routingNumber></debtor><date>" + dateString + "</date><amount>10</amount><memo>memo string</memo></TransferMessage>";
