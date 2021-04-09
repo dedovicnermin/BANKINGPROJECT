@@ -4,6 +4,7 @@ package tech.nermindedovic.rest.kafka.transfer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -18,7 +19,8 @@ import java.util.Map;
 @Configuration
 public class TransferMessageConfiguration {
 
-    private static final String BROKER = "localhost:9092";
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String BROKER;
 
     @Bean
     public Map<String, Object> transferProducerConfig() {

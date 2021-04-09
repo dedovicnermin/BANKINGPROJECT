@@ -1,11 +1,15 @@
 spring:
   kafka:
+
+    bootstrap-servers: localhost:9092
     consumer:
-      bootstrap-servers: localhost:9092
       group-id: rest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 
-topics:
-  transferError: "funds.transfer.error"
+
+
+
+
+
