@@ -43,7 +43,7 @@ public class RestAPI {
 
     @PostMapping(value = "funds/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String fundsTransferRequest( @RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
-        transferMessage.setMessage_id(UUID.randomUUID().getMostSignificantBits());
+        transferMessage.setMessage_id(Math.abs(UUID.randomUUID().getMostSignificantBits()));
         return transferFundsProducer.sendTransferMessage(transferMessage);
     }
 
