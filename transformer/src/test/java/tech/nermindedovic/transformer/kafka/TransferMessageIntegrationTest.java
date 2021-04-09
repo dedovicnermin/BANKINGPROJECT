@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, ports = 8998)
+@EmbeddedKafka(partitions = 1)
 @ExtendWith({SpringExtension.class})
 @DirtiesContext
 class TransferMessageIntegrationTest {
