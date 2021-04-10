@@ -45,17 +45,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1)
+@EmbeddedKafka(partitions = 1, topics = {TransferMessageIntegrationTest.INBOUND_TOPIC, TransferMessageIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class TransferMessageIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
-    private static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_PERSISTENCE_TRANSFER;
+    public static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
+    public static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_PERSISTENCE_TRANSFER;
 
     XmlMapper mapper = new XmlMapper();
 
@@ -84,7 +84,7 @@ class TransferMessageIntegrationTest {
 
 
     @AfterEach
-    void tearDown() {
+    void tearDown()  {
         container.stop();
         producer.close();
     }
@@ -100,7 +100,7 @@ class TransferMessageIntegrationTest {
 
 
         String xml = mapper.writeValueAsString(createTransferMessage());
-        ConsumerRecord<String, String> singleRecord = records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> singleRecord = records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(singleRecord).isNotNull();
         assertThat(singleRecord.value()).isEqualTo(xml);
     }

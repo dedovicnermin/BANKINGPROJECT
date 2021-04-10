@@ -34,17 +34,17 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1)
+@EmbeddedKafka(partitions = 1, topics = {TransferMessageErrorIntegrationTest.INBOUND_TOPIC, TransferMessageErrorIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class TransferMessageErrorIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
-    private static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS;
+    public static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
+    public static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS;
 
 
 
@@ -83,7 +83,7 @@ class TransferMessageErrorIntegrationTest {
         badProducer.flush();
 
 
-        ConsumerRecord<String, String> record = records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> record = records.poll(2500, TimeUnit.MILLISECONDS);
         assertThat(record).isNotNull();
         assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
 
