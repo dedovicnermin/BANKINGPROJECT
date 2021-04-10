@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransferMessageIntegrationTest.INBOUND_TOPIC, TransferMessageIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext
 class TransferMessageIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -100,7 +100,7 @@ class TransferMessageIntegrationTest {
 
 
         String xml = mapper.writeValueAsString(createTransferMessage());
-        ConsumerRecord<String, String> singleRecord = records.poll(10000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> singleRecord = records.poll(100, TimeUnit.MILLISECONDS);
         assertThat(singleRecord).isNotNull();
         assertThat(singleRecord.value()).isEqualTo(xml);
     }
