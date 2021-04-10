@@ -1,5 +1,5 @@
 # BANKINGPROJECT  
-https://travis-ci.com/dedovicnermin/BANKINGPROJECT.svg?branch=master
+[![Build Status](https://travis-ci.com/dedovicnermin/BANKINGPROJECT.svg?branch=master)](https://travis-ci.com/dedovicnermin/BANKINGPROJECT)
 
 ## End points:
 1. /balance - returns the current balance
