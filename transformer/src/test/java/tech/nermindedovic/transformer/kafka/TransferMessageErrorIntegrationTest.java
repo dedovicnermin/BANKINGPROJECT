@@ -83,7 +83,7 @@ class TransferMessageErrorIntegrationTest {
         badProducer.flush();
 
 
-        ConsumerRecord<String, String> record = records.poll(100, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> record = records.poll(200, TimeUnit.MILLISECONDS);
         assertThat(record).isNotNull();
         assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
 
