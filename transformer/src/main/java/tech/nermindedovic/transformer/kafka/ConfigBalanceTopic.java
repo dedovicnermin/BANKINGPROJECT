@@ -97,7 +97,7 @@ public class ConfigBalanceTopic {
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setGroupId(GROUP);
         factory.setReplyTemplate(balanceMessageKafkaTemplate());
-
+        factory.setErrorHandler(new KafkaErrHandler(new KafkaTemplate<>(producerFactory())));
         return factory;
     }
 
@@ -125,7 +125,7 @@ public class ConfigBalanceTopic {
     @Bean
     public ReplyingKafkaTemplate<String, String, String> replyingKafkaTemplate(ProducerFactory<String, String> pf,
                                                                                ConcurrentKafkaListenerContainerFactory<String, String> factory) {
-        ConcurrentMessageListenerContainer<String, String> replyContainer = factory.createContainer("balance.update.response");
+        ConcurrentMessageListenerContainer<String, String> replyContainer = factory.createContainer(TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE);
         replyContainer.getContainerProperties().setMissingTopicsFatal(false);
         replyContainer.getContainerProperties().setGroupId(GROUP);
         return new ReplyingKafkaTemplate<>(pf, replyContainer);

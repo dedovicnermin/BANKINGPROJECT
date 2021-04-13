@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
+import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public class ConsumerService {
      * @return  reply back to transformer application
      * @throws JsonProcessingException
      */
-    @KafkaListener(topics = "${balance.request.topic}", groupId = "persistence")
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "persistence")
     @SendTo
     public String handleBalanceRequest(@NotNull final String xml) throws JsonProcessingException {
         String response = null;
@@ -60,7 +61,7 @@ public class ConsumerService {
      * POSTCONDITION: producer commits transaction
      * @param xml
      */
-    @KafkaListener(topics = "${funds.transfer.request.topic}", groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleFundsTransferRequest(@NotNull final String xml) {
         Optional<String> errors = Optional.empty();
         log.info(xml);
@@ -76,7 +77,7 @@ public class ConsumerService {
 
     private void produceErrorMessage(String errorMessage) {
         log.info("producing error message to funds.transfer.error");
-        stringKafkaTemplate.send("funds.transfer.error", errorMessage);
+        stringKafkaTemplate.send(PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, errorMessage);
     }
 
 

@@ -1,9 +1,6 @@
-package tech.nermindedovic.transformer.kafka;
+package tech.nermindedovic.persistence.kafka;
 
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -12,7 +9,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ErrorHandler;
 import org.springframework.kafka.listener.MessageListenerContainer;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class KafkaErrHandler implements ErrorHandler {
@@ -42,11 +41,9 @@ public class KafkaErrHandler implements ErrorHandler {
 
             log.info("Skipped message with offset {} from partition {}", offset, partition);
 
-            if (topics.equals(TransformerTopicNames.INBOUND_REST_TRANSFER)) {
-                stringKafkaTemplate.send(TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS, e.getMessage());
+            if (topics.equals(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST)) {
+                stringKafkaTemplate.send(PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, e.getMessage());
             }
-
-
         }
     }
 
