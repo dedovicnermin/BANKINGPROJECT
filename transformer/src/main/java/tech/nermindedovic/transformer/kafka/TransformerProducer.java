@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import tech.nermindedovic.transformer.components.MessageTransformer;
-import tech.nermindedovic.transformer.pojos.BalanceMessage;
-import tech.nermindedovic.transformer.pojos.TransferMessage;
+import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.business.pojos.TransferMessage;
 
 import java.util.concurrent.ExecutionException;
 

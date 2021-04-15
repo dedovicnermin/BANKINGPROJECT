@@ -1,21 +1,18 @@
-package tech.nermindedovic.transformer.kafka;
+package tech.nermindedovic.transformer.kafka.transfer;
 
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -27,9 +24,7 @@ import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import tech.nermindedovic.transformer.business.service.KafkaMessageService;
-import tech.nermindedovic.transformer.pojos.BalanceMessage;
-import tech.nermindedovic.transformer.pojos.TransferMessage;
+import tech.nermindedovic.transformer.kafka.TransformerTopicNames;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,72 +34,59 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, ports = 8999)
+@EmbeddedKafka(partitions = 1, topics = {TransferMessageErrorIntegrationTest.INBOUND_TOPIC, TransferMessageErrorIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
-@DirtiesContext
-class BalanceMessageIntegrationTest {
-
-
+class TransferMessageErrorIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private static final String INITIATION_TOPIC = TransformerTopicNames.INBOUND_REST_BALANCE;
-    private static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_PERSISTENCE_BALANCE;
-    private static final String REPLY_INBOUND_TOPIC = TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE;
+    public static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
+    public static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS;
 
-    @Autowired
-    KafkaMessageService kafkaMessageService;
-    XmlMapper mapper = new XmlMapper();
+
+
     BlockingQueue<ConsumerRecord<String, String>> records;
     KafkaMessageListenerContainer<String,String> container;
-    Producer<String, String> producer;
 
+    Producer<String, String> badProducer;
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "true", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
-        container = new KafkaMessageListenerContainer<>(consumerFactory,containerProperties);
+        container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
         records = new LinkedBlockingQueue<>();
         container.setupMessageListener((MessageListener<String,String>) records::add);
         container.start();
         ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
-    }
 
+        Map<String, Object> producerConfigs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
+        badProducer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), new StringSerializer()).createProducer();
+    }
 
     @AfterEach
     void shutdown() {
         container.stop();
+        badProducer.close();
     }
 
-    @Disabled("How can I simulate consuming and producing back before calling the method that does the work")
+
+
     @Test
-    void onValidBalanceMessage_sendsAndRecieves_BalanceMessageSuccess() throws InterruptedException {
-        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
-        producer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new StringSerializer()).createProducer();
+    void listenerContainerCantDeserialize_errorHandlerSendsToErrorTopic_test() throws InterruptedException {
 
-        BalanceMessage balanceMessage = createBalanceMessage();
-        ConsumerRecord<String, String> singleRecord = records.poll(10000, TimeUnit.MILLISECONDS);
-//        producer.send()
+        badProducer.send(new ProducerRecord<>(INBOUND_TOPIC, "This is NOT a transfer message. This should not make it past one line of .listen code and container will delegate to error message handler"));
+        badProducer.flush();
 
-        BalanceMessage response = kafkaMessageService.listen(balanceMessage);
-        assertThat(response).isNotNull();
+
+        ConsumerRecord<String, String> record = records.poll(200, TimeUnit.MILLISECONDS);
+        assertThat(record).isNotNull();
+        assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
+
+
     }
-
-
-
-    private BalanceMessage createBalanceMessage() {
-        return new BalanceMessage(123456, 123, "", false);
-    }
-
-
-
-
-
-
 }

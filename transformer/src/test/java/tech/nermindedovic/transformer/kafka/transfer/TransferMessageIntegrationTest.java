@@ -1,11 +1,12 @@
-package tech.nermindedovic.transformer.kafka;
+package tech.nermindedovic.transformer.kafka.transfer;
 
-
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,48 +15,60 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
+
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.HashMap;
-import java.util.Map;
+
+import tech.nermindedovic.transformer.business.pojos.Creditor;
+import tech.nermindedovic.transformer.business.pojos.Debtor;
+import tech.nermindedovic.transformer.business.pojos.TransferMessage;
+import tech.nermindedovic.transformer.kafka.TransformerTopicNames;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, topics = {TransferMessageErrorIntegrationTest.INBOUND_TOPIC, TransferMessageErrorIntegrationTest.OUTBOUND_TOPIC})
+@EmbeddedKafka(partitions = 1, topics = {TransferMessageIntegrationTest.INBOUND_TOPIC, TransferMessageIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
 @DirtiesContext
-class TransferMessageErrorIntegrationTest {
+class TransferMessageIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     public static final String INBOUND_TOPIC = TransformerTopicNames.INBOUND_REST_TRANSFER;
-    public static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_TRANSFER_ERRORS;
+    public static final String OUTBOUND_TOPIC = TransformerTopicNames.OUTBOUND_PERSISTENCE_TRANSFER;
 
-
+    XmlMapper mapper = new XmlMapper();
 
     BlockingQueue<ConsumerRecord<String, String>> records;
     KafkaMessageListenerContainer<String,String> container;
 
-    Producer<String, String> badProducer;
+    Producer<String, TransferMessage> producer;
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "true", embeddedKafkaBroker));
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
         container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
@@ -64,29 +77,48 @@ class TransferMessageErrorIntegrationTest {
         container.start();
         ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
 
+
         Map<String, Object> producerConfigs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
-        badProducer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), new StringSerializer()).createProducer();
+        JsonSerializer<TransferMessage> transferMessageJsonSerializer = new JsonSerializer<>();
+        producer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), transferMessageJsonSerializer).createProducer();
+
     }
 
+
     @AfterEach
-    void shutdown() {
+    void tearDown()  {
         container.stop();
-        badProducer.close();
+        producer.close();
     }
+
 
 
 
     @Test
-    void listenerContainerCantDeserialize_errorHandlerSendsToErrorTopic_test() throws InterruptedException {
+    void inboundFromRest_willSendOutbound_toPersistence_test() throws InterruptedException, JsonProcessingException {
 
-        badProducer.send(new ProducerRecord<>(INBOUND_TOPIC, "This is NOT a transfer message. This should not make it past one line of .listen code and container will delegate to error message handler"));
-        badProducer.flush();
-
-
-        ConsumerRecord<String, String> record = records.poll(200, TimeUnit.MILLISECONDS);
-        assertThat(record).isNotNull();
-        assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
+        producer.send(new ProducerRecord<>(INBOUND_TOPIC, createTransferMessage()));
+        producer.flush();
 
 
+        String xml = mapper.writeValueAsString(createTransferMessage());
+        ConsumerRecord<String, String> singleRecord = records.poll(100, TimeUnit.MILLISECONDS);
+        assertThat(singleRecord).isNotNull();
+        assertThat(singleRecord.value()).isEqualTo(xml);
     }
+
+
+
+
+
+
+    private TransferMessage createTransferMessage() {
+        Creditor creditor = new Creditor(5555,5555555);
+        Debtor debtor = new Debtor(88888,8888888);
+        return new TransferMessage(11111, creditor, debtor, LocalDate.now(), BigDecimal.TEN, "Generic memo");
+    }
+
+
+
+
 }

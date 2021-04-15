@@ -3,23 +3,22 @@ package tech.nermindedovic.transformer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.transformer.components.MessageTransformer;
-import tech.nermindedovic.transformer.pojos.BalanceMessage;
-import tech.nermindedovic.transformer.pojos.Creditor;
-import tech.nermindedovic.transformer.pojos.Debtor;
-import tech.nermindedovic.transformer.pojos.TransferMessage;
+import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.business.pojos.Creditor;
+import tech.nermindedovic.transformer.business.pojos.Debtor;
+import tech.nermindedovic.transformer.business.pojos.TransferMessage;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -44,8 +43,6 @@ class TransformerComponentTest {
         BalanceMessage balanceMessage = createBalanceMessage(1,159595, "0.00", false);
 
         String xml = messageTransformer.balancePojoToXML(balanceMessage);
-
-        Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
         assertThat(mapper.writeValueAsString(balanceMessage)).isEqualTo(xml);
 
     }
@@ -62,7 +59,6 @@ class TransformerComponentTest {
         String xml = mapper.writeValueAsString(balanceMessage);
 
         assertThat(messageTransformer.balanceXMLToPojo(xml)).isEqualTo(balanceMessage);
-        Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
     }
 
 
@@ -70,14 +66,9 @@ class TransformerComponentTest {
     @Test
     void test_onValidTransferMessage_transformsToValidXML() throws JsonProcessingException {
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
-        ZoneId zoneId = ZoneId.of("America/Chicago");
-        dateFormat.setTimeZone(TimeZone.getTimeZone(zoneId));
-        Date date = new Date();
-        String dateString = dateFormat.format(date);
 
-
-        String xml = "<TransferMessage><messageId>1234</messageId><creditor><accountNumber>21345</accountNumber><routingNumber>3454</routingNumber></creditor><debtor><accountNumber>123455</accountNumber><routingNumber>45555</routingNumber></debtor><date>" + dateString + "</date><amount>10</amount><memo>memo string</memo></TransferMessage>";
+        LocalDate date = LocalDate.now();
+        String xml = "<TransferMessage><messageId>1234</messageId><creditor><accountNumber>21345</accountNumber><routingNumber>3454</routingNumber></creditor><debtor><accountNumber>123455</accountNumber><routingNumber>45555</routingNumber></debtor><date>" + date.format(DateTimeFormatter.ofPattern("MM-dd-yyyy")) + "</date><amount>10</amount><memo>memo string</memo></TransferMessage>";
         assertThat(messageTransformer.transferPojoToXML(new TransferMessage(1234, new Creditor(21345,3454), new Debtor(123455, 45555), date, BigDecimal.TEN, "memo string"))).isEqualTo(xml);
     }
 

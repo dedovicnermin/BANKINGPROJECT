@@ -6,14 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
@@ -21,7 +18,6 @@ import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
@@ -41,7 +37,6 @@ class BalanceProducerTest {
     BalanceProducer balanceProducer;
 
 
-
     @Test
     void testGoodBalanceMessage() throws ExecutionException, InterruptedException {
         balanceProducer = new BalanceProducer(replyingKafkaTemplate);
@@ -53,6 +48,8 @@ class BalanceProducerTest {
 
         assertDoesNotThrow(() -> balanceProducer.sendAndReceive(balanceMessage));
     }
+
+
 
 
     @ParameterizedTest
@@ -70,7 +67,6 @@ class BalanceProducerTest {
         //then
         assertThrows(exceptionClass, () -> balanceProducer.sendAndReceive(balanceMessage));
     }
-
 
 
 

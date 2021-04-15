@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer.pojos;
+package tech.nermindedovic.transformer.business.pojos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

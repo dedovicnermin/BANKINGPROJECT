@@ -7,8 +7,8 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.transformer.kafka.TransformerProducer;
 import tech.nermindedovic.transformer.kafka.TransformerTopicNames;
-import tech.nermindedovic.transformer.pojos.BalanceMessage;
-import tech.nermindedovic.transformer.pojos.TransferMessage;
+import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.business.pojos.TransferMessage;
 
 @Slf4j
 @Service

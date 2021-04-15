@@ -13,7 +13,7 @@ import org.springframework.kafka.listener.*;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import tech.nermindedovic.transformer.pojos.BalanceMessage;
+import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
 
 import java.util.HashMap;
 import java.util.Map;

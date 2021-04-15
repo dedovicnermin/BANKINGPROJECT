@@ -21,6 +21,7 @@ import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.service.ConsumerService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -54,7 +55,7 @@ public class EmbeddedKafkaIntegrationTest {
 
     @Test
     void test_whenGoodXML_allGood() throws JsonProcessingException {
-        String xml = mapper.writeValueAsString(new TransferMessage(23, new Creditor(2, 12355534), new Debtor(1, 8435973), new Date(), new BigDecimal("25.00"), "This is my memo found in the kafka embedded test"));
+        String xml = mapper.writeValueAsString(new TransferMessage(23, new Creditor(2, 12355534), new Debtor(1, 8435973), LocalDate.now(), new BigDecimal("25.00"), "This is my memo found in the kafka embedded test"));
         ListenableFuture<SendResult<String, String>> future = template.send(topic, xml);
         future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
             @Override
