@@ -30,8 +30,8 @@ public class RestAPI {
     }
 
 
-    @PostMapping(value = "balance", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public BalanceMessage getBalanceUpdate(@RequestBody @Valid BalanceMessage balanceMessage) throws ExecutionException, InterruptedException {
+    @PostMapping(value = "balance", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public BalanceMessage getBalanceUpdate(@RequestBody @Valid BalanceMessage balanceMessage) {
         try {
             return balanceProducer.sendAndReceive(balanceMessage);
         } catch (ExecutionException | InterruptedException exception) {

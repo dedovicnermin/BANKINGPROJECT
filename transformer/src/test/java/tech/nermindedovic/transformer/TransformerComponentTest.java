@@ -44,8 +44,6 @@ class TransformerComponentTest {
         BalanceMessage balanceMessage = createBalanceMessage(1,159595, "0.00", false);
 
         String xml = messageTransformer.balancePojoToXML(balanceMessage);
-
-        Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
         assertThat(mapper.writeValueAsString(balanceMessage)).isEqualTo(xml);
 
     }
@@ -62,7 +60,7 @@ class TransformerComponentTest {
         String xml = mapper.writeValueAsString(balanceMessage);
 
         assertThat(messageTransformer.balanceXMLToPojo(xml)).isEqualTo(balanceMessage);
-        Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
+//        Assertions.assertDoesNotThrow(() -> JsonProcessingException.class);
     }
 
 

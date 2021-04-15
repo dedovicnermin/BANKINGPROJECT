@@ -47,6 +47,8 @@ public class TransformerProducer {
             record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE.getBytes()));
             RequestReplyFuture<String, String, String> sendAndReceive = replyingKafkaTemplate.sendAndReceive(record);
             ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
+
+
             return transformer.balanceXMLToPojo(consumerRecord.value());
         } catch (JsonProcessingException | InterruptedException | ExecutionException exception) {
             balanceMessage.setErrors(true);
