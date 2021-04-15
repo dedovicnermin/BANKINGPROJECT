@@ -1,5 +1,6 @@
 package tech.nermindedovic.rest.business.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -44,6 +45,7 @@ public class TransferMessage {
     @JsonProperty(required = true)
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate date;
 
 

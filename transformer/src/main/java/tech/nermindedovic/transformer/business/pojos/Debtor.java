@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer.pojos;
+package tech.nermindedovic.transformer.business.pojos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

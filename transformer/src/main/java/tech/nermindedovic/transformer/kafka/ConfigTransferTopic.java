@@ -19,7 +19,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
 
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import tech.nermindedovic.transformer.pojos.TransferMessage;
+import tech.nermindedovic.transformer.business.pojos.TransferMessage;
 
 import java.util.HashMap;
 import java.util.Map;
