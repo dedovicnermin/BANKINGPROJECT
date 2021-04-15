@@ -15,6 +15,7 @@ import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -51,7 +52,7 @@ class XMLProcessorTest {
         verify(persistenceService, times(1)).validateBalanceMessage(message);
 
         String actualXml = xmlProcessor.bindAndValidateBalanceRequest(xml);
-        assertThat(message.getErrors()).isEqualTo(false);
+        assertThat(message.getErrors()).isFalse();
         assertThat(message.getBalance()).isNotEmpty();
         assertThat(actualXml).isEqualTo(xml);
     }
@@ -91,7 +92,7 @@ class XMLProcessorTest {
     void test_processingTransfer_withInvalidTransferMsg_shouldThrowInvalidTransferMessageException() throws JsonProcessingException, InvalidTransferMessageException {
         Debtor debtor = new Debtor(123, 456);
         Creditor creditor = new Creditor(456,789);
-        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), new BigDecimal(-10), "for love");
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, LocalDate.now(), new BigDecimal(-10), "for love");
 
         String xml = mapper.writeValueAsString(transferMessage);
         TransferMessage real = mapper.readValue(xml, TransferMessage.class);
@@ -107,17 +108,17 @@ class XMLProcessorTest {
     void test_processingTransfer_withValidMsg_shouldReturnWithoutException() throws JsonProcessingException, InvalidTransferMessageException {
         Debtor debtor = new Debtor(123, 456);
         Creditor creditor = new Creditor(456,789);
-        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), new BigDecimal(10), "for war");
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, LocalDate.now(), new BigDecimal(10), "for war");
 
         String xml = mapper.writeValueAsString(transferMessage);
         TransferMessage real = mapper.readValue(xml, TransferMessage.class);
 
         doNothing().when(persistenceService).validateAndProcessTransferMessage(real);
 
-        xmlProcessor.bindAndProcessTransferRequest(xml);
 
-        assertDoesNotThrow(() -> InvalidTransferMessageException.class);
-        assertDoesNotThrow(() -> JsonProcessingException.class);
+
+        assertDoesNotThrow(() -> xmlProcessor.bindAndProcessTransferRequest(xml));
+
     }
 
 

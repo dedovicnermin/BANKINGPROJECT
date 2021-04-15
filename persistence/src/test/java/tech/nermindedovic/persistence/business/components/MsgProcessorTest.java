@@ -14,6 +14,7 @@ import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,7 +73,7 @@ class MsgProcessorTest {
     void test_onValidXMLString_returnsNoErrors() throws JsonProcessingException, InvalidTransferMessageException {
         Debtor debtor = new Debtor(123, 456);
         Creditor creditor = new Creditor(456,789);
-        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, new Date(), BigDecimal.TEN, "for war");
+        TransferMessage transferMessage = new TransferMessage(1111,creditor,debtor, LocalDate.now(), BigDecimal.TEN, "for war");
 
         String xml = mapper.writeValueAsString(transferMessage);
 

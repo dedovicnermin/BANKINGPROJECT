@@ -19,6 +19,7 @@ import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 
@@ -52,7 +53,7 @@ public class IntegrationTest {
 
         Creditor creditor = new Creditor(1, 123);
         Debtor debtor = new Debtor(2, 456);
-        TransferMessage transferMessage = new TransferMessage(1, creditor, debtor,new Date(),new BigDecimal("25.00"),  "MEMO");
+        TransferMessage transferMessage = new TransferMessage(1, creditor, debtor, LocalDate.now(),new BigDecimal("25.00"),  "MEMO");
         String xml = mapper.writeValueAsString(transferMessage);
         TransferMessage formattedTM = mapper.readValue(xml, TransferMessage.class);
 

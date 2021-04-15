@@ -5,7 +5,8 @@ import tech.nermindedovic.persistence.data.utils.TransactionAttributes;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+
 
 @Entity
 @Data
@@ -30,7 +31,7 @@ public class Transaction {
     private BigDecimal amount;
 
     @Column(name = TransactionAttributes.DATE)
-    private Date date;
+    private LocalDate date;
 
     @Column(name = TransactionAttributes.MEMO)
     private String memo;

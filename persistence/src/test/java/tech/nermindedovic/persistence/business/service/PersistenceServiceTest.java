@@ -1,6 +1,6 @@
 package tech.nermindedovic.persistence.business.service;
 
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,13 +11,12 @@ import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.data.entity.Account;
-import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -65,7 +64,7 @@ class PersistenceServiceTest {
     void test_validateAndProcessTransferMessage_whenInvalidAmount_throwsInvalidTransferMsgException() {
         Creditor creditor = new Creditor(123, 123456);
         Debtor debtor = new Debtor(24, 234354);
-        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, new Date(), BigDecimal.ZERO, "Memo message");
+        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, LocalDate.now(), BigDecimal.ZERO, "Memo message");
 
         assertThrows(InvalidTransferMessageException.class, () -> persistenceService.validateAndProcessTransferMessage(transferMessage));
     }
@@ -74,7 +73,7 @@ class PersistenceServiceTest {
     void test_validateAndProcessTransferMessage_onInvalidParties_throwsInvalidTransferMsgException() {
         Creditor creditor = new Creditor(123, 123456);
         Debtor debtor = new Debtor(24, 234354);
-        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, new Date(), new BigDecimal(30), "Memo message");
+        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, LocalDate.now(), new BigDecimal(30), "Memo message");
 
         when(accountRepository.findById(any())).thenAnswer(invocationOnMock -> Optional.empty());
 
@@ -85,7 +84,7 @@ class PersistenceServiceTest {
     void test_validateAndProcessTransferMessage_debtorCannotMakePayment_throwsInvalidTransferMsgException() {
         Creditor creditor = new Creditor(123, 123456);
         Debtor debtor = new Debtor(24, 234354);
-        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, new Date(), new BigDecimal(30), "Memo message");
+        TransferMessage transferMessage = new TransferMessage(12, creditor, debtor, LocalDate.now(), new BigDecimal(30), "Memo message");
 
         Account debtorAccount = new Account(debtor.getAccountNumber(), debtor.getRoutingNumber(), "BOB", new BigDecimal(9));
         Account creditorAccount = new Account(creditor.getAccountNumber(), creditor.getRoutingNumber(), "SPENCER", new BigDecimal(100));
@@ -105,7 +104,7 @@ class PersistenceServiceTest {
         Debtor debtor = new Debtor(3,3333);
         Account creditorAccount = new Account(creditor.getAccountNumber(), creditor.getRoutingNumber(), "CREDITOR",new BigDecimal(100));
         Account debtorAccount = new Account(debtor.getAccountNumber(), debtor.getRoutingNumber(), "DEBTOR", new BigDecimal(100));
-        TransferMessage transferMessage = new TransferMessage(12, creditor,debtor, new Date(), new BigDecimal(5), "For lunch");
+        TransferMessage transferMessage = new TransferMessage(12, creditor,debtor, LocalDate.now(), new BigDecimal(5), "For lunch");
 
         // when
         when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(debtorAccount));

@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import org.springframework.context.annotation.Import;
 
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
+
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
 import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
