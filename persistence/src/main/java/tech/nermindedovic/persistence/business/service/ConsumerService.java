@@ -21,40 +21,27 @@ import java.util.Optional;
 @Slf4j
 public class ConsumerService {
 
-
     // == dependency ==
     private final MsgProcessor processor;
-    private final KafkaTemplate<String, String> stringKafkaTemplate;
+
 
     // == constructor ==
-    public ConsumerService(MsgProcessor msgProcessor, KafkaTemplate<String, String> template) {
+    public ConsumerService(MsgProcessor msgProcessor) {
         this.processor = msgProcessor;
-        this.stringKafkaTemplate = template;
     }
-
-
 
     /**
      * Balance request consumer
      * @param xml deserialized string
      * @return  reply back to transformer application
-     * @throws JsonProcessingException
+     *
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "persistence")
     @SendTo
-    public String handleBalanceRequest(@NotNull final String xml) throws JsonProcessingException {
-        String response = null;
-        try {
-            response = processor.processBalanceRequest(xml);
-        } catch (JsonProcessingException e) {
-            log.info(e.getMessage());
-            BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", true);
-            response = processor.processFailedAttempt(balanceMessage);
-        }
-
-        log.info(response);
-        return response;
+    public String handleBalanceRequest(@NotNull final String xml) {
+        return processor.processBalanceRequest(xml);
     }
+
 
     /**
      * PRECONDITION: producer has sent an XML message for a funds transfer request
@@ -63,22 +50,11 @@ public class ConsumerService {
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleFundsTransferRequest(@NotNull final String xml) {
-        Optional<String> errors = Optional.empty();
-        log.info(xml);
-        try {
-            processor.processTransferRequest(xml);
-        } catch (InvalidTransferMessageException e) {
-            errors = Optional.of(e.getMessage() + " --- " + xml);
-        }
-
-        errors.ifPresent(this::produceErrorMessage);
+        processor.processTransferRequest(xml);
     }
 
 
-    private void produceErrorMessage(String errorMessage) {
-        log.info("producing error message to funds.transfer.error");
-        stringKafkaTemplate.send(PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, errorMessage);
-    }
+
 
 
 
