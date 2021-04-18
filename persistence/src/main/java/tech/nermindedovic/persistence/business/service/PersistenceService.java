@@ -3,10 +3,7 @@ package tech.nermindedovic.persistence.business.service;
 
 
 import org.springframework.stereotype.Service;
-import tech.nermindedovic.persistence.business.doman.BalanceMessage;
-import tech.nermindedovic.persistence.business.doman.Creditor;
-import tech.nermindedovic.persistence.business.doman.Debtor;
-import tech.nermindedovic.persistence.business.doman.TransferMessage;
+import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
@@ -66,28 +63,24 @@ public class PersistenceService {
      * STARTING POINT FOR TRANSFER FUNDS.
      *
      * PRECONDITION  : XML processing service should have successfully been able to bind the xml message into a transferMessage
-     * POSTCONDITION : DB will have created ledger transaction records for both parties and update each balance for user.
+     * POST-CONDITION : DB will have created ledger transaction records for both parties and update each balance for user.
      */
     public void validateAndProcessTransferMessage(@NotNull final TransferMessage transferMessage) throws InvalidTransferMessageException {
-        validateTransferMessage(transferMessage);
-        processTransferMessage(transferMessage);
+        PaymentParty paymentParty = validateTransferMessage(transferMessage);
+        processTransferMessage(transferMessage, paymentParty);
     }
 
 
     /**
      * Validates input prior to processing.
      * Ensure data is accurate. Will be used to make changes to db.
-     * @param transferMessage
-     *
-     *
      */
-    private void validateTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+    private PaymentParty validateTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
         amountIsValid(transferMessage.getAmount());
-        accountsAreValid(transferMessage);
-        debtorCanTransferAmount(transferMessage.getDebtor(), transferMessage.getAmount());
+        PaymentParty paymentParty = accountsAreValid(transferMessage);
+        debtorCanTransferAmount(paymentParty, transferMessage.getAmount());
+        return paymentParty;
     }
-
-
 
 
 
@@ -95,14 +88,13 @@ public class PersistenceService {
 
     /**
      * PRECONDITION:    both parties have been VALIDATED.
-     * POSTCONDITION:   transaction record saved / balances updated
-     * @param transferMessage
+     * POST-CONDITION:   transaction record saved / balances updated
+     *
      *
      */
-    private void processTransferMessage(final TransferMessage transferMessage) throws InvalidTransferMessageException {
-        enterTransaction(transferMessage);
-        updateBalance(transferMessage.getDebtor(), transferMessage.getCreditor(), transferMessage.getAmount());
-
+    private void processTransferMessage(final TransferMessage transferMessage, final PaymentParty paymentParty) throws InvalidTransferMessageException {
+        enterTransaction(transferMessage, paymentParty);
+        updateBalance(paymentParty, transferMessage.getAmount());
     }
 
 
@@ -110,15 +102,16 @@ public class PersistenceService {
 
     /**
      * PRECONDITION:    transferMessage contains no errors
-     * POSTCONDITION:   new transaction created/persisted
-     * @param transferMessage
+     * POST-CONDITION:   new transaction created/persisted
+     *
+     * @param transferMessage carrying valid transaction data
      */
-    public void enterTransaction(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+    public void enterTransaction(final TransferMessage transferMessage, PaymentParty paymentParty) throws InvalidTransferMessageException {
         if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessage_id()));
 
         Transaction transaction = new Transaction();
         transaction.setTransactionId(transferMessage.getMessage_id());
-        setAccountNumbers(transferMessage.getDebtor(), transferMessage.getCreditor(), transaction);
+        setAccountNumbers(paymentParty, transaction);
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
         transaction.setMemo(transferMessage.getMemo());
@@ -127,32 +120,28 @@ public class PersistenceService {
 
 
     /**
-     * PRECONDITION: debtor/creditor are valid accounts. Debtor has enough to make this transfer
-     * POSTCONDITION: debtor/creditor will have balances updated according to role in transfer
-     * @param debtor
-     * @param creditor
-     * @param amount
+     * PRECONDITION: paymentParty carries valid accounts. Debtor has enough to make this transfer
+     * POST-CONDITION: paymentParty will have balances updated according to role in transfer
+     *
+     * @param paymentParty carrying debtor/creditor accounts
+     * @param amount found in transferMessage
      */
-    private void updateBalance(final Debtor debtor, final Creditor creditor,final BigDecimal amount) {
-        Optional<Account> debtorAccount = accountRepository.findById(debtor.getAccountNumber());
-        debtorAccount.ifPresent(account -> {
-            account.setAccountBalance(getUpdatedDebtorBalance(account, amount));
-            accountRepository.save(account);
-        });
+    private void updateBalance(final PaymentParty paymentParty, final BigDecimal amount) {
 
-        Optional<Account> creditorAccount = accountRepository.findById(creditor.getAccountNumber());
-        creditorAccount.ifPresent(account -> {
-            account.setAccountBalance(getUpdatedCreditorBalance(account, amount));
-            accountRepository.save(account);
-        });
+        Account debtorAccount = paymentParty.getDebtorAccount();
+        debtorAccount.setAccountBalance(getUpdatedDebtorBalance(debtorAccount.getAccountBalance(), amount));
+        accountRepository.save(debtorAccount);
+
+        Account creditorAccount = paymentParty.getCreditorAccount();
+        creditorAccount.setAccountBalance(getUpdatedCreditorBalance(creditorAccount.getAccountBalance(), amount));
+        accountRepository.save(creditorAccount);
 
     }
 
 
     /**
      * Ensures the transfer amount is valid
-     * @param amount
-     * @throws InvalidTransferMessageException
+     * @throws InvalidTransferMessageException if amount is invalid
      */
     private void amountIsValid(BigDecimal amount) throws InvalidTransferMessageException {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidTransferMessageException("Transfer Message contains an invalid payment amount.");
@@ -160,17 +149,14 @@ public class PersistenceService {
 
 
 
-
     /**
      * PRECONDITION: transferMessage will be free of errors outside of validating parties
-     * POSTCONDITION: will return true if both parties valid, else false
+     * POST-CONDITION: will return true if both parties valid, else false
      * Ensures BOTH parties have a relationship with this bank.
      *
-     *
-     * @param transferMessage
-     * @return
+     * @return a paymentParty holding valid account information
      */
-    private void accountsAreValid(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+    private PaymentParty accountsAreValid(final TransferMessage transferMessage) throws InvalidTransferMessageException {
         Optional<Account> creditor = accountRepository.findById(transferMessage.getCreditor().getAccountNumber());
         Optional<Account> debtor = accountRepository.findById(transferMessage.getDebtor().getAccountNumber());
 
@@ -178,52 +164,46 @@ public class PersistenceService {
             throw new InvalidTransferMessageException("Both accounts are not users of this bank.");
         }
 
-        boolean routingNumbersMatch = (transferMessage.getCreditor().getRoutingNumber() == creditor.get().getRoutingNumber()) &&
-                (transferMessage.getDebtor().getRoutingNumber() == debtor.get().getRoutingNumber());
-        if (!routingNumbersMatch) {
-            throw new InvalidTransferMessageException("Both routing numbers could not be matched with data from database.");
-        }
+        return new PaymentParty(debtor.get(), creditor.get());
     }
 
 
+
     /**
-     * PRECONDITION: debtor and creditor have valid acocunts. Amount is greater than 0
-     * POSTCONDITION: exception will be thrown or processing will continue
-     * @param debtor
-     * @param amount
-     * @throws InvalidTransferMessageException
+     * PRECONDITION: PaymentParty carries valid accounts. Amount is greater than 0
+     * POST-CONDITION: exception will be thrown or processing will continue
+     *
+     * @param paymentParty debtor/creditor
+     * @param amount from transferMessage
+     * @throws InvalidTransferMessageException on insufficient funds
      */
-    private void debtorCanTransferAmount(final Debtor debtor, BigDecimal amount) throws InvalidTransferMessageException {
-        BigDecimal balance = accountRepository.findById(debtor.getAccountNumber()).get().getAccountBalance();
+    private void debtorCanTransferAmount(final PaymentParty paymentParty, BigDecimal amount) throws InvalidTransferMessageException {
+        BigDecimal balance = paymentParty.getDebtorAccount().getAccountBalance();
         if (cannotMakePayment(balance,amount)) {
             throw new InvalidTransferMessageException("Debtor cannot make this payment with the current balance.");
         }
-
     }
+
 
     /**
      * Negative funds check
-     * @param debtorBalance
-     * @param amount
-     * @return
      */
-    private boolean cannotMakePayment(final BigDecimal debtorBalance,final BigDecimal amount) {
+    private boolean cannotMakePayment(final BigDecimal debtorBalance, final BigDecimal amount) {
         return (debtorBalance.subtract(amount)).compareTo(BigDecimal.ZERO) <= 0;
     }
 
-    private void setAccountNumbers(final Debtor debtor, final Creditor creditor, Transaction transaction) {
-        transaction.setDebtorAccountNumber(debtor.getAccountNumber());
-        transaction.setCreditorAccountNumber(creditor.getAccountNumber());
+    private void setAccountNumbers(final PaymentParty paymentParty, Transaction transaction) {
+        transaction.setDebtorAccountNumber(paymentParty.getDebtorAccount().getAccountNumber());
+        transaction.setCreditorAccountNumber(paymentParty.getCreditorAccount().getAccountNumber());
     }
 
 
-
-    private BigDecimal getUpdatedDebtorBalance(final Account debtorAccount, final BigDecimal amount) {
-        return debtorAccount.getAccountBalance().subtract(amount).setScale(2, RoundingMode.HALF_EVEN);
+    private BigDecimal getUpdatedDebtorBalance(final BigDecimal debtorAccountBalance, final BigDecimal amount) {
+        return debtorAccountBalance.subtract(amount).setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    private BigDecimal getUpdatedCreditorBalance(final Account creditorAccount, final BigDecimal amount) {
-        return creditorAccount.getAccountBalance().add(amount).setScale(2, RoundingMode.HALF_EVEN);
+    private BigDecimal getUpdatedCreditorBalance(final BigDecimal creditorAccountBalance, final BigDecimal amount) {
+        return creditorAccountBalance.add(amount).setScale(2, RoundingMode.HALF_EVEN);
     }
 
 
