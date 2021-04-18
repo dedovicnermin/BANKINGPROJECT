@@ -2,7 +2,6 @@ package tech.nermindedovic.persistence.business.components;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
@@ -38,7 +37,7 @@ public class MsgProcessor {
             persistenceService.validateBalanceMessage(balanceMessage);
             return BankXmlBinder.toXml(balanceMessage);
         } catch (JsonProcessingException processingException) {
-            return "<BalanceMessage><accountNumber>0</accountNumber><routingNumber>0</routingNumber><balance>0</balance><errors>true</errors></BalanceMessage>";
+            return "<BalanceMessage><accountNumber>0</accountNumber><routingNumber>0</routingNumber><balance></balance><errors>true</errors></BalanceMessage>";
         }
     }
 
