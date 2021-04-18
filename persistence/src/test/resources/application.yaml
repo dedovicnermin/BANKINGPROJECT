@@ -15,11 +15,11 @@ spring:
     consumer:
       auto-offset-reset: latest
       group-id: persistence
-      bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9092
+
   test:
     topic: embedded-test-topic
 

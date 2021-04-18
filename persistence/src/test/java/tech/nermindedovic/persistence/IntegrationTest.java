@@ -20,7 +20,6 @@ import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,9 +38,6 @@ public class IntegrationTest {
 
     @Autowired
     ConsumerService consumerService;
-
-
-
 
 
 
@@ -80,8 +76,6 @@ public class IntegrationTest {
         String xml = "<ERROR></ERROR>";
         Assertions.assertThrows(RuntimeException.class,() -> consumerService.handleFundsTransferRequest(xml));
     }
-
-
 
 
 

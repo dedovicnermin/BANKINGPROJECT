@@ -98,7 +98,7 @@ class PersistenceServiceTest {
     }
 
     @Test
-    void test_validateAndProcessTransferMessage_onValidTransferMessage_shouldUpdateBalanceAndInsertTransaction() throws InvalidTransferMessageException {
+    void test_validateAndProcessTransferMessage_onValidTransferMessage_shouldUpdateBalanceAndInsertTransaction() {
         // given
         Creditor creditor = new Creditor(5, 55555);
         Debtor debtor = new Debtor(3,3333);
@@ -109,21 +109,11 @@ class PersistenceServiceTest {
         // when
         when(accountRepository.findById(debtor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(debtorAccount));
 
-        when(accountRepository.findById(creditor.getAccountNumber())).thenAnswer(invocationOnMock -> {
-            return Optional.of(creditorAccount);
-        });
+        when(accountRepository.findById(creditor.getAccountNumber())).thenAnswer(invocationOnMock -> Optional.of(creditorAccount));
 
         // then
-        persistenceService.validateAndProcessTransferMessage(transferMessage);
-        assertDoesNotThrow(() -> InvalidTransferMessageException.class);
+        assertDoesNotThrow(() -> persistenceService.validateAndProcessTransferMessage(transferMessage));
     }
-
-
-
-
-
-
-
 
 
     private Account createAccount(long accountId, long routingNum, String userName, BigDecimal balance) {
