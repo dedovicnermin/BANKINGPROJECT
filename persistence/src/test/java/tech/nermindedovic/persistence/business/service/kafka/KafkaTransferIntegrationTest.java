@@ -23,6 +23,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
@@ -43,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS})
+@DirtiesContext
 public class KafkaTransferIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")

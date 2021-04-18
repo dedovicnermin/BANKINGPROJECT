@@ -20,6 +20,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaBalanceIntegrationTest.OUTBOUND_BALANCE})
+@DirtiesContext
 class KafkaBalanceIntegrationTest {
 
     public static final String OUTBOUND_BALANCE = "balance.update.response";
