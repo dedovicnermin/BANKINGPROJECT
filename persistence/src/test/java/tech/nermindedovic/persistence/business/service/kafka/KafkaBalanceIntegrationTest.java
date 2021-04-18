@@ -71,7 +71,7 @@ class KafkaBalanceIntegrationTest {
         Map<String, Object> producerConfigs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         producer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), new StringSerializer()).createProducer();
 
-        accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
+
 
     }
 
@@ -84,6 +84,8 @@ class KafkaBalanceIntegrationTest {
 
     @Test
     void test_balanceMessages_WillBeConsumedAndProduced() throws JsonProcessingException, InterruptedException {
+
+        accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
 
         BalanceMessage balanceMessage = new BalanceMessage(11, 11, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
