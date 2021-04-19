@@ -17,6 +17,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.rest.api.RestAPI;
 import tech.nermindedovic.rest.business.domain.Creditor;
 import tech.nermindedovic.rest.business.domain.Debtor;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransferFundsIntegrationTest.OUTBOUND_TOPIC })
+@DirtiesContext
 class TransferFundsIntegrationTest {
 
     public static final String OUTBOUND_TOPIC = "funds.transformer.request";

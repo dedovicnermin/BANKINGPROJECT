@@ -17,6 +17,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 @TestConfiguration
 @EnableKafka
+@DirtiesContext
 public class BalanceTestConfig {
 
 
@@ -57,7 +59,7 @@ public class BalanceTestConfig {
             return factory;
         }
 
-        @KafkaListener(topics = BalanceMessageIntegrationTest.TO_TRANSFORMER, groupId = "transformer")
+        @KafkaListener(topics = BalanceMessageIntegrationTest.TO_TRANSFORMER, groupId = "REST-balance-test", id = "restBalance1")
         @SendTo
         public BalanceMessage listenForRestToSendBalanceMessage(BalanceMessage balanceMessage) {
             balanceMessage.setBalance("10.00");

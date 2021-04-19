@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaBalanceIntegrationTest.OUTBOUND_BALANCE})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext
 class KafkaBalanceIntegrationTest {
 
     public static final String OUTBOUND_BALANCE = "balance.update.response";

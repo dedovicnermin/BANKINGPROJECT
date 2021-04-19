@@ -41,7 +41,6 @@ class MsgProcessorTest {
         //given a valid balance message
         BalanceMessage VALID = new BalanceMessage(1111,1111,"",false);
         String VALID_XML = mapper.writeValueAsString(VALID);
-
         String EXPECTED = mapper.writeValueAsString(new BalanceMessage(1111,1111,"10.00", false));
 
 

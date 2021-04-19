@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith({MockitoExtension.class, SpringExtension.class})
-@DirtiesContext
 class BalanceProducerTest {
 
     @Mock

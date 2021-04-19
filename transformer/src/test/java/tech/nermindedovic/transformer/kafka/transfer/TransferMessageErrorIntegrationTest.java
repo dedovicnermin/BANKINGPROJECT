@@ -36,8 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransferMessageErrorIntegrationTest.INBOUND_TOPIC, TransferMessageErrorIntegrationTest.OUTBOUND_TOPIC})
-@ExtendWith({SpringExtension.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TransferMessageErrorIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -56,7 +55,7 @@ class TransferMessageErrorIntegrationTest {
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "true", embeddedKafkaBroker));
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer-transferMessage-error-test", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
         container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);

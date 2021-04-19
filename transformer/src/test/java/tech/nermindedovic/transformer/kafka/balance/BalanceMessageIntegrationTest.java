@@ -31,6 +31,10 @@ class BalanceMessageIntegrationTest {
    private TransformerProducer transformerProducer;
 
 
+    /**
+     * producer will successfully send balance message and receive response 
+     */
+
    @Test
    void givenValidBalanceMessage_producerWillProduceAndConsumeResponse() {
        BalanceMessage balanceMessage = createBalanceMessage();

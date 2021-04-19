@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.rest.api.RestAPI;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers", webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EmbeddedKafka(partitions = 1, topics = {BalanceMessageIntegrationTest.TO_TRANSFORMER, BalanceMessageIntegrationTest.FROM_TRANSFORMER})
+@DirtiesContext
 @Import(BalanceTestConfig.class)
 class BalanceMessageIntegrationTest {
 

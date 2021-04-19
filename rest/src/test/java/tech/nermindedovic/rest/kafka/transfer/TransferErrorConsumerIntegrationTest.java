@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = TransferErrorConsumerIntegrationTest.ERROR_TOPIC)
 @ExtendWith(MockitoExtension.class)
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class TransferErrorConsumerIntegrationTest {
     public static final String ERROR_TOPIC = "funds.transfer.error";
 
@@ -56,7 +56,7 @@ class TransferErrorConsumerIntegrationTest {
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerConfigs = new HashMap<>(KafkaTestUtils.consumerProps("errorTest", "false", embeddedKafkaBroker));
+        Map<String, Object> consumerConfigs = new HashMap<>(KafkaTestUtils.consumerProps("rest-error-consumer-test", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfigs, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(ERROR_TOPIC);
         listenerContainer = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
@@ -82,7 +82,7 @@ class TransferErrorConsumerIntegrationTest {
         errorProducer.send(new ProducerRecord<>(ERROR_TOPIC, errorMessage));
         errorProducer.flush();
 
-        ConsumerRecord<String,String> consumedRecord = consumed.poll(100, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String,String> consumedRecord = consumed.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(consumedRecord).isNotNull();
         assertThat(consumedRecord.value()).isEqualTo(errorMessage);
 
