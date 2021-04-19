@@ -31,6 +31,4 @@ public class BalanceProducer {
         return consumerRecord.value();
     }
 
-
-
 }
