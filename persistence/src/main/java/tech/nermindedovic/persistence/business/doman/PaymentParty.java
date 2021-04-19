@@ -2,15 +2,15 @@ package tech.nermindedovic.persistence.business.doman;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import tech.nermindedovic.persistence.data.entity.Account;
 
-@Data
+@Getter
 @AllArgsConstructor
-@NoArgsConstructor
 public class PaymentParty {
 
-    Account debtorAccount;
-    Account creditorAccount;
+    private Account debtorAccount;
+    private Account creditorAccount;
 
 }
