@@ -2,6 +2,7 @@ package tech.nermindedovic.transformer.kafka.transfer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -68,7 +69,8 @@ class TransferMessageIntegrationTest {
 
     @BeforeEach
     void setup() {
-        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "false", embeddedKafkaBroker));
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("transformer-consumerForTransferMessage", "false", embeddedKafkaBroker));
+        consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "transformerTestClientId-transferMessage");
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
         container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
