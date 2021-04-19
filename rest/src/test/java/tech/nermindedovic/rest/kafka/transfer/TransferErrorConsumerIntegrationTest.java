@@ -24,7 +24,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-
+import org.springframework.test.annotation.DirtiesContext;
 
 
 import java.util.HashMap;
@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = TransferErrorConsumerIntegrationTest.ERROR_TOPIC)
 @ExtendWith(MockitoExtension.class)
+@DirtiesContext
 class TransferErrorConsumerIntegrationTest {
     public static final String ERROR_TOPIC = "funds.transfer.error";
 
