@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaBalanceIntegrationTest.OUTBOUND_BALANCE})
-@DirtiesContext
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class KafkaBalanceIntegrationTest {
 
     public static final String OUTBOUND_BALANCE = "balance.update.response";
@@ -96,7 +96,7 @@ class KafkaBalanceIntegrationTest {
         producer.send(record);
         producer.flush();
 
-        ConsumerRecord<String, String> consumed = records.poll(100, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(mapper.writeValueAsString(new BalanceMessage(11,11,"10.00", false)));
     }
