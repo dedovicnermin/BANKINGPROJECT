@@ -28,7 +28,8 @@ class AccountRepoTest {
     void givenAccount_whenSave_thenGetOk() {
         Account account = new Account(1L,1L, "Bob", new BigDecimal("200.00"));
         entityManager.persist(account);
-        Account actual = repository.findById(1L).get();
+        Account actual = repository.findById(1L).orElse(new Account());
+
         assertEquals(account.getUserName(), actual.getUserName());
         assertEquals(account.getRoutingNumber(), actual.getRoutingNumber());
         assertEquals(account.getAccountBalance(), actual.getAccountBalance());

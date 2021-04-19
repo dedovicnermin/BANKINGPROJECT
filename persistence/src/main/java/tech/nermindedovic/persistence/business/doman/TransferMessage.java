@@ -33,8 +33,6 @@ public class TransferMessage {
     @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate date;
 
-
-//    @JsonDeserialize(as = NumberDeserializers.BigDecimalDeserializer.class)
     private BigDecimal amount;
 
     private String memo;

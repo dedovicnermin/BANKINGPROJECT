@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -40,19 +41,22 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS})
-@DirtiesContext
-public class KafkaTransferIntegrationTest {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class KafkaTransferIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private EmbeddedKafkaBroker embeddedKafkaBroker;
+    @Autowired private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired AccountRepository accountRepository;
     @Autowired TransactionRepository transactionRepository;
+
+
 
     private BlockingQueue<ConsumerRecord<String, String>> error_records;
     private KafkaMessageListenerContainer<String, String> error_container;
@@ -109,6 +113,9 @@ public class KafkaTransferIntegrationTest {
         // check transaction was persisted without generating id
         assertThat(transactionRepository.findById(100L)).isNotEmpty();
         // check balances of users to ensure they have been updated
+
+
+
         assertThat(accountRepository.findById(11L).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"));
         assertThat(accountRepository.findById(22L).get().getAccountBalance()).isEqualTo(new BigDecimal("9.00"));
     }
@@ -119,7 +126,7 @@ public class KafkaTransferIntegrationTest {
      */
     @Test
     void givenInvalidAccount_sendsToErrorTopic() throws JsonProcessingException, InterruptedException {
-        TransferMessage transferMessage = new TransferMessage(100, new Creditor(0, 0), new Debtor(1,1), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
+        TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,1L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
 
         producer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, xml));
@@ -128,6 +135,7 @@ public class KafkaTransferIntegrationTest {
         //check error consumer is not empty
         ConsumerRecord<String, String> potentialError = error_records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
+        assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Both accounts are not users of this bank.");
 
     }
 
@@ -146,7 +154,7 @@ public class KafkaTransferIntegrationTest {
         //check error consumer is not empty
         ConsumerRecord<String, String> potentialError = error_records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
-
+        assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
     }
 
 
