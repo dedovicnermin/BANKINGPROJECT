@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Import;
 
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.kafka.TransformerProducer;
 import tech.nermindedovic.transformer.kafka.TransformerTopicNames;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransformerTopicNames.OUTBOUND_PERSISTENCE_BALANCE, TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE})
 @Import(BalanceTestConfig.class)
+@DirtiesContext
 class BalanceMessageIntegrationTest {
 
 
