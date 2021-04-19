@@ -104,7 +104,7 @@ class TransferMessageIntegrationTest {
 
 
         String xml = mapper.writeValueAsString(createTransferMessage());
-        ConsumerRecord<String, String> singleRecord = records.poll(100, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> singleRecord = records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(singleRecord).isNotNull();
         assertThat(singleRecord.value()).isEqualTo(xml);
     }
