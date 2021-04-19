@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.rest.business.domain.Creditor;
 import tech.nermindedovic.rest.business.domain.Debtor;
 import tech.nermindedovic.rest.business.domain.TransferMessage;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = {TransferFundsProducer.class, TransferMessageConfiguration.class}, properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka
+@DirtiesContext
 class TransferFundsProducerTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")

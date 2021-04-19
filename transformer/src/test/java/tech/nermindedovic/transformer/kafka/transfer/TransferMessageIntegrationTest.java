@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransferMessageIntegrationTest.INBOUND_TOPIC, TransferMessageIntegrationTest.OUTBOUND_TOPIC})
 @ExtendWith({SpringExtension.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext
 class TransferMessageIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -92,7 +92,9 @@ class TransferMessageIntegrationTest {
     }
 
 
-
+    /**
+     * Producer will successfully produce Transfer message to persistence
+     */
 
     @Test
     void inboundFromRest_willSendOutbound_toPersistence_test() throws InterruptedException, JsonProcessingException {

@@ -39,7 +39,7 @@ public class KafkaMessageService {
      * @throws JsonProcessingException
      * @throws InterruptedException
      */
-    @KafkaListener(topics = TransformerTopicNames.INBOUND_REST_BALANCE, containerFactory = "factory", groupId = GROUP_ID)
+    @KafkaListener(topics = TransformerTopicNames.INBOUND_REST_BALANCE, containerFactory = "factory", groupId = GROUP_ID, id = "transformer-balance-consumer")
     @SendTo
     public BalanceMessage listen(final BalanceMessage balanceMessage)  {
         log.info("Transformer received: " + balanceMessage);
@@ -48,7 +48,7 @@ public class KafkaMessageService {
 
 
 
-    @KafkaListener(topics = TransformerTopicNames.INBOUND_REST_TRANSFER, containerFactory = "transferMessageListenerContainerFactory", groupId = GROUP_ID)
+    @KafkaListener(topics = TransformerTopicNames.INBOUND_REST_TRANSFER, containerFactory = "transferMessageListenerContainerFactory", groupId = GROUP_ID, id = "transformer-transfer-consumer")
     public void listen(final TransferMessage transferMessage) {
         log.info("Transformer received: " + transferMessage);
         transformerProducer.sendTransferMessage(transferMessage);

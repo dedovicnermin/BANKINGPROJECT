@@ -8,11 +8,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class PersistenceApplicationTests {
 
-	@Autowired
-	PersistenceApplication application;
+
 	@Test
 	void contextLoads() {
-		Assertions.assertNotNull(application);
+
 	}
 
 }

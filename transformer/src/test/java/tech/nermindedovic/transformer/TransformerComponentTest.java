@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class TransformerComponentTest {
 
     @Autowired
@@ -77,8 +76,6 @@ class TransformerComponentTest {
     void test_onInvalidTransferMessage_returnsNull() throws JsonProcessingException {
         assertThat(messageTransformer.transferPojoToXML(null)).isEqualTo("<null/>");
     }
-
-
 
 
 

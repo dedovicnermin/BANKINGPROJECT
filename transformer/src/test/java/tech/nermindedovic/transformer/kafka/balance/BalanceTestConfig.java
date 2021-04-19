@@ -17,6 +17,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.kafka.TransformerTopicNames;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 
 @TestConfiguration
 @EnableKafka
+@DirtiesContext
 public class BalanceTestConfig {
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
