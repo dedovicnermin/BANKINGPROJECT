@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -46,7 +47,32 @@ class TransactionRepoTest {
 
     @Test
     void givenNonExistingTransaction_returnsEmptyOptional() {
-        assertThat(transactionRepository.findById(1L).isPresent()).isFalse();
+        assertThat(transactionRepository.findById(1L)).isEmpty();
+    }
+
+    @Test
+    void confirmLocalDate_outputsAsExpected() {
+        LocalDate localDate = LocalDate.now();
+        int month = localDate.getMonthValue();
+        int year = localDate.getYear();
+        int day = localDate.getDayOfMonth();
+
+        Transaction transaction = new Transaction(123L, 11L, 22L, BigDecimal.TEN, localDate, "memo");
+        assertThat(transaction.getDate().toString()).isEqualTo(year + "-" + (month < 10 ? "0"+month : month) + "-" + day);
+    }
+
+    @Test
+    void confirmBuilderWorksAsIntended() {
+        Transaction transaction = Transaction.builder()
+                .transactionId(1L)
+                .creditorAccountNumber(100L)
+                .debtorAccountNumber(101L)
+                .amount(BigDecimal.ONE)
+                .date(LocalDate.now())
+                .memo("memo")
+                .build();
+
+        assertThat(transaction.toString()).hasToString(new Transaction(1L, 100L, 101L, BigDecimal.ONE, LocalDate.now(), "memo").toString());
     }
 
 

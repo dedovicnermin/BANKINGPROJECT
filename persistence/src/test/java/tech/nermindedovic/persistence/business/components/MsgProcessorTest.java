@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @DisplayName("=== MESSAGE PROCESSOR TEST ===")
-
 @ExtendWith({MockitoExtension.class})
 class MsgProcessorTest {
 

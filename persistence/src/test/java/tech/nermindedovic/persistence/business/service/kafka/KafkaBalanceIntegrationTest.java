@@ -46,7 +46,8 @@ class KafkaBalanceIntegrationTest {
     XmlMapper mapper = new XmlMapper();
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired private EmbeddedKafkaBroker embeddedKafkaBroker;
+    @Autowired
+    private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired AccountRepository accountRepository;
 
@@ -59,7 +60,7 @@ class KafkaBalanceIntegrationTest {
     @BeforeEach
     void setup() {
 
-        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test", "true", embeddedKafkaBroker));
+        Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test-balance-request", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_BALANCE);
         container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
@@ -70,7 +71,6 @@ class KafkaBalanceIntegrationTest {
 
         Map<String, Object> producerConfigs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         producer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), new StringSerializer()).createProducer();
-
 
 
     }
@@ -96,7 +96,7 @@ class KafkaBalanceIntegrationTest {
         producer.send(record);
         producer.flush();
 
-        ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> consumed = records.poll(100, TimeUnit.MILLISECONDS);
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(mapper.writeValueAsString(new BalanceMessage(11,11,"10.00", false)));
     }
