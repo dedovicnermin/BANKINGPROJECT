@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaIntegrationTest.OUTBOUND_BALANCE})
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class KafkaIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -111,6 +112,8 @@ class KafkaIntegrationTest {
         error_container.stop();
         producer.close();
         container.stop();
+
+        embeddedKafkaBroker.destroy();
     }
 
 
@@ -118,6 +121,7 @@ class KafkaIntegrationTest {
      * consumer successfully listens, passes xml to be processed/persisted, balances are updated
      */
     @Test
+    @Order(1)
     void onValidTransfer_willConsumeAndPersist() throws JsonProcessingException, InterruptedException {
         accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
         accountRepository.save(new Account(22,22,"Ken", BigDecimal.TEN));
@@ -149,6 +153,7 @@ class KafkaIntegrationTest {
      * invalid accounts raise errors, handled - sending to error topic
      */
     @Test
+    @Order(2)
     void givenInvalidAccount_sendsToErrorTopic() throws JsonProcessingException, InterruptedException {
         TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,1L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
@@ -168,6 +173,7 @@ class KafkaIntegrationTest {
      * Can handle deserialization issues
      */
     @Test
+    @Order(3)
     void givenUnserializableTransferMessage_willHandleAndSendToErrorTopic() throws InterruptedException {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, Long> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new LongSerializer()).createProducer();
@@ -192,6 +198,7 @@ class KafkaIntegrationTest {
 
 
     @Test
+    @Order(4)
     void test_balanceMessages_WillBeConsumedAndProduced() throws JsonProcessingException, InterruptedException {
 
         accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
@@ -213,6 +220,7 @@ class KafkaIntegrationTest {
 
 
     @Test
+    @Order(5)
     void test_balanceMessages_willReplyWithGenericBalanceMessage_whenAccountNonExistent() throws JsonProcessingException, InterruptedException {
         BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);

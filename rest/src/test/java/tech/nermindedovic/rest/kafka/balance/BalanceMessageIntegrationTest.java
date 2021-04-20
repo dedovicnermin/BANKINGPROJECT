@@ -47,6 +47,8 @@ class BalanceMessageIntegrationTest {
         balanceMessage.setBalance("10.00");
         assertThat(returned).isEqualTo(balanceMessage);
 
+        embeddedKafkaBroker.destroy();
+
     }
 
 
