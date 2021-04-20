@@ -21,17 +21,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TransformerComponentTest {
 
 
-    private MessageTransformer messageTransformer = new MessageTransformer();
+    private final MessageTransformer messageTransformer = new MessageTransformer();
 
-    private XmlMapper mapper = new XmlMapper();
+    private final XmlMapper mapper = new XmlMapper();
 
     /**
      * Testing balance message request transformation
-     * @throws JsonProcessingException
      */
     @Test
     void test_onValidBalanceMessage_shouldNotThrowOn_XML_Transformation() throws JsonProcessingException {
-        BalanceMessage balanceMessage = createBalanceMessage(1,159595, "0.00", false);
+        BalanceMessage balanceMessage = createBalanceMessage(1,159595, "0.00");
 
         String xml = messageTransformer.balancePojoToXML(balanceMessage);
         assertThat(mapper.writeValueAsString(balanceMessage)).isEqualTo(xml);
@@ -42,11 +41,10 @@ class TransformerComponentTest {
 
     /**
      * Testing balance message response from rest
-     * @throws JsonProcessingException
      */
     @Test
     void test_onValidXMLResponse_shouldNotThrow_on_xmlToPojo() throws JsonProcessingException {
-        BalanceMessage balanceMessage = createBalanceMessage(1, 34234, "200.25", false);
+        BalanceMessage balanceMessage = createBalanceMessage(1, 34234, "200.25");
         String xml = mapper.writeValueAsString(balanceMessage);
 
         assertThat(messageTransformer.balanceXMLToPojo(xml)).isEqualTo(balanceMessage);
@@ -73,8 +71,8 @@ class TransformerComponentTest {
 
 
 
-    private BalanceMessage createBalanceMessage(long accountNumber, long routingNumber, String balance, boolean errors) {
-        return new BalanceMessage(accountNumber, routingNumber, balance, errors);
+    private BalanceMessage createBalanceMessage(long accountNumber, long routingNumber, String balance) {
+        return new BalanceMessage(accountNumber, routingNumber, balance, false);
     }
 
 
