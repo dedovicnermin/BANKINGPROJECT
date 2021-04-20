@@ -98,6 +98,8 @@ class TransferMessageIntegrationTest {
         badProducer.send(new ProducerRecord<>(INBOUND_TOPIC, "This is NOT a transfer message. This should not make it past one line of .listen code and container will delegate to error message handler"));
         badProducer.flush();
 
+
+        // record that will be consumed by rest (in theory)
         ConsumerRecord<String, String> record = records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(record).isNotNull();
         assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
@@ -154,7 +156,7 @@ class TransferMessageIntegrationTest {
     }
 
     void shutdown_errorConfig() {
-        container.stop();
+        container.stop(true);
         badProducer.close();
     }
 

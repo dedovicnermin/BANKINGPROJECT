@@ -33,6 +33,5 @@ funds:
   transfer:
     request:
       topic: funds.transfer.request
-    response:
-      topic: funds.transfer.response
+
 

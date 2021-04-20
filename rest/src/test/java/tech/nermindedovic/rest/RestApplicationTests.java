@@ -6,7 +6,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1)
+@EmbeddedKafka(partitions = 1, topics = {"funds.transfer.error","funds.transformer.request","balance.transformer.response","balance.transformer.request"})
 @DirtiesContext
 class RestApplicationTests {
 
@@ -15,5 +15,4 @@ class RestApplicationTests {
 	}
 
 }
-//TransferMessageIntegrationTest
 //, topics = {"funds.transfer.error","funds.transformer.request","balance.transformer.response","balance.transformer.request"}

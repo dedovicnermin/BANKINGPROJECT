@@ -7,8 +7,7 @@ funds:
   transfer:
     request:
       topic: funds.transfer.request
-    response:
-      topic: funds.transfer.response
+
 server:
   port: 8082
 spring:
