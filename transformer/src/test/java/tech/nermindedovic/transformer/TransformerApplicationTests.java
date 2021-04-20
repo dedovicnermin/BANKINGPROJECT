@@ -6,7 +6,6 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest
-@DirtiesContext
 class TransformerApplicationTests {
 
 	@Test

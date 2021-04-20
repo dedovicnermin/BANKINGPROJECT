@@ -1,6 +1,7 @@
 package tech.nermindedovic.rest.kafka.transfer;
 
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -9,12 +10,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -37,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = TransferErrorConsumerIntegrationTest.ERROR_TOPIC)
-@ExtendWith(MockitoExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class TransferErrorConsumerIntegrationTest {
     public static final String ERROR_TOPIC = "funds.transfer.error";
@@ -51,12 +48,11 @@ class TransferErrorConsumerIntegrationTest {
 
     Producer<String, String> errorProducer;
 
-    @SpyBean
-    TransferErrorConsumer transferErrorConsumer;
 
     @BeforeEach
     void setup() {
         Map<String, Object> consumerConfigs = new HashMap<>(KafkaTestUtils.consumerProps("rest-error-consumer-test", "false", embeddedKafkaBroker));
+        consumerConfigs.put(ConsumerConfig.CLIENT_ID_CONFIG, "rest-error-consumer-client");
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfigs, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(ERROR_TOPIC);
         listenerContainer = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
@@ -82,11 +78,10 @@ class TransferErrorConsumerIntegrationTest {
         errorProducer.send(new ProducerRecord<>(ERROR_TOPIC, errorMessage));
         errorProducer.flush();
 
-        ConsumerRecord<String,String> consumedRecord = consumed.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String,String> consumedRecord = consumed.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(consumedRecord).isNotNull();
         assertThat(consumedRecord.value()).isEqualTo(errorMessage);
 
-//        Mockito.verify(transferErrorConsumer, Mockito.times(1)).listen(errorMessage);
     }
 
 }

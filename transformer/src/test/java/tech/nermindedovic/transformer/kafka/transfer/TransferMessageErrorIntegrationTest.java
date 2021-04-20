@@ -57,7 +57,6 @@ class TransferMessageErrorIntegrationTest {
     @BeforeEach
     void setup() {
         Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("consumer-transferMessage-error-test", "false", embeddedKafkaBroker));
-        consumerConfig.put(ConsumerConfig.CLIENT_ID_CONFIG, "transformer-test-errorIntegration");
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
         container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
@@ -85,7 +84,7 @@ class TransferMessageErrorIntegrationTest {
         badProducer.flush();
 
 
-        ConsumerRecord<String, String> record = records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> record = records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(record).isNotNull();
         assertThat(record.value()).contains("Error deserializing key/value for partition funds.");
 

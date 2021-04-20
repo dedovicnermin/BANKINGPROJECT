@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(classes = {TransferFundsProducer.class, TransferMessageConfiguration.class}, properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka
+@EmbeddedKafka(partitions = 1, topics = "funds.transformer.request")
 @DirtiesContext
 class TransferFundsProducerTest {
 

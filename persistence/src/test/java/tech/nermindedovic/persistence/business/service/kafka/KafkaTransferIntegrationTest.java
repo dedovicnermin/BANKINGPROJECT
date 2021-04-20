@@ -94,6 +94,7 @@ class KafkaTransferIntegrationTest {
      * consumer successfully listens, passes xml to be processed/persisted, balances are updated
      */
     @Test
+    @DirtiesContext
     void onValidTransfer_willConsumeAndPersist() throws JsonProcessingException, InterruptedException {
         accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
         accountRepository.save(new Account(22,22,"Ken", BigDecimal.TEN));
@@ -106,7 +107,7 @@ class KafkaTransferIntegrationTest {
         producer.flush();
 
         //check error consumer is empty
-        ConsumerRecord<String, String> potentialError = error_records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNull();
 
 
@@ -125,6 +126,7 @@ class KafkaTransferIntegrationTest {
      * invalid accounts raise errors, handled - sending to error topic
      */
     @Test
+    @DirtiesContext
     void givenInvalidAccount_sendsToErrorTopic() throws JsonProcessingException, InterruptedException {
         TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,1L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
@@ -133,7 +135,7 @@ class KafkaTransferIntegrationTest {
         producer.flush();
 
         //check error consumer is not empty
-        ConsumerRecord<String, String> potentialError = error_records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
         assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Both accounts are not users of this bank.");
 
@@ -144,6 +146,7 @@ class KafkaTransferIntegrationTest {
      * Can handle deserialization issues
      */
     @Test
+    @DirtiesContext
     void givenUnserializableTransferMessage_willHandleAndSendToErrorTopic() throws InterruptedException {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, Long> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new LongSerializer()).createProducer();
@@ -152,7 +155,7 @@ class KafkaTransferIntegrationTest {
         myProducer.flush();
 
         //check error consumer is not empty
-        ConsumerRecord<String, String> potentialError = error_records.poll(1000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
         assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
     }
