@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @TestConfiguration
-@EnableKafka
-@DirtiesContext
 public class BalanceTestConfig {
 
 

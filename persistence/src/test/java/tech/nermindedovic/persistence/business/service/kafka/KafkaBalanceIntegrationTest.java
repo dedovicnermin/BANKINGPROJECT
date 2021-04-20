@@ -38,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaBalanceIntegrationTest.OUTBOUND_BALANCE})
-@DirtiesContext
 class KafkaBalanceIntegrationTest {
 
     public static final String OUTBOUND_BALANCE = "balance.update.response";
@@ -83,6 +82,7 @@ class KafkaBalanceIntegrationTest {
 
 
     @Test
+    @DirtiesContext
     void test_balanceMessages_WillBeConsumedAndProduced() throws JsonProcessingException, InterruptedException {
 
         accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
@@ -103,6 +103,7 @@ class KafkaBalanceIntegrationTest {
 
 
     @Test
+    @DirtiesContext
     void test_balanceMessages_willReplyWithGenericBalanceMessage_whenAccountNonExistent() throws JsonProcessingException, InterruptedException {
         BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);

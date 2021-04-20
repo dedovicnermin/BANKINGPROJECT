@@ -25,11 +25,10 @@ import java.util.TimeZone;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-@SpringBootTest
 class TransformerComponentTest {
 
-    @Autowired
-    private MessageTransformer messageTransformer;
+
+    private MessageTransformer messageTransformer = new MessageTransformer();
 
     private XmlMapper mapper = new XmlMapper();
 
