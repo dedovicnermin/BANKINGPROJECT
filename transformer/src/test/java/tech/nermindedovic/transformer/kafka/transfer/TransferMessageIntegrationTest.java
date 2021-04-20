@@ -8,6 +8,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,10 @@ class TransferMessageIntegrationTest {
     Producer<String, String> badProducer;
 
 
+    @AfterAll
+    void destroyBroker() {
+        embeddedKafkaBroker.destroy();
+    }
 
 
 

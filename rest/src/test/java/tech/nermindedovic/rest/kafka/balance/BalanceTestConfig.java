@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @TestConfiguration
+@DirtiesContext
 public class BalanceTestConfig {
 
 
