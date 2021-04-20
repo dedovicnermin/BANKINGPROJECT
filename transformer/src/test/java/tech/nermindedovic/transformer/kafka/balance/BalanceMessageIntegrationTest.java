@@ -3,6 +3,7 @@ package tech.nermindedovic.transformer.kafka.balance;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EmbeddedKafka(partitions = 1, topics = {TransformerTopicNames.OUTBOUND_PERSISTENCE_BALANCE, TransformerTopicNames.INBOUND_PERSISTENCE_BALANCE})
 @Import(BalanceTestConfig.class)
 @DirtiesContext
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceMessageIntegrationTest {
 
 
