@@ -8,6 +8,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
@@ -64,10 +65,14 @@ class TransferFundsIntegrationTest {
     BlockingQueue<ConsumerRecord<String, TransferMessage>> consumed;
     KafkaMessageListenerContainer<String, TransferMessage> listenerContainer;
 
-
+    @BeforeAll
+    void setup() {
+        setup_receivingEnd();
+    }
 
     @AfterAll
     void destroyBroker() {
+        shutdown();
         embeddedKafkaBroker.destroy();
     }
 
@@ -77,8 +82,6 @@ class TransferFundsIntegrationTest {
      */
     @Test
     void givenValidTransferMessage_willProduceToTransformerTopic() throws ExecutionException, InterruptedException {
-        setup_receivingEnd();
-
         TransferMessage transferMessage = TransferMessage.builder()
                 .message_id(0)
                 .creditor(new Creditor(1111, 1111))
@@ -94,7 +97,6 @@ class TransferFundsIntegrationTest {
         assertThat(consumerRecord).isNotNull();
         assertThat(consumerRecord.value()).isEqualTo(transferMessage);
 
-        shutdown();
     }
 
 

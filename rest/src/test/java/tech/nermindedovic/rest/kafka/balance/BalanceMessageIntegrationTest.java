@@ -18,7 +18,7 @@ import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers", webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers")
 @EmbeddedKafka(partitions = 1, topics = {BalanceMessageIntegrationTest.TO_TRANSFORMER, BalanceMessageIntegrationTest.FROM_TRANSFORMER})
 @DirtiesContext
 @Import(BalanceTestConfig.class)
@@ -47,13 +47,11 @@ class BalanceMessageIntegrationTest {
      */
 
     @Test
-    void givenVALIDBalanceMessage_willSendAndReturnResponseFromTransformer() throws JsonProcessingException {
+    void givenVALIDBalanceMessage_willSendAndReturnResponseFromTransformer()  {
         BalanceMessage balanceMessage = new BalanceMessage(1111,2222,"", false);
         BalanceMessage returned = restAPI.getBalanceUpdate(balanceMessage);
         balanceMessage.setBalance("10.00");
         assertThat(returned).isEqualTo(balanceMessage);
-
-        embeddedKafkaBroker.destroy();
 
     }
 
