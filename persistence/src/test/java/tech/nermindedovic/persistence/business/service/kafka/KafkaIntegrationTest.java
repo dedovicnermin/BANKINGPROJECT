@@ -18,11 +18,13 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
+import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.Creditor;
 import tech.nermindedovic.persistence.business.doman.Debtor;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
@@ -44,10 +46,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS})
+@EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaIntegrationTest.OUTBOUND_BALANCE})
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class KafkaTransferIntegrationTest {
+class KafkaIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired private EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -56,12 +58,22 @@ class KafkaTransferIntegrationTest {
     @Autowired TransactionRepository transactionRepository;
 
 
-
     private BlockingQueue<ConsumerRecord<String, String>> error_records;
     private KafkaMessageListenerContainer<String, String> error_container;
     private Producer<String, String> producer;
 
     XmlMapper mapper = new XmlMapper();
+
+
+
+
+    public static final String OUTBOUND_BALANCE = "balance.update.response";
+
+    private BlockingQueue<ConsumerRecord<String, String>> records;
+    private KafkaMessageListenerContainer<String, String> container;
+
+
+
 
     @BeforeAll
     void setup() {
@@ -79,6 +91,18 @@ class KafkaTransferIntegrationTest {
         producer = new DefaultKafkaProducerFactory<>(producerConfigs, new StringSerializer(), new StringSerializer()).createProducer();
 
 
+        // BALANCE INTERACTION CONFIG
+
+        Map<String, Object> consumerConfigBalance = new HashMap<>(KafkaTestUtils.consumerProps("test-balance-request", "false", embeddedKafkaBroker));
+        DefaultKafkaConsumerFactory<String, String> consumerFactory1 = new DefaultKafkaConsumerFactory<>(consumerConfigBalance, new StringDeserializer(), new StringDeserializer());
+        ContainerProperties containerProperties1 = new ContainerProperties(OUTBOUND_BALANCE);
+        container = new KafkaMessageListenerContainer<>(consumerFactory1, containerProperties1);
+        records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String, String>) records::add);
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
+
+
     }
 
 
@@ -86,6 +110,7 @@ class KafkaTransferIntegrationTest {
     void shutdown() {
         error_container.stop();
         producer.close();
+        container.stop();
     }
 
 
@@ -154,6 +179,52 @@ class KafkaTransferIntegrationTest {
         ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
         assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
+    }
+
+
+
+
+
+
+
+
+
+
+
+    @Test
+    void test_balanceMessages_WillBeConsumedAndProduced() throws JsonProcessingException, InterruptedException {
+
+        accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
+
+        BalanceMessage balanceMessage = new BalanceMessage(11, 11, "", false);
+        String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
+
+        ProducerRecord<String, String> record = new ProducerRecord<>(PersistenceTopicNames.INBOUND_BALANCE_REQUEST, balanceMessageXML);
+        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE.getBytes());
+
+        producer.send(record);
+        producer.flush();
+
+        ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
+        assertThat(consumed).isNotNull();
+        assertThat(consumed.value()).isEqualTo(mapper.writeValueAsString(new BalanceMessage(11,11,"10.00", false)));
+    }
+
+
+
+    @Test
+    void test_balanceMessages_willReplyWithGenericBalanceMessage_whenAccountNonExistent() throws JsonProcessingException, InterruptedException {
+        BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", false);
+        String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
+        ProducerRecord<String, String> record = new ProducerRecord<>(PersistenceTopicNames.INBOUND_BALANCE_REQUEST, balanceMessageXML);
+        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE.getBytes());
+
+        producer.send(record);
+        producer.flush();
+
+        ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
+        assertThat(consumed).isNotNull();
+        assertThat(consumed.value()).isEqualTo("<BalanceMessage><accountNumber>0</accountNumber><routingNumber>0</routingNumber><balance></balance><errors>true</errors></BalanceMessage>");
     }
 
 
