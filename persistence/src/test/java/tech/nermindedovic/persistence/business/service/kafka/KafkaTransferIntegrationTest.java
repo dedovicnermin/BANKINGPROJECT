@@ -10,9 +10,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -48,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS})
 @DirtiesContext
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class KafkaTransferIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -64,7 +63,7 @@ class KafkaTransferIntegrationTest {
 
     XmlMapper mapper = new XmlMapper();
 
-    @BeforeEach
+    @BeforeAll
     void setup() {
         Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test-transfer-request", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
@@ -83,7 +82,7 @@ class KafkaTransferIntegrationTest {
     }
 
 
-    @AfterEach
+    @AfterAll
     void shutdown() {
         error_container.stop();
         producer.close();
@@ -94,7 +93,6 @@ class KafkaTransferIntegrationTest {
      * consumer successfully listens, passes xml to be processed/persisted, balances are updated
      */
     @Test
-    @DirtiesContext
     void onValidTransfer_willConsumeAndPersist() throws JsonProcessingException, InterruptedException {
         accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
         accountRepository.save(new Account(22,22,"Ken", BigDecimal.TEN));
@@ -126,7 +124,6 @@ class KafkaTransferIntegrationTest {
      * invalid accounts raise errors, handled - sending to error topic
      */
     @Test
-    @DirtiesContext
     void givenInvalidAccount_sendsToErrorTopic() throws JsonProcessingException, InterruptedException {
         TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,1L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
@@ -146,7 +143,6 @@ class KafkaTransferIntegrationTest {
      * Can handle deserialization issues
      */
     @Test
-    @DirtiesContext
     void givenUnserializableTransferMessage_willHandleAndSendToErrorTopic() throws InterruptedException {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, Long> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new LongSerializer()).createProducer();
