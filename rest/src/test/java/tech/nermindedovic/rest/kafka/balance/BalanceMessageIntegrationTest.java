@@ -3,6 +3,7 @@ package tech.nermindedovic.rest.kafka.balance;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EmbeddedKafka(partitions = 1, topics = {BalanceMessageIntegrationTest.TO_TRANSFORMER, BalanceMessageIntegrationTest.FROM_TRANSFORMER})
 @DirtiesContext
 @Import(BalanceTestConfig.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceMessageIntegrationTest {
 
 

@@ -44,6 +44,12 @@ public class BalanceTestConfig {
             return new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new JsonDeserializer<>(BalanceMessage.class));
         }
 
+    @Bean
+    public DefaultKafkaConsumerFactory<String, String> cf1() {
+        Map<String, Object> consumerConfig = KafkaTestUtils.consumerProps("listen-and-return", "false", embeddedKafkaBroker);
+        return new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
+    }
+
         @Bean
         public KafkaTemplate<String, BalanceMessage> template() {
             return new KafkaTemplate<>(pf());
