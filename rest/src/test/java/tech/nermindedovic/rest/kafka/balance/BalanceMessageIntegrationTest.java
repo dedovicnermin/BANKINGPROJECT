@@ -2,6 +2,7 @@ package tech.nermindedovic.rest.kafka.balance;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,11 @@ class BalanceMessageIntegrationTest {
 
     @Autowired
     private RestAPI restAPI;
+
+    @AfterAll
+    void destroyKafka() {
+        embeddedKafkaBroker.destroy();
+    }
 
 
     /**
