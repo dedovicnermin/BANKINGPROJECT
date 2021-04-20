@@ -4,9 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.transformer.components.MessageTransformer;
 import tech.nermindedovic.transformer.business.pojos.BalanceMessage;
 import tech.nermindedovic.transformer.business.pojos.Creditor;
@@ -14,13 +11,9 @@ import tech.nermindedovic.transformer.business.pojos.Debtor;
 import tech.nermindedovic.transformer.business.pojos.TransferMessage;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.Date;
-import java.util.TimeZone;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 
