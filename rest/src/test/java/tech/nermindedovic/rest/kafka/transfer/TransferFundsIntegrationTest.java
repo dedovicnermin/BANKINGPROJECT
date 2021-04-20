@@ -7,8 +7,6 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
@@ -55,34 +53,20 @@ class TransferFundsIntegrationTest {
     public static final String OUTBOUND_TOPIC = "funds.transformer.request";
     public static final String ERROR_TOPIC = "funds.transfer.error";
 
-
-
-
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-
-    @Autowired
-    RestAPI restAPI;
-
-    @SpyBean
-    private TransferErrorConsumer transferErrorConsumer;
-
-
+    @Autowired RestAPI restAPI;
+    @SpyBean private TransferErrorConsumer transferErrorConsumer;
 
     BlockingQueue<ConsumerRecord<String, TransferMessage>> consumed;
     KafkaMessageListenerContainer<String, TransferMessage> listenerContainer;
 
 
-
-
-
-
     /**
      * testing if producer will producer to transfer topic
      */
-
     @Test
     void givenValidTransferMessage_willProduceToTransformerTopic() throws ExecutionException, InterruptedException {
         setup_receivingEnd();
