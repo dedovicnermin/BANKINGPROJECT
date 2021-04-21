@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,11 +58,12 @@ public class BalanceCommConfiguration {
         Properties properties = new Properties();
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        properties.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         properties.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BalanceMessage.class);
+        properties.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        properties.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-
+        containerProperties.getKafkaConsumerProperties().put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, true);
 
 
 
