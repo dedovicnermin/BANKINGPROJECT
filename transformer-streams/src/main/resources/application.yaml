@@ -1,0 +1,36 @@
+spring:
+  cloud:
+    function:
+      definition: processTransfer;processBalanceLeg1;processBalanceLeg2
+    stream:
+      bindings:
+        processTransfer-in-0:
+          destination: funds.transformer.request
+        processTransfer-out-0:
+          destination: funds.transfer.request
+
+
+        processBalanceLeg1-in-0:
+          destination: balance.transformer.request
+        processBalanceLeg1-out-0:
+          destination: balance.update.request
+
+
+        processBalanceLeg2-in-0:
+          destination: balance.update.response
+        processBalanceLeg2-out-0:
+          destination: balance.transformer.response
+
+
+
+      kafka:
+        streams:
+          binder:
+            brokers: localhost:9092
+            configuration:
+              commit.interval.ms: 100
+
+server:
+  port: 8081
+
+
