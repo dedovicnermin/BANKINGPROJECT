@@ -1,21 +1,12 @@
 package tech.nermindedovic.persistence.business.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
-import tech.nermindedovic.persistence.business.doman.BalanceMessage;
-import tech.nermindedovic.persistence.business.doman.TransferValidation;
-import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
-
 import javax.validation.constraints.NotNull;
-import java.util.Optional;
 
 
 @Service

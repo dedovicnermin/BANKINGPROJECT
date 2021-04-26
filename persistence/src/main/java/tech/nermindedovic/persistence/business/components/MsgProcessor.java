@@ -6,11 +6,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
-import tech.nermindedovic.persistence.exception.AccountNotFoundException;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
-import java.util.stream.Stream;
 
 
 @Component

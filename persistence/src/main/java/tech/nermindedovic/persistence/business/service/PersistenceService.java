@@ -9,14 +9,13 @@ import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
-import tech.nermindedovic.persistence.exception.AccountNotFoundException;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.stream.Stream;
+
 
 @Slf4j
 @Service
