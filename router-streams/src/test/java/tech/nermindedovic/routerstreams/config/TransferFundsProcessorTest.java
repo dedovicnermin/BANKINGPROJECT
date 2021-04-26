@@ -42,7 +42,7 @@ import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.TransferStatus;
 import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
 import tech.nermindedovic.routerstreams.business.service.TransferStatusService;
-import tech.nermindedovic.routerstreams.config.TransferFundsProcessor;
+import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
 import java.math.BigDecimal;
@@ -62,7 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
 })
 @ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, topics = {"funds.transfer.request", "funds.transfer.error", "funds.transfer.111", "funds.transfer.222", "router.validate.transfer", "funds.validate.111", "funds.validate.222", "funds.transfer.status", "transfer.status"})
+@EmbeddedKafka(partitions = 1, topics = {RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_ERROR , RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "111", RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "222", RouterTopicNames.INBOUND_VALIDATION_TOPIC, RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "111", RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "222", RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC})
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TransferFundsProcessorTest {
@@ -93,7 +93,7 @@ class TransferFundsProcessorTest {
     void onIncomingTransferMessageXML_whenContainsUnknownRoutingNumber_willDirectToErrorTopic() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-error", "false", embeddedKafkaBroker);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
-        ContainerProperties containerProperties = new ContainerProperties("funds.transfer.error");
+        ContainerProperties containerProperties = new ContainerProperties(RouterTopicNames.OUTBOUND_TRANSFER_ERROR);
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
         container.setupMessageListener((MessageListener<String, String>) record -> {
@@ -108,7 +108,7 @@ class TransferFundsProcessorTest {
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("funds.transfer.request");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xmlWithInvalidRoutes);
         template.flush();
 
@@ -160,7 +160,7 @@ class TransferFundsProcessorTest {
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("funds.transfer.request");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xmlWithMatchingRoutes_111);
         template.flush();
 
@@ -210,7 +210,7 @@ class TransferFundsProcessorTest {
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("funds.transfer.request");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xmlWithMatchingRoutes_222);
         template.flush();
 
@@ -264,7 +264,7 @@ class TransferFundsProcessorTest {
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("funds.transfer.request");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xmlWithDiffRoutes);
         template.flush();
 
@@ -313,7 +313,7 @@ class TransferFundsProcessorTest {
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         ProducerFactory<String, TransferValidation> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,TransferValidation> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("router.validate.transfer");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_VALIDATION_TOPIC);
         template.sendDefault(transferValidation);
         template.flush();
 
@@ -376,7 +376,7 @@ class TransferFundsProcessorTest {
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         ProducerFactory<String, TransferValidation> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,TransferValidation> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("router.validate.transfer");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_VALIDATION_TOPIC);
         template.sendDefault(transferValidation);
         template.flush();
 
@@ -419,7 +419,7 @@ class TransferFundsProcessorTest {
         properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, embeddedKafkaBroker.getBrokersAsString());
 
         try (TopologyTestDriver testDriver = new TopologyTestDriver(streamsBuilder.build(), properties)) {
-            TestInputTopic<String, TransferStatus> inputTopic = testDriver.createInputTopic("transfer.status", stringSerde.serializer(), new JsonSerializer<>());
+            TestInputTopic<String, TransferStatus> inputTopic = testDriver.createInputTopic(RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC, stringSerde.serializer(), new JsonSerializer<>());
 
             String key1 = String.valueOf(123L);
             String key2 = String.valueOf(456L);
@@ -459,7 +459,7 @@ class TransferFundsProcessorTest {
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic("funds.transfer.request");
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xml);
         template.flush();
 

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 import java.util.function.Consumer;
 
@@ -25,7 +26,7 @@ public class BalanceProcessor {
     public Consumer<String> balanceRequestConsumer() {
         return xml -> {
             String routingNumber = grabRouting(xml);
-            streamBridge.send("balance.update.request." + routingNumber, xml);
+            streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + routingNumber, xml);
         };
     }
 

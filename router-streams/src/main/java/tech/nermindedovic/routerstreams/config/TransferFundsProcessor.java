@@ -16,7 +16,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import tech.nermindedovic.routerstreams.MessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;
-
+import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
 import java.nio.charset.StandardCharsets;
@@ -27,8 +27,8 @@ import java.util.function.Function;
 @Slf4j
 public class TransferFundsProcessor {
 
-    public static final String VALIDATE_USER = "funds.validate.";
-    public static final String FUNDS_SINGLE_ACCOUNT = "funds.transfer.single.";
+    public static final String VALIDATE_USER = RouterTopicNames.OUTBOUND_VALIDATION_PREFIX;
+    public static final String FUNDS_SINGLE_ACCOUNT = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX;
 
     private final StreamBridge streamBridge;
 
@@ -74,7 +74,7 @@ public class TransferFundsProcessor {
 
 //ERROR
     private void sendToErrorTopic(final String transferMessageXML) {
-        streamBridge.send("funds.transfer.error", "Error routing message - " + transferMessageXML);
+        streamBridge.send(RouterTopicNames.OUTBOUND_TRANSFER_ERROR, "Error routing message - " + transferMessageXML);
     }
 
 
@@ -82,7 +82,7 @@ public class TransferFundsProcessor {
 
     // ONE ROUTING NUMBER PRESENT
     private void sendDirectlyToBank(final String transferMessageXML, MessageParser messageParser) {
-        String topic = "funds.transfer." + messageParser.getMatchingRoute();
+        String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + messageParser.getMatchingRoute();
         Message<String> message = MessageBuilder.withPayload(transferMessageXML).build();
         streamBridge.send(topic, message);
         log.info("SEND DIRECT MESSAGE : " + message);
@@ -99,7 +99,7 @@ public class TransferFundsProcessor {
         transferValidation.setCreditorAccount(paymentParty.getCreditorAccount());
         transferValidation.setAmount(paymentParty.getAmount());
 
-        streamBridge.send("router.validate.transfer", transferValidation);
+        streamBridge.send(RouterTopicNames.INBOUND_VALIDATION_TOPIC, transferValidation);
     }
 
 
@@ -144,16 +144,16 @@ public class TransferFundsProcessor {
         Message<TransferStatus> message = MessageBuilder.withPayload(status)
                 .setHeader(KafkaHeaders.MESSAGE_KEY, messageId.toString().getBytes(StandardCharsets.UTF_8))
                 .build();
-        streamBridge.send("funds.transfer.status", message);
+        streamBridge.send(RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, message);
     }
 
 
-    public static final String STORE = "transfer.status.store";
+    public static final String STORE = RouterTopicNames.TRANSFER_STORE;
     @Bean
     public Function<KStream<String, TransferStatus>, KTable<String, String>> upsertMetric() {
         return stream -> stream
                 .mapValues(Enum::toString)
-                .toTable(Named.as("transfer.status"), Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(STORE).withKeySerde(Serdes.String()).withValueSerde(Serdes.String()));
+                .toTable(Named.as(RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC), Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(STORE).withKeySerde(Serdes.String()).withValueSerde(Serdes.String()));
     }
 
 
