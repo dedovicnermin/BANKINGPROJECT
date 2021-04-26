@@ -1,0 +1,60 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      client-id: ROUTING-APP
+      properties:
+        bootstrap.servers: localhost:9092
+  cloud:
+    stream:
+      function:
+        definition: consumeInitialTransfer;validationConsumer;upsertMetric;balanceRequestConsumer
+#        ;supplyTransferStatus
+      bindings:
+        upsertMetric-in-0:
+          destination: funds.transfer.status
+        upsertMetric-out-0:
+          destination: transfer.status
+
+        consumeInitialTransfer-in-0:
+          destination: funds.transfer.request
+
+        validationConsumer-in-0:
+          destination: router.validate.transfer
+
+        balanceRequestConsumer-in-0:
+          destination: balance.update.request
+
+
+
+      kafka:
+        streams:
+          binder:
+            configuration:
+              default:
+                key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              commit.interval.ms: 1000
+            auto-create-topics: true
+            brokers: localhost:9092
+
+        bindings:
+          upsertMetric-in-0:
+            keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+
+
+
+
+
+
+
+
+
+
+
+server:
+  port: 8084
+spring.cloud.stream.kafka.streams.binder.applicationId: ROUTING-APP
+
+logging:
+  level: debug
