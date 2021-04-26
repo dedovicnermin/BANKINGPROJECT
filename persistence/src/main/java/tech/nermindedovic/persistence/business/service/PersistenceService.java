@@ -2,6 +2,7 @@ package tech.nermindedovic.persistence.business.service;
 
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.data.entity.Account;
@@ -15,6 +16,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
+
+@Slf4j
 @Service
 public class PersistenceService {
 
@@ -72,6 +75,57 @@ public class PersistenceService {
 
 
     /**
+     * PRE-CONDITION: accounts from both banks have been validated
+     * POST-CONDITION: transfer will be persisted and account updated
+     *
+     * @throws InvalidTransferMessageException message already exists
+     */
+    public void processTwoBankTransferMessage(@NotNull final TransferMessage transferMessage, long accountNumber, boolean isDebtor) throws InvalidTransferMessageException {
+        enterTwoBankTransaction(transferMessage);
+        updateAccountBalance(accountNumber, transferMessage.getAmount(), isDebtor);
+
+    }
+
+
+    // TODO: test processTransferValidation
+    public void processTransferValidation(@NotNull final TransferValidation transferValidation) {
+        switch (transferValidation.getCurrentLeg()) {
+            case 1:
+                validateNativeUser(transferValidation, transferValidation.getDebtorAccount().getAccountNumber(), true);
+                break;
+            case 2:
+                validateNativeUser(transferValidation, transferValidation.getCreditorAccount().getAccountNumber(), false);
+                break;
+            default:
+                transferValidation.setCurrentLeg(0);
+                break;
+        }
+    }
+
+
+    /**
+     * i.   check if user exists
+     * ii.  if debtor account, check if insufficient funds
+     * iii. increase leg count on passing
+     */
+    private void validateNativeUser(TransferValidation validation, long accountNumber, boolean isDebtor) {
+        Optional<Account> nativeUser = accountRepository.findById(accountNumber);
+        if (!nativeUser.isPresent()) {
+            validation.setCurrentLeg(0);
+        } else if (isDebtor && cannotMakePayment(nativeUser.get().getAccountBalance(), validation.getAmount())) {
+            validation.setCurrentLeg(0);
+        } else {
+            validation.setCurrentLeg(validation.getCurrentLeg() + 1);
+        }
+    }
+
+
+
+
+
+
+
+    /**
      * Validates input prior to processing.
      * Ensure data is accurate. Will be used to make changes to db.
      */
@@ -119,6 +173,30 @@ public class PersistenceService {
     }
 
 
+
+    /**
+     * PRECONDITION: transferMessage contains no errors
+     * POST-CONDITION: new transaction created/persisted with one native account
+     * @param transferMessage carrying transfer between 2 accounts from different banks
+     * @throws InvalidTransferMessageException message exists
+     */
+
+    public void enterTwoBankTransaction(final TransferMessage transferMessage) throws InvalidTransferMessageException {
+        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessage_id()));
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(transferMessage.getMessage_id());
+        transaction.setDebtorAccountNumber(transferMessage.getDebtor().getAccountNumber());
+        transaction.setCreditorAccountNumber(transferMessage.getCreditor().getAccountNumber());
+        transaction.setAmount(transferMessage.getAmount());
+        transaction.setDate(transferMessage.getDate());
+        transaction.setMemo(transferMessage.getMemo());
+        transactionRepository.save(transaction);
+        log.info("PERSISTING... : " + transaction);
+    }
+
+
+
+
     /**
      * PRECONDITION: paymentParty carries valid accounts. Debtor has enough to make this transfer
      * POST-CONDITION: paymentParty will have balances updated according to role in transfer
@@ -137,6 +215,20 @@ public class PersistenceService {
         accountRepository.save(creditorAccount);
 
     }
+
+
+
+    private void updateAccountBalance(final long accountNumber, final BigDecimal amount, boolean isDebtor) {
+        accountRepository.findById(accountNumber).ifPresent(account -> {
+            if (isDebtor) {
+                account.setAccountBalance(account.getAccountBalance().subtract(amount));
+            } else {
+                account.setAccountBalance(account.getAccountBalance().add(amount));
+            }
+            accountRepository.save(account);
+        });
+    }
+
 
 
     /**

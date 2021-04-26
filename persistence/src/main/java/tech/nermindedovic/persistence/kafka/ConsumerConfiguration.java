@@ -31,6 +31,7 @@ public class ConsumerConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    // TODO: make a private static class for all Persistence app utils. (i.e. generic balanceMessage on fails, error messages)
 
     /**
      * Config for consumers

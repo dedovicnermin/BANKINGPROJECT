@@ -21,6 +21,7 @@ import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -37,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
 })
 @ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, topics = {"balance.update.request", "balance.update.request.111", "balance.update.request.222"})
+@EmbeddedKafka(partitions = 1, topics = {RouterTopicNames.INBOUND_BALANCE_REQUEST_TOPIC, RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "111", RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "222"})
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceProcessorTest {
