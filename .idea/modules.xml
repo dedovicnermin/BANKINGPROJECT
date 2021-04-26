@@ -5,7 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/BANKINGPROJECT.iml" filepath="$PROJECT_DIR$/.idea/BANKINGPROJECT.iml" />
       <module fileurl="file://$PROJECT_DIR$/persistence/persistence.iml" filepath="$PROJECT_DIR$/persistence/persistence.iml" />
       <module fileurl="file://$PROJECT_DIR$/rest/rest.iml" filepath="$PROJECT_DIR$/rest/rest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/router-streams/router-streams.iml" filepath="$PROJECT_DIR$/router-streams/router-streams.iml" />
       <module fileurl="file://$PROJECT_DIR$/transformer/transformer.iml" filepath="$PROJECT_DIR$/transformer/transformer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/transformer-streams/transformer-streams.iml" filepath="$PROJECT_DIR$/transformer-streams/transformer-streams.iml" />
     </modules>
   </component>
 </project>
