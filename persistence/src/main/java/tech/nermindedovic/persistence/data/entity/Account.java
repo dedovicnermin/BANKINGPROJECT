@@ -31,5 +31,11 @@ public class Account {
     @Column(name = AccountAttributes.BALANCE)
     private BigDecimal accountBalance;
 
+    public Account(long accountNumber, long routingNumber) {
+        this.accountNumber = accountNumber;
+        this.routingNumber = routingNumber;
+    }
+
+
 
 }

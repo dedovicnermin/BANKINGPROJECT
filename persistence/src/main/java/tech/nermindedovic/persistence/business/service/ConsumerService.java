@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
+import tech.nermindedovic.persistence.business.doman.TransferValidation;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
@@ -46,12 +47,48 @@ public class ConsumerService {
     /**
      * PRECONDITION: producer has sent an XML message for a funds transfer request
      * POSTCONDITION: producer commits transaction
-     * @param xml
+     * @param xml of TransferMessage
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleFundsTransferRequest(@NotNull final String xml) {
         processor.processTransferRequest(xml);
     }
+
+
+
+
+    /**
+     * PRE-CONDITION: leg1 / leg2 of router validation.
+     * POST-CONDITION: will verify that account with routing number 111 is valid + send to router to continue processing
+     * @param json of TransferValidation
+     */
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "persistence")
+    @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
+    public String validateAccount(@NotNull final String json) {
+        return processor.processTransferValidation(json);
+    }
+
+
+
+    /**
+     * PRECONDITION: both accounts have been validated already by router, router has reached the final leg
+     * POST-CONDITION: delegates to msg processor to be processed
+     * @param xml of TransferMessage
+     */
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
+    public void handleSingleUserFundsTransferRequest(@NotNull final String xml) {
+        processor.processTransferRequestWithSingleUser(xml);
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 
