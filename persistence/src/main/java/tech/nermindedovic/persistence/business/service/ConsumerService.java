@@ -37,7 +37,7 @@ public class ConsumerService {
      *
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "persistence")
-    @SendTo
+    @SendTo({"balance.update.response"})
     public String handleBalanceRequest(@NotNull final String xml) {
         return processor.processBalanceRequest(xml);
     }

@@ -25,7 +25,7 @@ public class BalanceProducer {
 
     public BalanceMessage sendAndReceive(BalanceMessage balanceMessage) throws ExecutionException, InterruptedException {
         ProducerRecord<String,BalanceMessage> record = new ProducerRecord<>(TOPIC, balanceMessage);
-        record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, RESP_TOPIC.getBytes()));
+//        record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, RESP_TOPIC.getBytes()));
         RequestReplyFuture<String, BalanceMessage, BalanceMessage> sendAndReceive = replyingKafkaTemplate.sendAndReceive(record);
         ConsumerRecord<String, BalanceMessage> consumerRecord = sendAndReceive.get();
         return consumerRecord.value();
