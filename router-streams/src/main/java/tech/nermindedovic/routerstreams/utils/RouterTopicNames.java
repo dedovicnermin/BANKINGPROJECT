@@ -29,6 +29,10 @@ public final class RouterTopicNames {
     public static final String INBOUND_BALANCE_REQUEST_TOPIC = "balance.update.request";
     public static final String OUTBOUND_BALANCE_REQUEST_PREFIX = "balance.update.request.";
 
+    public static final String OUTBOUND_BALANCE_RETURN_TOPIC = "balance.update.response";
+
+
+
 
 
 

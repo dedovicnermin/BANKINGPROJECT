@@ -37,8 +37,8 @@ class PersistenceServiceTest {
 
     @Test
     void whenGivenBalanceMessage_andUserExists_thenOk() {
-        BalanceMessage balanceMessage = createBalanceMsg(100L, 200L, "", false);
-        Account account = createAccount(100L, 200L, "BOB", new BigDecimal(2000));
+        BalanceMessage balanceMessage = new BalanceMessage(100L, 200L, "", false);
+        Account account = new Account(100L, 200L, "BOB", new BigDecimal(2000));
 
         when(accountRepository.findById(balanceMessage.getAccountNumber())).thenReturn(Optional.of(account));
 
@@ -51,7 +51,7 @@ class PersistenceServiceTest {
 
     @Test
     void whenGivenBalanceMessage_andUserDoesNotExist_thenErrorsIsTrue_Test() {
-        BalanceMessage balanceMessage = createBalanceMsg(24L, 200L, "", false);
+        BalanceMessage balanceMessage = new BalanceMessage(24L, 200L, "", false);
         when(accountRepository.findById(balanceMessage.getAccountNumber())).thenReturn(Optional.empty());
         persistenceService.validateBalanceMessage(balanceMessage);
 
@@ -115,13 +115,5 @@ class PersistenceServiceTest {
         assertDoesNotThrow(() -> persistenceService.validateAndProcessTransferMessage(transferMessage));
     }
 
-
-    private Account createAccount(long accountId, long routingNum, String userName, BigDecimal balance) {
-        return new Account(accountId, routingNum, userName, balance);
-    }
-
-    private BalanceMessage createBalanceMsg(long accountNumber, long routingNum, String balance, boolean errors) {
-        return new BalanceMessage(accountNumber, routingNum, balance, errors);
-    }
 
 }

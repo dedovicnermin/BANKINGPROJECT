@@ -22,8 +22,6 @@ public class PaymentParty {
     private Account creditorAccount;
 
 
-
-
     public boolean invalidRoutingNumbersPresent() {
         if (debtorAccount == null || creditorAccount == null) return true;
         return Stream.of(debtorAccount.getRoutingNumber(), creditorAccount.getRoutingNumber()).anyMatch(routing -> (!(routing.equals(111L) || routing.equals(222L))));

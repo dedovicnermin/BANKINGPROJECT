@@ -43,8 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceProcessorTest {
 
-    final String balanceMessageXML_111 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>111</routingNumber></balance></balance><errors>false</errors></BalanceMessage>";
-    final String balanceMessageXML_222 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>222</routingNumber></balance></balance><errors>false</errors></BalanceMessage>";
+    final String balanceMessageXML_111 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>111</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
+    final String balanceMessageXML_222 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>222</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired

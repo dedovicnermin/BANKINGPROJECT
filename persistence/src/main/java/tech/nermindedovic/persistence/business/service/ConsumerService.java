@@ -31,6 +31,7 @@ public class ConsumerService {
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "persistence")
     @SendTo({"balance.update.response"})
     public String handleBalanceRequest(@NotNull final String xml) {
+        log.info("PERSISTENCE RECIEVED: " + xml);
         return processor.processBalanceRequest(xml);
     }
 
@@ -68,7 +69,7 @@ public class ConsumerService {
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleSingleUserFundsTransferRequest(@NotNull final String xml) {
-        processor.processTransferRequestWithSingleUser(xml);
+        processor.processTransferRequestTwoBanks(xml);
     }
 
 
