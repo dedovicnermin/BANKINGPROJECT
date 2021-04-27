@@ -147,7 +147,7 @@ class KafkaIntegrationTest {
         TransferMessage transferMessage = new TransferMessage(100, new Creditor(11, 11), new Debtor(22,22), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
 
-        producer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, xml));
+        producer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, Long.toString(100), xml));
         producer.flush();
 
         //check error consumer is empty
@@ -201,7 +201,7 @@ class KafkaIntegrationTest {
         //check error consumer is not empty
         ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNotNull();
-        assertThat(potentialError.value()).isEqualTo("PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
+        assertThat(potentialError.value()).containsIgnoringCase("PERSISTENCE ---");
     }
 
 

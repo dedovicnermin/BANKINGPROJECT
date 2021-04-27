@@ -8,8 +8,11 @@ public final class PersistenceTopicNames {
     public static final String INBOUND_TRANSFER_SINGLE_USER = "funds.transfer.single.111";
     public static final String INBOUND_BALANCE_REQUEST = "balance.update.request.111";
     public static final String OUTBOUND_TRANSFER_ERRORS = "funds.transfer.error";
+    public static final String OUTBOUND_TRANSFER_STATUS = "funds.transfer.status";
 
     public static final String OUTBOUND_ROUTER_VALIDATION = "router.validate.transfer";
+
+
 
 
 }
