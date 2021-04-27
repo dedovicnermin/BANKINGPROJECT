@@ -2,10 +2,10 @@ package tech.nermindedovic.rest.api;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 import tech.nermindedovic.rest.business.domain.TransferMessage;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
@@ -21,12 +21,15 @@ import java.util.concurrent.ExecutionException;
 public class RestAPI {
 
 
+
     private final BalanceProducer balanceProducer;
     private final TransferFundsProducer transferFundsProducer;
+    private final WebClient webClient;
 
-    public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer) {
+    public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer, final WebClient webClient) {
         this.balanceProducer = balanceProducer;
         this.transferFundsProducer = transferFundsProducer;
+        this.webClient = webClient;
     }
 
 
@@ -46,6 +49,22 @@ public class RestAPI {
         transferMessage.setMessage_id(Math.abs(UUID.randomUUID().getMostSignificantBits()));
         return transferFundsProducer.sendTransferMessage(transferMessage);
     }
+
+
+    @GetMapping(value = "transfer/status/{key}")
+    public String getTransferStatus(@PathVariable final String key) {
+        return webClient
+                .get()
+                .uri("/" + key)
+                .retrieve()
+                .toEntity(String.class)
+                .block().getBody();
+
+    }
+
+
+
+
 
 
 
