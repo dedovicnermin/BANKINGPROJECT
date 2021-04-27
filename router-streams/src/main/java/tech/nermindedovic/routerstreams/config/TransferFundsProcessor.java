@@ -90,7 +90,7 @@ public class TransferFundsProcessor {
     // ONE ROUTING NUMBER PRESENT
     private void sendDirectlyToBank(final String transferMessageXML, TransferMessageParser transferMessageParser) {
         String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + transferMessageParser.getMatchingRoute();
-        Message<String> message = MessageBuilder.withPayload(transferMessageXML).build();
+        Message<String> message = MessageBuilder.withPayload(transferMessageXML).setHeader(KafkaHeaders.MESSAGE_KEY, transferMessageParser.retrieveMessageId().toString().getBytes(StandardCharsets.UTF_8)).build();
         streamBridge.send(topic, message);
     }
 
@@ -113,28 +113,36 @@ public class TransferFundsProcessor {
 
 
     @Bean
-    public Consumer<TransferValidation> validationConsumer() {
-        return transferValidation -> {
-
-            switch (transferValidation.getCurrentLeg()) {
+    public Consumer<Message<TransferValidation>> validationConsumer() {
+        return message -> {
+            TransferValidation validation = message.getPayload();
+            switch (validation.getCurrentLeg()) {
                 case 1:
                     // Initial state - has not been sent to any banks yet
-                    streamBridge.send(VALIDATE_USER + transferValidation.getDebtorAccount().getRoutingNumber(), MessageBuilder.withPayload(transferValidation.toJsonString()).build());
+                    streamBridge.send(VALIDATE_USER + validation.getDebtorAccount().getRoutingNumber(),
+                            MessageBuilder
+                                    .withPayload(validation.toJsonString())
+                                    .setHeader(KafkaHeaders.MESSAGE_KEY, validation.getMessageId().toString().getBytes())
+                                    .build());
+
                     break;
                 case 2:
                     // debtor bank has responded and is content with user data and amount
-                    streamBridge.send(VALIDATE_USER + transferValidation.getCreditorAccount().getRoutingNumber(), MessageBuilder.withPayload(transferValidation.toJsonString()).build());
+                    streamBridge.send(VALIDATE_USER + validation.getCreditorAccount().getRoutingNumber(),
+                            MessageBuilder.withPayload(validation.toJsonString())
+                                    .setHeader(KafkaHeaders.MESSAGE_KEY, validation.getMessageId().toString().getBytes())
+                                    .build());
                     break;
                 case 3:
                     // creditor bank has responded and is content with user data
-                    streamBridge.send(FUNDS_SINGLE_ACCOUNT + transferValidation.getDebtorAccount().getRoutingNumber(), transferValidation.getTransferMessage());
-                    streamBridge.send(FUNDS_SINGLE_ACCOUNT + transferValidation.getCreditorAccount().getRoutingNumber(), transferValidation.getTransferMessage());
-                    updateMetrics(transferValidation.getMessageId(), TransferStatus.PERSISTED);
+                    streamBridge.send(FUNDS_SINGLE_ACCOUNT + validation.getDebtorAccount().getRoutingNumber(), validation.getTransferMessage());
+                    streamBridge.send(FUNDS_SINGLE_ACCOUNT + validation.getCreditorAccount().getRoutingNumber(), validation.getTransferMessage());
+                    updateMetrics(validation.getMessageId(), TransferStatus.PERSISTED);
                     break;
                 default:
                     // leg is 0. bank could not validate user.
-                    sendToErrorTopic(transferValidation.getTransferMessage());
-                    updateMetrics(transferValidation.getMessageId(), TransferStatus.FAIL);
+                    sendToErrorTopic(validation.getTransferMessage());
+                    updateMetrics(validation.getMessageId(), TransferStatus.FAIL);
             }
         };
     }

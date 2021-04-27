@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
@@ -144,7 +145,7 @@ class TransferFundsProcessorTest {
     @Test
     void onIncomingTransferMessageXML_whenContainsMatchingRoutingNumber_willRouteDirectlyToBankWith111() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-initial-direct", "false", embeddedKafkaBroker);
-        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties("funds.transfer.111");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
@@ -194,7 +195,7 @@ class TransferFundsProcessorTest {
     @Test
     void onIncomingTransferMessageXML_whenContainsMatchingRoutingNumber_willRouteDirectlyToBankWith222() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-initial-direct-222", "false", embeddedKafkaBroker);
-        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties("funds.transfer.222");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
@@ -242,7 +243,7 @@ class TransferFundsProcessorTest {
     @Test
     void onDifferentRoutes_leg1_willSendToDebtorRouteForValidation() throws InterruptedException {
         TransferValidation transferValidation = TransferValidation.builder()
-                .messageId(8785179)
+                .messageId(8785179L)
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(1)
                 .transferMessage(xmlWithDiffRoutes)
@@ -251,7 +252,7 @@ class TransferFundsProcessorTest {
                 .build();
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-leg1", "false", embeddedKafkaBroker);
-        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties("funds.validate.111");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
@@ -287,7 +288,7 @@ class TransferFundsProcessorTest {
     @Test
     void onDifferentRoutes_leg2_willSendToCreditorForValidation() throws InterruptedException {
         TransferValidation transferValidation = TransferValidation.builder()
-                .messageId(8785179)
+                .messageId(8785179L)
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(2)
                 .transferMessage(xmlWithDiffRoutes)
@@ -298,7 +299,7 @@ class TransferFundsProcessorTest {
 
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-leg2", "false", embeddedKafkaBroker);
-        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
         ContainerProperties containerProperties = new ContainerProperties("funds.validate.222");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
@@ -335,7 +336,7 @@ class TransferFundsProcessorTest {
     @Test
     void onDifferentRoutes_leg3_willFanOutXML_toBothBanks() throws InterruptedException {
         TransferValidation transferValidation = TransferValidation.builder()
-                .messageId(8785179)
+                .messageId(8785179L)
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(3)
                 .transferMessage(xmlWithDiffRoutes)
