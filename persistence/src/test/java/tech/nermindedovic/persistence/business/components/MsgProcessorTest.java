@@ -74,7 +74,7 @@ class MsgProcessorTest {
         String json = mapper.writeValueAsString(transferValidation);
 
         doNothing().when(persistenceService).processTransferValidation(transferValidation);
-        assertThat(msgProcessor.processTransferValidation(json)).isEqualTo(json);
+        assertThat(msgProcessor.processTransferValidation(String.valueOf(transferValidation.getMessageId()),json)).isEqualTo(json);
 
 
     }

@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 @JsonRootName("TransferValidation")
 public class TransferValidation {
     @JsonProperty("messageId")
-    private long messageId;
+    private Long messageId;
 
     @JsonProperty("amount")
     private BigDecimal amount;

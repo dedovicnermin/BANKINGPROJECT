@@ -2,6 +2,7 @@ package tech.nermindedovic.persistence.business.components;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.*;
@@ -42,25 +43,32 @@ public class MsgProcessor {
     }
 
 
+
+
     /**
+     * Called when routing numbers in transfer message match
      * bind string to TransferMessage. attempt to persist transaction. else produce error message
      * @param xml of type TransferMessage
+     *
      */
-    public void processTransferRequest(final String xml)  {
+    public void processTransferRequest(final String key, final String xml)  {
         try {
             TransferMessage transferMessage = BankXmlBinder.toTransferMessage(xml);
             persistenceService.validateAndProcessTransferMessage(transferMessage);
-        } catch (JsonProcessingException e) {
-            produceErrorMessage("PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
-        } catch (InvalidTransferMessageException e) {
+            updateState(key, TransferStatus.PERSISTED);
+        } catch (JsonProcessingException | InvalidTransferMessageException e) {
             produceErrorMessage("PERSISTENCE --- "+e.getMessage());
+            updateState(key, TransferStatus.FAIL);
         }
     }
 
 
+
+
     /**
      * bind string to TransferMessage. attempt to persist transaction. else produce error message
      * @param xml of type TransferMessage
+     *
      */
     public void processTransferRequestTwoBanks(final String xml)  {
         try {
@@ -88,15 +96,24 @@ public class MsgProcessor {
 
 
 
-    // TODO : unbindable exception should ensure the currentLeg gets set to 0
-    public String processTransferValidation(final String json) {
+
+    public String processTransferValidation(final String key, String json) {
         try {
             TransferValidation validation = BankXmlBinder.toTransferValidation(json);
             persistenceService.processTransferValidation(validation);
             return BankXmlBinder.toJson(validation);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            updateState(key, TransferStatus.FAIL);
             return json;
+        }
+    }
+
+
+    private void updateState(String messageId, TransferStatus status) {
+        try {
+            kafkaTemplate.send(new ProducerRecord<>(PersistenceTopicNames.OUTBOUND_TRANSFER_STATUS, messageId, status.toJsonString()));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
     }
 

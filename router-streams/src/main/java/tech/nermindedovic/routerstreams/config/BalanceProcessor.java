@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 public class BalanceProcessor {
 
     private final StreamBridge streamBridge;
-
     public BalanceProcessor(final StreamBridge streamBridge) {
         this.streamBridge = streamBridge;
     }
