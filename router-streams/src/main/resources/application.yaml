@@ -29,9 +29,11 @@ spring:
 
 
 
+
+
       kafka:
         binder:
-          headers: correlationId, RecordHeader
+          headers: correlationId
         streams:
           binder:
             configuration:
@@ -41,7 +43,7 @@ spring:
               commit.interval.ms: 1000
             auto-create-topics: true
             brokers: localhost:9092
-            headers: correlationId, RecordHeader
+
 
 
         bindings:
@@ -50,6 +52,8 @@ spring:
           consumeInitialTransfer-in-0:
             enableDlq: true
             dlqName: funds.transfer.error
+
+
 
 
 
