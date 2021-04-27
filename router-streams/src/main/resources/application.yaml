@@ -41,6 +41,11 @@ spring:
         bindings:
           upsertMetric-in-0:
             keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+          consumeInitialTransfer-in-0:
+            enableDlq: true
+            dlqName: funds.transfer.error
+
+
 
 
 

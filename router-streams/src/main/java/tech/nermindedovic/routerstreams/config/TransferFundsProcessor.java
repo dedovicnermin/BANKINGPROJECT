@@ -8,17 +8,19 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.*;
 
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.jdom2.JDOMException;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
-import tech.nermindedovic.routerstreams.MessageParser;
+import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -46,25 +48,30 @@ public class TransferFundsProcessor {
     @Bean
     public Consumer<String> consumeInitialTransfer() {
         return transferMessage -> {
-            MessageParser messageParser = new MessageParser(transferMessage);
-            if (messageParser.getPaymentParty().invalidRoutingNumbersPresent()) {
-                sendToErrorTopic(transferMessage);
-                updateMetrics(messageParser.retrieveMessageId(), TransferStatus.FAIL);
-            } else {
-                switch (messageParser.countRoutingNumbersPresent()) {
-                    case 1:
-                        sendDirectlyToBank(transferMessage, messageParser);
-                        updateMetrics(messageParser.retrieveMessageId(), TransferStatus.PROCESSING);
-                        break;
-                    case 2:
-                        processTransactionParty(transferMessage, messageParser);
-                        updateMetrics(messageParser.retrieveMessageId(), TransferStatus.PROCESSING);
-                        break;
-                    default:
-                        sendToErrorTopic(transferMessage);
-                        updateMetrics(messageParser.retrieveMessageId(), TransferStatus.FAIL);
-                        break;
+            try {
+                TransferMessageParser transferMessageParser = new TransferMessageParser(transferMessage);
+                if (transferMessageParser.getPaymentParty().invalidRoutingNumbersPresent()) {
+                    sendToErrorTopic(transferMessage);
+                    updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.FAIL);
+                } else {
+                    switch (transferMessageParser.countRoutingNumbersPresent()) {
+                        case 1:
+                            sendDirectlyToBank(transferMessage, transferMessageParser);
+                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.PROCESSING);
+                            break;
+                        case 2:
+                            processTransactionParty(transferMessage, transferMessageParser);
+                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.PROCESSING);
+                            break;
+                        default:
+                            sendToErrorTopic(transferMessage);
+                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.FAIL);
+                            break;
+                    }
                 }
+            }  catch (JDOMException | IOException e) {
+                e.printStackTrace();
+                sendToErrorTopic(transferMessage);
             }
         };
     }
@@ -81,19 +88,19 @@ public class TransferFundsProcessor {
 
 
     // ONE ROUTING NUMBER PRESENT
-    private void sendDirectlyToBank(final String transferMessageXML, MessageParser messageParser) {
-        String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + messageParser.getMatchingRoute();
+    private void sendDirectlyToBank(final String transferMessageXML, TransferMessageParser transferMessageParser) {
+        String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + transferMessageParser.getMatchingRoute();
         Message<String> message = MessageBuilder.withPayload(transferMessageXML).build();
         streamBridge.send(topic, message);
-        log.info("SEND DIRECT MESSAGE : " + message);
     }
 
 
-
-    private void processTransactionParty(final String transferMessageXML, final MessageParser messageParser) {
-        PaymentParty paymentParty = messageParser.getPaymentParty();
+    //TWO BANK PREP
+    private void processTransactionParty(final String transferMessageXML, final TransferMessageParser transferMessageParser) {
+        PaymentParty paymentParty = transferMessageParser.getPaymentParty();
         TransferValidation transferValidation = new TransferValidation();
-        transferValidation.setMessageId(messageParser.retrieveMessageId());
+
+        transferValidation.setMessageId(paymentParty.getMessageId());
         transferValidation.setTransferMessage(transferMessageXML);
         transferValidation.setDebtorAccount(paymentParty.getDebtorAccount());
         transferValidation.setCreditorAccount(paymentParty.getCreditorAccount());
