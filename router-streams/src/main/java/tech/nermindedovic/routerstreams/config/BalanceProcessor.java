@@ -28,8 +28,10 @@ public class BalanceProcessor {
     public Consumer<String> balanceRequestConsumer() {
         return xml -> {
             try {
+                log.info("ROUTER RECIEVED:" + xml);
                 BalanceMessageParser parser = new BalanceMessageParser(xml);
                 streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + parser.getRoute(), xml);
+                log.info("ROUTER SENDING :" + xml);
             } catch (JDOMException | IOException | InvalidRoutingNumberException e) {
                 log.error(e.getMessage());
                 streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_RETURN_TOPIC, RouterAppUtils.BALANCE_ERROR_XML);

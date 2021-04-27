@@ -10,6 +10,7 @@ spring:
       function:
         definition: consumeInitialTransfer;validationConsumer;upsertMetric;balanceRequestConsumer
 #        ;supplyTransferStatus
+
       bindings:
         upsertMetric-in-0:
           destination: funds.transfer.status
@@ -27,7 +28,10 @@ spring:
 
 
 
+
       kafka:
+        binder:
+          headers: correlationId, RecordHeader
         streams:
           binder:
             configuration:
@@ -37,6 +41,8 @@ spring:
               commit.interval.ms: 1000
             auto-create-topics: true
             brokers: localhost:9092
+            headers: correlationId, RecordHeader
+
 
         bindings:
           upsertMetric-in-0:
