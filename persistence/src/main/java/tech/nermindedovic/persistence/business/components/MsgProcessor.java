@@ -62,7 +62,7 @@ public class MsgProcessor {
      * bind string to TransferMessage. attempt to persist transaction. else produce error message
      * @param xml of type TransferMessage
      */
-    public void processTransferRequestWithSingleUser(final String xml)  {
+    public void processTransferRequestTwoBanks(final String xml)  {
         try {
             TransferMessage transferMessage = BankXmlBinder.toTransferMessage(xml);
             long accountNumberReference = retrieveNativeAccount(transferMessage);

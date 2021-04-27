@@ -59,7 +59,7 @@ public class PersistenceService {
     }
 
 
-    // == FUNDS TRANSFER ==
+
 
 
     /**
@@ -87,7 +87,7 @@ public class PersistenceService {
     }
 
 
-    // TODO: test processTransferValidation
+
     public void processTransferValidation(@NotNull final TransferValidation transferValidation) {
         switch (transferValidation.getCurrentLeg()) {
             case 1:

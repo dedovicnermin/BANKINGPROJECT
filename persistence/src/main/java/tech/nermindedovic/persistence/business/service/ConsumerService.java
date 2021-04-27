@@ -68,7 +68,7 @@ public class ConsumerService {
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleSingleUserFundsTransferRequest(@NotNull final String xml) {
-        processor.processTransferRequestWithSingleUser(xml);
+        processor.processTransferRequestTwoBanks(xml);
     }
 
 
