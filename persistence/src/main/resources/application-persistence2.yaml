@@ -1,0 +1,32 @@
+
+server:
+  port: 8085
+spring:
+  datasource:
+    password: postgres
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/BANK2
+    username: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      groupId: persistence2
+
+
+
+
+
+
+persistence-topics:
+  INBOUND_TRANSFER_REQUEST: funds.transfer.222
+  INBOUND_TRANSFER_VALIDATION: funds.validate.222
+  INBOUND_TRANSFER_SINGLE_USER: funds.transfer.single.222
+  INBOUND_BALANCE_REQUEST: balance.update.request.222
+  OUTBOUND_TRANSFER_ERRORS: funds.transfer.error
+  OUTBOUND_TRANSFER_STATUS: funds.transfer.status
+  OUTBOUND_ROUTER_VALIDATION: router.validate.transfer
+  OUTBOUND_BALANCE_RESPONSE: balance.update.response
+
