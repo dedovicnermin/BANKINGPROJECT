@@ -32,6 +32,7 @@ import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, PersistenceTopicNames.INBOUND_BALANCE_REQUEST, KafkaIntegrationTest.OUTBOUND_BALANCE, PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION})
+@EmbeddedKafka(partitions = 1, topics = {KafkaIntegrationTest.OUTBOUND_TRANSFER_ERRORS, KafkaIntegrationTest.INBOUND_BALANCE_REQUEST, KafkaIntegrationTest.OUTBOUND_BALANCE_RESPONSE, KafkaIntegrationTest.INBOUND_TRANSFER_SINGLE_USER, KafkaIntegrationTest.INBOUND_TRANSFER_VALIDATION, KafkaIntegrationTest.OUTBOUND_ROUTER_VALIDATION, KafkaIntegrationTest.INBOUND_TRANSFER_REQUEST})
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -68,7 +69,17 @@ class KafkaIntegrationTest {
 
 
 
-    public static final String OUTBOUND_BALANCE = "balance.update.response";
+
+    public static final String OUTBOUND_TRANSFER_ERRORS = "funds.transfer.error";
+    public static final String OUTBOUND_ROUTER_VALIDATION = "router.validate.transfer";
+    public static final String INBOUND_TRANSFER_REQUEST = "funds.transfer.111";
+    public static final String INBOUND_TRANSFER_SINGLE_USER = "funds.transfer.single.111";
+    public static final String INBOUND_TRANSFER_VALIDATION = "funds.validate.111";
+    public static final String INBOUND_BALANCE_REQUEST = "balance.update.request.111";
+    public static final String OUTBOUND_BALANCE_RESPONSE = "balance.update.response";
+
+
+
 
     private BlockingQueue<ConsumerRecord<String, String>> records;
     private KafkaMessageListenerContainer<String, String> container;
@@ -85,7 +96,7 @@ class KafkaIntegrationTest {
     void setup() {
         Map<String, Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test-transfer-request", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new StringDeserializer());
-        ContainerProperties containerProperties = new ContainerProperties(PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS);
+        ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TRANSFER_ERRORS);
         error_container = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
         error_records = new LinkedBlockingQueue<>();
         error_container.setupMessageListener((MessageListener<String, String>) error_records::add);
@@ -101,7 +112,7 @@ class KafkaIntegrationTest {
 
         Map<String, Object> consumerConfigBalance = new HashMap<>(KafkaTestUtils.consumerProps("test-balance-request", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory1 = new DefaultKafkaConsumerFactory<>(consumerConfigBalance, new StringDeserializer(), new StringDeserializer());
-        ContainerProperties containerProperties1 = new ContainerProperties(OUTBOUND_BALANCE);
+        ContainerProperties containerProperties1 = new ContainerProperties(OUTBOUND_BALANCE_RESPONSE);
         container = new KafkaMessageListenerContainer<>(consumerFactory1, containerProperties1);
         records = new LinkedBlockingQueue<>();
         container.setupMessageListener((MessageListener<String, String>) records::add);
@@ -112,7 +123,7 @@ class KafkaIntegrationTest {
 
         Map<String, Object> validationConsumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test-transfer-validation", "false", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, String> consumerFactory2 = new DefaultKafkaConsumerFactory<>(validationConsumerConfig, new StringDeserializer(), new StringDeserializer());
-        ContainerProperties containerProperties2 = new ContainerProperties(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION);
+        ContainerProperties containerProperties2 = new ContainerProperties(OUTBOUND_ROUTER_VALIDATION);
         validationContainer = new KafkaMessageListenerContainer<>(consumerFactory2, containerProperties2);
         validationRecords = new LinkedBlockingQueue<>();
         validationContainer.setupMessageListener((MessageListener<String, String>) validationRecords::add);
@@ -144,10 +155,10 @@ class KafkaIntegrationTest {
         accountRepository.save(new Account(22,22,"Ken", BigDecimal.TEN));
 
 
-        TransferMessage transferMessage = new TransferMessage(100, new Creditor(11, 11), new Debtor(22,22), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
+        TransferMessage transferMessage = new TransferMessage(100L, new Creditor(11, 11), new Debtor(22,22), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
 
-        producer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, Long.toString(100), xml));
+        producer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, Long.toString(100), xml));
         producer.flush();
 
         //check error consumer is empty
@@ -175,7 +186,7 @@ class KafkaIntegrationTest {
         TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,1L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
 
-        producer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, xml));
+        producer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, xml));
         producer.flush();
 
         //check error consumer is not empty
@@ -195,7 +206,7 @@ class KafkaIntegrationTest {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, Long> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new LongSerializer()).createProducer();
 
-        myProducer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, 20L));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, 20L));
         myProducer.flush();
 
         //check error consumer is not empty
@@ -221,11 +232,11 @@ class KafkaIntegrationTest {
 
 
 
-        myProducer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, xml));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_SINGLE_USER, xml));
         myProducer.flush();
 
 
-        Thread.sleep(8000);
+        Thread.sleep(10000);
         Optional<Transaction> transaction = transactionRepository.findById(messageId);
         assertThat(transaction).isPresent();
         assertThat(transaction.get()).isEqualTo(new Transaction(messageId, 779, 345, new BigDecimal("1.00"), date,  "Here's one dollar"));
@@ -262,7 +273,7 @@ class KafkaIntegrationTest {
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
 
-        myProducer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, json));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_VALIDATION, messageId+"",json));
         myProducer.flush();
 
         transferValidation.setCurrentLeg(2);
@@ -298,7 +309,7 @@ class KafkaIntegrationTest {
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
 
-        myProducer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, json));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_VALIDATION, json));
         myProducer.flush();
 
         transferValidation.setCurrentLeg(0);
@@ -335,7 +346,7 @@ class KafkaIntegrationTest {
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
 
-        myProducer.send(new ProducerRecord<>(PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, json));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_VALIDATION, json));
         myProducer.flush();
 
         transferValidation.setCurrentLeg(0);
@@ -369,8 +380,8 @@ class KafkaIntegrationTest {
         BalanceMessage balanceMessage = new BalanceMessage(11, 11, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
 
-        ProducerRecord<String, String> record = new ProducerRecord<>(PersistenceTopicNames.INBOUND_BALANCE_REQUEST, balanceMessageXML);
-        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE.getBytes());
+        ProducerRecord<String, String> record = new ProducerRecord<>(INBOUND_BALANCE_REQUEST, balanceMessageXML);
+        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE_RESPONSE.getBytes());
 
         producer.send(record);
         producer.flush();
@@ -387,8 +398,8 @@ class KafkaIntegrationTest {
     void test_balanceMessages_willReplyWithGenericBalanceMessage_whenAccountNonExistent() throws JsonProcessingException, InterruptedException {
         BalanceMessage balanceMessage = new BalanceMessage(0, 0, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
-        ProducerRecord<String, String> record = new ProducerRecord<>(PersistenceTopicNames.INBOUND_BALANCE_REQUEST, balanceMessageXML);
-        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE.getBytes());
+        ProducerRecord<String, String> record = new ProducerRecord<>(INBOUND_BALANCE_REQUEST, balanceMessageXML);
+        record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE_RESPONSE.getBytes());
 
         producer.send(record);
         producer.flush();

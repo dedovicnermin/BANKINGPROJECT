@@ -83,7 +83,7 @@ class TransferFundsIntegrationTest {
     @Test
     void givenValidTransferMessage_willProduceToTransformerTopic() throws ExecutionException, InterruptedException {
         TransferMessage transferMessage = TransferMessage.builder()
-                .message_id(0)
+                .messageId(0)
                 .creditor(new Creditor(1111, 1111))
                 .debtor(new Debtor(2222,2222))
                 .amount(BigDecimal.TEN)

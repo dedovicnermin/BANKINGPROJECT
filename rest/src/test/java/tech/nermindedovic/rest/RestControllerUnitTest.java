@@ -54,7 +54,7 @@ class RestControllerUnitTest {
     void postTransferMessageEvent_withValidTransferMessage() throws Exception {
         //given
         TransferMessage transferMessage = TransferMessage.builder()
-                .message_id(0)
+                .messageId(0)
                 .creditor(new Creditor(1L, 23435352345L))
                 .debtor(new Debtor(2L, 34454534534L))
                 .amount(new BigDecimal("100.00"))

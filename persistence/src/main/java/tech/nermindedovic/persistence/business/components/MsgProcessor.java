@@ -3,13 +3,12 @@ package tech.nermindedovic.persistence.business.components;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
-import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
-
 
 
 @Component
@@ -20,6 +19,13 @@ public class MsgProcessor {
     // == dependency ==
     private final PersistenceService persistenceService;
     private final KafkaTemplate<String, String> kafkaTemplate;
+
+    @Value("${persistence-topics.OUTBOUND_TRANSFER_ERRORS}")
+    private String errorTopic;
+
+    @Value("${persistence-topics.OUTBOUND_TRANSFER_STATUS}")
+    private String transferStatusTopic;
+
 
     // == constructor ==
     public MsgProcessor(PersistenceService persistenceService, KafkaTemplate<String,String> kafkaTemplate) {
@@ -83,6 +89,12 @@ public class MsgProcessor {
         }
     }
 
+
+    /**
+     * Get the account belonging to this bank (routing number 111)
+     * @param transferMessage holding account info
+     * @return account number
+     */
     private long retrieveNativeAccount(TransferMessage transferMessage) {
         Creditor creditor = transferMessage.getCreditor();
         Debtor debtor = transferMessage.getDebtor();
@@ -90,13 +102,13 @@ public class MsgProcessor {
         else return debtor.getAccountNumber();
     }
 
-    private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {
-        return transferMessage.getDebtor().getAccountNumber() == accountNumber;
-    }
 
-
-
-
+    /**
+     * validating native account. To be sent to Router app.
+     * @param key messageId
+     * @param json transferValidation
+     * @return return transferValidation:JSON
+     */
     public String processTransferValidation(final String key, String json) {
         try {
             TransferValidation validation = BankXmlBinder.toTransferValidation(json);
@@ -109,18 +121,27 @@ public class MsgProcessor {
     }
 
 
+    /**
+     * Updates state store found in router app
+     * @param messageId transfer ID
+     * @param status status of transfer
+     */
     private void updateState(String messageId, TransferStatus status) {
         try {
-            kafkaTemplate.send(new ProducerRecord<>(PersistenceTopicNames.OUTBOUND_TRANSFER_STATUS, messageId, status.toJsonString()));
+            kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.toJsonString()));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
     }
 
+    private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {
+        return transferMessage.getDebtor().getAccountNumber() == accountNumber;
+    }
+
 
     private void produceErrorMessage(String errorMessage) {
         log.error("producing error message to funds.transfer.error");
-        kafkaTemplate.send(PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, errorMessage);
+        kafkaTemplate.send(errorTopic, errorMessage);
     }
 
 

@@ -7,6 +7,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
+
 import javax.validation.constraints.NotNull;
 
 
@@ -29,8 +30,9 @@ public class ConsumerService {
      * @return  reply back to transformer application
      *
      */
-    @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "persistence")
-    @SendTo({"balance.update.response"})
+
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_BALANCE_REQUEST, groupId = "${spring.kafka.consumer.groupId}")
+    @SendTo(PersistenceTopicNames.OUTBOUND_BALANCE_RESPONSE)
     public String handleBalanceRequest(@NotNull final String xml) {
         return processor.processBalanceRequest(xml);
     }
@@ -39,11 +41,11 @@ public class ConsumerService {
     /**
      * PRECONDITION: producer has sent an XML message for a funds transfer request
      * POSTCONDITION: producer commits transaction
-     * @param record of key: messageId , value: TransferMessage
+     * @param transferRecord of key: messageId , value: TransferMessage
      */
-    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
-    public void handleFundsTransferRequest(@NotNull ConsumerRecord<String, String> record) {
-        processor.processTransferRequest(record.key(),record.value());
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")
+    public void handleFundsTransferRequest(@NotNull ConsumerRecord<String, String> transferRecord) {
+        processor.processTransferRequest(transferRecord.key(),transferRecord.value());
     }
 
 
@@ -51,23 +53,22 @@ public class ConsumerService {
 
     /**
      * PRE-CONDITION: leg1 / leg2 of router validation.
-     * POST-CONDITION: will verify that account with routing number 111 is valid + send to router to continue processing
-     * @param record of messageId:TransferValidation
+     * @param validationRecord of messageId:TransferValidation
      */
-    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "persistence")
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "${spring.kafka.consumer.groupId}")
     @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
-    public String validateAccount(@NotNull final ConsumerRecord<String, String> record) {
-        return processor.processTransferValidation(record.key(), record.value());
+    public String validateAccount(@NotNull final ConsumerRecord<String, String> validationRecord) {
+        return processor.processTransferValidation(validationRecord.key(), validationRecord.value());
     }
 
 
 
     /**
-     * PRECONDITION: both accounts have been validated already by router, router has reached the final leg
+     * PRECONDITION: both accounts have been validated already by router, router has reached the final leg.
      * POST-CONDITION: delegates to msg processor to be processed
      * @param xml of TransferMessage
      */
-    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "persistence", containerFactory = "nonReplying_ListenerContainerFactory")
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleSingleUserFundsTransferRequest(@NotNull final String xml) {
         processor.processTransferRequestTwoBanks(xml);
     }
