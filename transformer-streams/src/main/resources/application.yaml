@@ -1,4 +1,10 @@
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      client-id: TRANSFORMER-APP
+      properties:
+        bootstrap.servers: localhost:9092
   cloud:
     function:
       definition: processTransfer;processBalanceLeg1;processBalanceLeg2
@@ -28,7 +34,7 @@ spring:
           binder:
             brokers: localhost:9092
             configuration:
-              commit.interval.ms: 100
+              commit.interval.ms: 1000
 
 server:
   port: 8081

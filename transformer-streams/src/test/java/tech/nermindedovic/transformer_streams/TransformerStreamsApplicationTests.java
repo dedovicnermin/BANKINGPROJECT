@@ -11,7 +11,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 @Slf4j
 @SpringBootTest(properties = "spring.cloud.stream.kafka.streams.binder.brokers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka
-class BankProcessorApplicationTests {
+class TransformerStreamsApplicationTests {
 
 	@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 	@Autowired
