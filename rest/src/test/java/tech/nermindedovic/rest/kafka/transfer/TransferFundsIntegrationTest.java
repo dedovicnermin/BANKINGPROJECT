@@ -110,7 +110,7 @@ class TransferFundsIntegrationTest {
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence or transformer when it has been unable to process the request sent"));
         producer.flush();
 
-        Mockito.verify(transferErrorConsumer, timeout(5000).times(1)).listen(anyString());
+        Mockito.verify(transferErrorConsumer, timeout(8000).times(1)).listen(anyString());
 
         producer.close();
     }
