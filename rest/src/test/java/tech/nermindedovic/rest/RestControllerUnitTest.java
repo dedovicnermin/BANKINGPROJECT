@@ -23,10 +23,12 @@ import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.concurrent.ExecutionException;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +50,8 @@ class RestControllerUnitTest {
 
     @MockBean
     WebClient webClient;
+
+
 
 
     @Test
@@ -113,4 +117,46 @@ class RestControllerUnitTest {
                 .content(""))
                 .andExpect(status().isBadRequest());
     }
+
+
+
+    @Test
+    void getBalanceUpdateTest_willSetErrorsToTrue_andReturnPassedContent_OnTimeOutForReply() throws Exception {
+        //given
+        BalanceMessage balanceMessage = new BalanceMessage(123, 111, "", false);
+
+
+        //when
+        when(balanceProducer.sendAndReceive(balanceMessage)).thenThrow(ExecutionException.class);
+
+        String actualJson = mockMvc.perform(post("/balance")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(balanceMessage)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+
+        balanceMessage.setErrors(true);
+        assertThat(actualJson).isEqualTo(mapper.writeValueAsString(balanceMessage));
+    }
+
+
+
+
+
+
+
+    @Test
+    void gettingTransferStatus_willReturnString() throws Exception {
+        // TODO : figure out how to test
+        RestAPI api = mock(RestAPI.class);
+        when(api.getTransferStatus("123")).thenReturn("PERSISTED");
+
+        assertThat(api.getTransferStatus("123")).isEqualTo("PERSISTED");
+
+
+
+    }
+
+
 }

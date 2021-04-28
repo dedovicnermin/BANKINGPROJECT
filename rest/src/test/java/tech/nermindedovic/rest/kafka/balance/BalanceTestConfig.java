@@ -3,9 +3,13 @@ package tech.nermindedovic.rest.kafka.balance;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -15,6 +19,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
+import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.test.annotation.DirtiesContext;
@@ -25,12 +30,16 @@ import java.util.Map;
 
 @TestConfiguration
 @DirtiesContext
+@EmbeddedKafka(partitions = 1, topics = BalanceMessageIntegrationTest.TO_TRANSFORMER)
+@Profile("test")
 public class BalanceTestConfig {
 
 
         @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-        @Autowired
+        @Autowired(required = false)
         private EmbeddedKafkaBroker embeddedKafkaBroker;
+
+
 
         @Bean
         public DefaultKafkaProducerFactory<String, BalanceMessage> pf() {
@@ -70,6 +79,8 @@ public class BalanceTestConfig {
             balanceMessage.setBalance("10.00");
             return balanceMessage;
         }
+
+
 
 
 
