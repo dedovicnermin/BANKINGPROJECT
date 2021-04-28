@@ -1,6 +1,8 @@
 # BANKINGPROJECT  
 [![Build Status](https://travis-ci.com/dedovicnermin/BANKINGPROJECT.svg?branch=master)](https://travis-ci.com/dedovicnermin/BANKINGPROJECT)
 
+[![codecov](https://codecov.io/gh/dedovicnermin/BANKINGPROJECT/branch/master/graph/badge.svg?token=3STMF7Q3L3)](https://codecov.io/gh/dedovicnermin/BANKINGPROJECT)
+
 ## End points:
 1. /balance - returns the current balance
 2. /funds/transfer - sends a request to transfer funds between two users
