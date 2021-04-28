@@ -30,3 +30,4 @@ persistence-topics:
   OUTBOUND_ROUTER_VALIDATION: router.validate.transfer
   OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
+routing-number: 111

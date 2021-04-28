@@ -27,6 +27,9 @@ public class MsgProcessor {
     private String transferStatusTopic;
 
 
+    @Value("${routing-number}")
+    private long routingNumber;
+
     // == constructor ==
     public MsgProcessor(PersistenceService persistenceService, KafkaTemplate<String,String> kafkaTemplate) {
         this.persistenceService = persistenceService;
@@ -91,14 +94,14 @@ public class MsgProcessor {
 
 
     /**
-     * Get the account belonging to this bank (routing number 111)
+     * Get the account belonging to this bank (routing number 111 || 222)
      * @param transferMessage holding account info
      * @return account number
      */
     private long retrieveNativeAccount(TransferMessage transferMessage) {
         Creditor creditor = transferMessage.getCreditor();
         Debtor debtor = transferMessage.getDebtor();
-        if (creditor.getRoutingNumber() == 111L) return creditor.getAccountNumber();
+        if (creditor.getRoutingNumber() == routingNumber) return creditor.getAccountNumber();
         else return debtor.getAccountNumber();
     }
 

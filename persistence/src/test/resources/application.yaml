@@ -35,3 +35,4 @@ persistence-topics:
   OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
 
+routing-number: 111
