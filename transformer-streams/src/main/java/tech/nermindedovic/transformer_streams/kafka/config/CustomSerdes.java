@@ -7,7 +7,7 @@ import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
 import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
 
 
-public final class CustomSerdes {
+final class CustomSerdes {
 
     public static final class TransferMessageSerde extends Serdes.WrapperSerde<TransferMessage> {
         public TransferMessageSerde() {

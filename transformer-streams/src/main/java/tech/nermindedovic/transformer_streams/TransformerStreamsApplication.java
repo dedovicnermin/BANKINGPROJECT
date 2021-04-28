@@ -8,11 +8,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-public class BankProcessorApplication {
+public class TransformerStreamsApplication {
 
 
 	public static void main(String[] args) {
-		SpringApplication.run(BankProcessorApplication.class, args);
+		SpringApplication.run(TransformerStreamsApplication.class, args);
 	}
 
 
