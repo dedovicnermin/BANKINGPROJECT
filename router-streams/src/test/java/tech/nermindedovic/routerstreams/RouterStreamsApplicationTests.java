@@ -1,5 +1,6 @@
 package tech.nermindedovic.routerstreams;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -16,6 +17,7 @@ class RouterStreamsApplicationTests {
 
 	@Test
 	void contextLoads() {
+		Assertions.assertDoesNotThrow(() -> RouterStreamsApplication.main(new String[] {}));
 	}
 
 }
