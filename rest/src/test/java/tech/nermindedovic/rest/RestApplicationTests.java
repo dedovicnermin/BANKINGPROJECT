@@ -1,5 +1,6 @@
 package tech.nermindedovic.rest;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -12,7 +13,7 @@ class RestApplicationTests {
 
 	@Test
 	void contextLoads() {
+		Assertions.assertDoesNotThrow(() -> RestApplication.main(new String[] {}));
 	}
 
 }
-//, topics = {"funds.transfer.error","funds.transformer.request","balance.transformer.response","balance.transformer.request"}
