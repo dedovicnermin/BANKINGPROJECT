@@ -82,6 +82,7 @@ public class PersistenceService {
      * @throws InvalidTransferMessageException message already exists
      */
     public void processTwoBankTransferMessage(@NotNull final TransferMessage transferMessage, long accountNumber, boolean isDebtor) throws InvalidTransferMessageException {
+        log.info("TWO BANK TRANSFER");
         enterTwoBankTransaction(transferMessage);
         updateAccountBalance(accountNumber, transferMessage.getAmount(), isDebtor);
 
