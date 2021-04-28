@@ -29,7 +29,7 @@ public class TransferFundsProducer {
         ListenableFuture<SendResult<String, TransferMessage>> future = transferMessageTemplate.send(record);
         future.addCallback(createTransferCallBack());
         SendResult<String, TransferMessage> result = future.completable().get();
-        long messageId = result.getProducerRecord().value().getMessage_id();
+        long messageId = result.getProducerRecord().value().getMessageId();
         return result.getRecordMetadata().hasOffset() ? String.format("Message (%d) has been sent successfully.", messageId) : String.format("Message (%d) was not able to successfully send", messageId);
 
     }
@@ -44,7 +44,7 @@ public class TransferFundsProducer {
 
             @Override
             public void onSuccess(SendResult<String, TransferMessage> stringTransferMessageSendResult) {
-                log.info("Message with ID {} has successfully sent, with offset ({}) and partition ({}).", stringTransferMessageSendResult.getProducerRecord().value().getMessage_id(), stringTransferMessageSendResult.getRecordMetadata().offset(), stringTransferMessageSendResult.getRecordMetadata().partition());
+                log.info("Message with ID {} has successfully sent, with offset ({}) and partition ({}).", stringTransferMessageSendResult.getProducerRecord().value().getMessageId(), stringTransferMessageSendResult.getRecordMetadata().offset(), stringTransferMessageSendResult.getRecordMetadata().partition());
             }
         };
     }

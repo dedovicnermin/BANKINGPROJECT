@@ -8,7 +8,7 @@ import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, PersistenceTopicNames.INBOUND_BALANCE_REQUEST, "balance.update.response"})
+@EmbeddedKafka(partitions = 1, topics = {PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, PersistenceTopicNames.OUTBOUND_TRANSFER_ERRORS, PersistenceTopicNames.INBOUND_BALANCE_REQUEST, PersistenceTopicNames.OUTBOUND_BALANCE_RESPONSE})
 @DirtiesContext
 class PersistenceApplicationTests {
 

@@ -5,12 +5,6 @@
 
 
 
-<!--	<parent>-->
-<!--		<groupId>org.springframework.boot</groupId>-->
-<!--		<artifactId>spring-boot-starter-parent</artifactId>-->
-<!--		<version>2.4.4</version>-->
-<!--		<relativePath/> &lt;!&ndash; lookup parent from repository &ndash;&gt;-->
-<!--	</parent>-->
 
 
 	<parent>
@@ -104,8 +98,14 @@
 			<artifactId>validation-api</artifactId>
 		</dependency>
 
+
+
+
+
 	</dependencies>
 
+
+	<packaging>jar</packaging>
 
 
 </project>

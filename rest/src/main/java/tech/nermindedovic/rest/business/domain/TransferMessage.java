@@ -30,7 +30,7 @@ public class TransferMessage {
 
 
     @JsonProperty("messageId")
-    private long message_id;
+    private long messageId;
 
     @Valid
     @NotNull

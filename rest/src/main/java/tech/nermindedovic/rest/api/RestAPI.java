@@ -2,7 +2,6 @@ package tech.nermindedovic.rest.api;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -46,7 +45,7 @@ public class RestAPI {
 
     @PostMapping(value = "funds/transfer", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String fundsTransferRequest( @RequestBody @Valid TransferMessage transferMessage) throws ExecutionException, InterruptedException {
-        transferMessage.setMessage_id(Math.abs(UUID.randomUUID().getMostSignificantBits()));
+        transferMessage.setMessageId(Math.abs(UUID.randomUUID().getMostSignificantBits()));
         return transferFundsProducer.sendTransferMessage(transferMessage);
     }
 

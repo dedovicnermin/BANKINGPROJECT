@@ -14,7 +14,7 @@ spring:
   kafka:
     consumer:
       auto-offset-reset: latest
-      group-id: persistence
+      groupId: persistence
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -24,14 +24,14 @@ spring:
     topic: embedded-test-topic
 
 
-balance:
-  request:
-    topic: balance.update.request
-  response:
-    topic: balance.update.response
-funds:
-  transfer:
-    request:
-      topic: funds.transfer.request
+persistence-topics:
+  INBOUND_TRANSFER_REQUEST: funds.transfer.111
+  INBOUND_TRANSFER_VALIDATION: funds.validate.111
+  INBOUND_TRANSFER_SINGLE_USER: funds.transfer.single.111
+  INBOUND_BALANCE_REQUEST: balance.update.request.111
+  OUTBOUND_TRANSFER_ERRORS: funds.transfer.error
+  OUTBOUND_TRANSFER_STATUS: funds.transfer.status
+  OUTBOUND_ROUTER_VALIDATION: router.validate.transfer
+  OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
 
