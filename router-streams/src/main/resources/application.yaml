@@ -3,8 +3,7 @@ spring:
     bootstrap-servers: localhost:9092
     admin:
       client-id: ROUTING-APP
-      properties:
-        bootstrap.servers: localhost:9092
+
   cloud:
     stream:
       function:
@@ -32,8 +31,6 @@ spring:
 
 
       kafka:
-        binder:
-          headers: correlationId
         streams:
           binder:
             configuration:
@@ -42,7 +39,7 @@ spring:
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               commit.interval.ms: 1000
             auto-create-topics: true
-            brokers: localhost:9092
+
 
 
 
@@ -69,7 +66,7 @@ spring:
 
 server:
   port: 8084
-spring.cloud.stream.kafka.streams.binder.applicationId: ROUTING-APP
+
 
 logging:
   level: debug
