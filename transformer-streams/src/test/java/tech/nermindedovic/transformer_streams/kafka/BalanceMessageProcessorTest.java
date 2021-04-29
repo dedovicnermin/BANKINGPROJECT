@@ -4,13 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,6 +98,10 @@ class BalanceMessageProcessorTest {
         container.stop();
     }
 
+
+
+
+
     @Test
     @DisplayName("=== PERSISTENCE (XML String)  ->  TRANSFORMER  ->  REST (BalanceMessage POJO) ===")
     void processBalanceLeg2() throws JsonProcessingException, InterruptedException {
@@ -136,6 +134,13 @@ class BalanceMessageProcessorTest {
 
         container.stop();
     }
+
+
+
+
+
+
+
 
 
 }

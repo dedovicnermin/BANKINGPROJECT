@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class BalanceMessageProcessor {
 
 
-    private final XmlMapper mapper = new XmlMapper();
+    private static final XmlMapper mapper = new XmlMapper();
 
     @Bean
     public Function<KStream<String, BalanceMessage>, KStream<String, String>> processBalanceLeg1() {
@@ -25,8 +25,7 @@ public class BalanceMessageProcessor {
                     try {
                         return mapper.writeValueAsString(val);
                     } catch (JsonProcessingException exception) {
-                        exception.printStackTrace();
-                        return null;
+                        return val.toString();
                     }
                 });
     }
@@ -38,7 +37,6 @@ public class BalanceMessageProcessor {
             try {
                 return mapper.readValue(val, BalanceMessage.class);
             } catch (JsonProcessingException exception) {
-                exception.printStackTrace();
                 return null;
             }
         });
