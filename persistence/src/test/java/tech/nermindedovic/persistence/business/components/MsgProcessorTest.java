@@ -1,13 +1,14 @@
 package tech.nermindedovic.persistence.business.components;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
 import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.TransferValidation;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
@@ -54,15 +55,12 @@ class MsgProcessorTest {
         //then
         assertThat(msgProcessor.processBalanceRequest(balanceXML)).isEqualTo(expected);
     }
-
-
-
-
+    ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void processTransferValidation() throws JsonProcessingException {
+    void processTransferValidation() throws com.fasterxml.jackson.core.JsonProcessingException {
         //given valid TransferValidation
-        ObjectMapper mapper = new ObjectMapper();
+
         TransferValidation transferValidation = TransferValidation.builder()
                 .messageId(5445)
                 .currentLeg(1)
@@ -76,6 +74,17 @@ class MsgProcessorTest {
         doNothing().when(persistenceService).processTransferValidation(transferValidation);
         assertThat(msgProcessor.processTransferValidation(String.valueOf(transferValidation.getMessageId()),json)).isEqualTo(json);
 
-
     }
+
+    @Test
+    void processTransferValidation_fail() throws JsonProcessingException {
+        TransferValidation transferValidation = new TransferValidation();
+        String json = mapper.writeValueAsString(transferValidation);
+        assertThat(msgProcessor.processTransferValidation("123", json)).isEqualTo(json);
+    }
+
+
+
+
+
 }

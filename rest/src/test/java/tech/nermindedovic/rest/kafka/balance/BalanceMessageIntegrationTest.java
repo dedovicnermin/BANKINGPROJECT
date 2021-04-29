@@ -8,9 +8,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import tech.nermindedovic.rest.api.RestAPI;
 import tech.nermindedovic.rest.business.domain.BalanceMessage;
 
@@ -20,6 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers")
 @EmbeddedKafka(partitions = 1, topics = {BalanceMessageIntegrationTest.TO_TRANSFORMER, BalanceMessageIntegrationTest.FROM_TRANSFORMER})
+@Profile("test")
+@ActiveProfiles("test")
 @DirtiesContext
 @Import(BalanceTestConfig.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
