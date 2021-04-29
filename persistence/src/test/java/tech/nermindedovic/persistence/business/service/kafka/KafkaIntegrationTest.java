@@ -30,7 +30,7 @@ import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
-import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
+
 
 
 import java.math.BigDecimal;
@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
@@ -206,7 +207,7 @@ class KafkaIntegrationTest {
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, Long> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new LongSerializer()).createProducer();
 
-        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, 20L));
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, "key",20L));
         myProducer.flush();
 
         //check error consumer is not empty
@@ -238,12 +239,15 @@ class KafkaIntegrationTest {
 
         Thread.sleep(10000);
         Optional<Transaction> transaction = transactionRepository.findById(messageId);
-        assertThat(transaction).isPresent();
-        assertThat(transaction.get()).isEqualTo(new Transaction(messageId, 779, 345, new BigDecimal("1.00"), date,  "Here's one dollar"));
+        Assertions.assertAll(
+                () -> assertThat(transaction).isPresent(),
+                () -> assertThat(transaction).contains(new Transaction(messageId, 779, 345, new BigDecimal("1.00"), date,  "Here's one dollar")),
+                () -> assertThat(accountRepository.findById(779L)).isNotEmpty(),
+                () -> assertThat(accountRepository.findById(779L).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"))
+        );
 
 
-        assertThat(accountRepository.findById(779L)).isNotEmpty();
-        assertThat(accountRepository.findById(779L).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"));
+
     }
 
 

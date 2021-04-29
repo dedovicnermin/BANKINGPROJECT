@@ -112,7 +112,7 @@ public class MsgProcessor {
      * @param json transferValidation
      * @return return transferValidation:JSON
      */
-    public String processTransferValidation(final String key, String json) {
+    public String processTransferValidation(String key, String json) {
         try {
             TransferValidation validation = BankXmlBinder.toTransferValidation(json);
             persistenceService.processTransferValidation(validation);

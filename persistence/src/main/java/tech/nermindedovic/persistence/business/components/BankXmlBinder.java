@@ -7,7 +7,9 @@ import tech.nermindedovic.persistence.business.doman.BalanceMessage;
 import tech.nermindedovic.persistence.business.doman.TransferMessage;
 import tech.nermindedovic.persistence.business.doman.TransferValidation;
 
-public final class BankXmlBinder {
+public class BankXmlBinder {
+
+    private BankXmlBinder() {}
 
     private static final XmlMapper xmlMapper = new XmlMapper();
     private static final ObjectMapper jsonMapper = new ObjectMapper();
