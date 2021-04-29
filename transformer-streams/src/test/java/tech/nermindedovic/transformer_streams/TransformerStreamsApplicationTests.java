@@ -3,29 +3,25 @@ package tech.nermindedovic.transformer_streams;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 
 
 @Slf4j
-@SpringBootTest(properties = "spring.cloud.stream.kafka.streams.binder.brokers=${spring.embedded.kafka.brokers}")
+@SpringBootTest(properties = {"spring.autoconfigure.exclude="
+		+ "org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration",
+		"spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+		"spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
+})
 @EmbeddedKafka
+@DirtiesContext
 class TransformerStreamsApplicationTests {
-
-	@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-	@Autowired
-	private EmbeddedKafkaBroker embeddedKafkaBroker;
-
-
 
 
 	@Test
 	void contextLoads() {
-		log.info(embeddedKafkaBroker.getBrokersAsString());
 		Assertions.assertDoesNotThrow(() -> TransformerStreamsApplication.main(new String[] {}));
-
 	}
 
 }
