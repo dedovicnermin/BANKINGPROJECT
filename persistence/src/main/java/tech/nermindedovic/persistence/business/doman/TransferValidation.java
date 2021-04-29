@@ -9,7 +9,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import tech.nermindedovic.persistence.data.entity.Account;
+import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
+import tech.nermindedovic.persistence.exception.InvalidTransferValidationException;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Data
@@ -18,32 +23,43 @@ import java.math.BigDecimal;
 @Builder
 @JsonRootName("TransferValidation")
 public class TransferValidation {
-    @JsonProperty("messageId")
+    @JsonProperty(value = "messageId", required = true)
     private long messageId;
 
-    @JsonProperty("amount")
+    @JsonProperty(value = "amount", required = true)
     private BigDecimal amount;
 
     @JsonProperty("currentLeg")
     private int currentLeg = 1;
 
-    @JsonProperty("transferMessage")
+    @JsonProperty(value = "transferMessage", required = true)
     private String transferMessage;
 
-    @JsonProperty("debtorAccount")
+    @JsonProperty(value = "debtorAccount", required = true)
     private Account debtorAccount;
 
-    @JsonProperty("creditorAccount")
+    @JsonProperty(value = "creditorAccount", required = true)
     private Account creditorAccount;
 
 
     public String toJsonString() {
         try {
+            if (!requiredDataIsPresent()) throw new InvalidTransferValidationException("Invalid information provided on TransferValidation.");
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException | InvalidTransferValidationException e) {
             return "error";
         }
+    }
+
+    private boolean requiredDataIsPresent() {
+        return (
+                messageId != 0 &&
+                creditorAccount != null &&
+                debtorAccount != null &&
+                !transferMessage.isEmpty() &&
+                amount != null
+                );
     }
 
 

@@ -6,11 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tech.nermindedovic.persistence.business.doman.BalanceMessage;
-import tech.nermindedovic.persistence.business.doman.Creditor;
-import tech.nermindedovic.persistence.business.doman.Debtor;
-import tech.nermindedovic.persistence.business.doman.TransferMessage;
+import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.data.entity.Account;
+import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import tech.nermindedovic.persistence.data.repository.TransactionRepository;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
@@ -114,6 +112,26 @@ class PersistenceServiceTest {
         // then
         assertDoesNotThrow(() -> persistenceService.validateAndProcessTransferMessage(transferMessage));
     }
+
+
+    @Test
+    void test_enterTransaction_AND_enterTwoBankTransaction_whenTransactionAlreadyExists_willThrowInvalidTransferMessageException() {
+        //given
+        long transactionId = 2000;
+        Creditor creditor = new Creditor(987, 111);
+        Debtor debtor = new Debtor(876, 222);
+        Transaction transaction = new Transaction(transactionId, creditor.getAccountNumber(), debtor.getAccountNumber(), BigDecimal.TEN, LocalDate.now(), "a memo for a transfer already initiated");
+        PaymentParty paymentParty = new PaymentParty(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()),new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()) );
+        final TransferMessage alreadyPersistedTransferMessage = new TransferMessage(transactionId, creditor, debtor,  LocalDate.now(), BigDecimal.TEN, "memo");
+
+        when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(transaction));
+
+        assertThrows(InvalidTransferMessageException.class, () -> persistenceService.enterTransaction(alreadyPersistedTransferMessage, paymentParty));
+        assertThrows(InvalidTransferMessageException.class, () -> persistenceService.enterTwoBankTransaction(alreadyPersistedTransferMessage));
+    }
+
+
+
 
 
 }
