@@ -1,6 +1,7 @@
 package tech.nermindedovic.transformer_streams.kafka;
 
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.kafka.streams.kstream.KStream;
@@ -17,7 +18,10 @@ import java.util.function.Function;
 public class TransferMessageProcessor {
 
 
-    XmlMapper mapper = new XmlMapper();
+    private final XmlMapper mapper;
+    public TransferMessageProcessor(final XmlMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Bean
     public Function<KStream<String, TransferMessage>, KStream<String, String>> processTransfer() {
@@ -28,7 +32,7 @@ public class TransferMessageProcessor {
                         return mapper.writeValueAsString(val);
                     } catch (JsonProcessingException exception) {
                         exception.printStackTrace();
-                        return null;
+                        return val.toString();
                     }
                 });
     }
