@@ -1,8 +1,8 @@
 package tech.nermindedovic.persistence.business.doman;
 
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.nermindedovic.persistence.data.entity.Account;
 
 import java.math.BigDecimal;
