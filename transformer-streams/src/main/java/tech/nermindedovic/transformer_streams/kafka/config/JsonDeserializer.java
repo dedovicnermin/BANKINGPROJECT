@@ -1,7 +1,7 @@
 package tech.nermindedovic.transformer_streams.kafka.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.common.errors.SerializationException;
+import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.Deserializer;
 
 import java.util.Map;
@@ -16,25 +16,16 @@ public class JsonDeserializer<T> implements Deserializer<T> {
         this.tClass = tClass;
     }
 
+    @SneakyThrows
     @Override
     public T deserialize(String s, byte[] bytes) {
         if (bytes == null) return null;
-        T data;
-        try {
-            data = objectMapper.readValue(bytes, tClass);
-        } catch (Exception e) {
-            throw new SerializationException(e);
-        }
-        return data;
+        return objectMapper.readValue(bytes, tClass);
     }
 
     @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
-        // nothing
-    }
+    public void configure(Map<String, ?> configs, boolean isKey) { /*nothing to do here*/ }
 
     @Override
-    public void close() {
-        // nothing
-    }
+    public void close() {/* nothing to do here */}
 }
