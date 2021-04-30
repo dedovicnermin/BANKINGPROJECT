@@ -19,19 +19,19 @@ import java.util.function.Consumer;
 public class BalanceProcessor {
 
     private final StreamBridge streamBridge;
-    public BalanceProcessor(final StreamBridge streamBridge) {
+    private final BalanceMessageParser parser;
+    public BalanceProcessor(final StreamBridge streamBridge, final BalanceMessageParser balanceMessageParser) {
         this.streamBridge = streamBridge;
+        this.parser = balanceMessageParser;
     }
 
 
     @Bean
     public Consumer<Message<String>> balanceRequestConsumer() {
-        return record -> {
+        return balanceMessage -> {
             try {
-                log.info("ROUTER RECIEVED:" + record);
-                BalanceMessageParser parser = new BalanceMessageParser(record.getPayload());
-                streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + parser.getRoute(), record);
-                log.info("ROUTER SENDING :" + record);
+                Long route = parser.getRoute(balanceMessage.getPayload());
+                streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + route, balanceMessage);
             } catch (JDOMException | IOException | InvalidRoutingNumberException e) {
                 log.error(e.getMessage());
                 streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_RETURN_TOPIC, RouterAppUtils.BALANCE_ERROR_XML);

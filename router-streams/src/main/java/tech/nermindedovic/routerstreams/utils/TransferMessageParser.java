@@ -3,6 +3,7 @@ package tech.nermindedovic.routerstreams.utils;
 import lombok.extern.slf4j.Slf4j;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
+import org.springframework.stereotype.Component;
 import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.PaymentParty;
 
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 
 @Slf4j
+@Component
 public class TransferMessageParser {
 
     private static final String DEBTOR           = "debtor";
@@ -24,17 +26,23 @@ public class TransferMessageParser {
     private static final String MESSAGE_ID       = "messageId";
     private static final String AMOUNT           = "amount";
 
-    static final SAXBuilder builder = new SAXBuilder();
+    final SAXBuilder builder;
     private PaymentParty paymentParty;
 
 
 
-    public TransferMessageParser(String xml) throws JDOMException, IOException {
+    public TransferMessageParser(final SAXBuilder saxBuilder)  {
+        this.builder = saxBuilder;
+    }
+
+    public TransferMessageParser build(String xml) throws JDOMException, IOException {
         Document messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Element root = messageDocument.getRootElement();
         paymentParty = createPaymentParty(root);
-
+        return this;
     }
+
+
 
     public PaymentParty getPaymentParty() {
         return paymentParty;
