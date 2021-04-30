@@ -33,3 +33,7 @@ build/
 .vscode/
 
 mvnw*
+.mvn
+mvnw.cmd
+mvnw
+persistence.iml
