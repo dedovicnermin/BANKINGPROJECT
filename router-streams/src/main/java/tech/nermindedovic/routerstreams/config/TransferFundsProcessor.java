@@ -1,5 +1,6 @@
 package tech.nermindedovic.routerstreams.config;
 
+
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
+import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
@@ -33,9 +35,12 @@ public class TransferFundsProcessor {
     public static final String FUNDS_SINGLE_ACCOUNT = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX;
 
     private final StreamBridge streamBridge;
-
-    public TransferFundsProcessor(final StreamBridge streamBridge) {
+    private  final RouterJsonMapper mapper;
+    private final TransferMessageParser parser;
+    public TransferFundsProcessor(final StreamBridge streamBridge, final RouterJsonMapper routerJsonMapper, final TransferMessageParser transferMessageParser) {
         this.streamBridge = streamBridge;
+        this.mapper = routerJsonMapper;
+        this.parser = transferMessageParser;
     }
 
 
@@ -49,7 +54,7 @@ public class TransferFundsProcessor {
     public Consumer<String> consumeInitialTransfer() {
         return transferMessage -> {
             try {
-                TransferMessageParser transferMessageParser = new TransferMessageParser(transferMessage);
+                TransferMessageParser transferMessageParser = parser.build(transferMessage);
                 if (transferMessageParser.getPaymentParty().invalidRoutingNumbersPresent()) {
                     sendToErrorTopic(transferMessage);
                     updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.FAIL);
@@ -64,8 +69,6 @@ public class TransferFundsProcessor {
                             updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.PROCESSING);
                             break;
                         default:
-                            sendToErrorTopic(transferMessage);
-                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.FAIL);
                             break;
                     }
                 }
@@ -121,7 +124,7 @@ public class TransferFundsProcessor {
                     // Initial state - has not been sent to any banks yet
                     streamBridge.send(VALIDATE_USER + validation.getDebtorAccount().getRoutingNumber(),
                             MessageBuilder
-                                    .withPayload(validation.toJsonString())
+                                    .withPayload(mapper.toJsonString(validation))
                                     .setHeader(KafkaHeaders.MESSAGE_KEY, validation.getMessageId().toString().getBytes())
                                     .build());
 
@@ -129,7 +132,7 @@ public class TransferFundsProcessor {
                 case 2:
                     // debtor bank has responded and is content with user data and amount
                     streamBridge.send(VALIDATE_USER + validation.getCreditorAccount().getRoutingNumber(),
-                            MessageBuilder.withPayload(validation.toJsonString())
+                            MessageBuilder.withPayload(mapper.toJsonString(validation))
                                     .setHeader(KafkaHeaders.MESSAGE_KEY, validation.getMessageId().toString().getBytes())
                                     .build());
                     break;

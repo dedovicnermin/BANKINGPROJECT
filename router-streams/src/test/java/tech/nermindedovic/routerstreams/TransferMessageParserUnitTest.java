@@ -2,8 +2,11 @@ package tech.nermindedovic.routerstreams;
 
 import org.jdom2.JDOMException;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.PaymentParty;
+import tech.nermindedovic.routerstreams.config.BeanConfig;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
 
@@ -12,8 +15,11 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest(classes = {BeanConfig.class, TransferMessageParser.class})
 class TransferMessageParserUnitTest {
 
+
+    @Autowired TransferMessageParser transferMessageParser;
 
 
     String GOOD_XML = "<TransferMessage><messageId>1255543</messageId><debtor><accountNumber>123</accountNumber><routingNumber>111</routingNumber></debtor>" +
@@ -30,23 +36,23 @@ class TransferMessageParserUnitTest {
 
     @Test
     void messageParser_willCreateParty() throws JDOMException, IOException {
-        assertThat(new TransferMessageParser(GOOD_XML).getPaymentParty()).isEqualTo(new PaymentParty(1255543, new BigDecimal("10.00"), new Account(123, 111), new Account(345, 222)));
+        assertThat(transferMessageParser.build(GOOD_XML).getPaymentParty()).isEqualTo(new PaymentParty(1255543, new BigDecimal("10.00"), new Account(123, 111), new Account(345, 222)));
     }
 
     @Test
     void messageParser_willReturnCorrectMessageId() throws JDOMException, IOException {
-        assertThat(new TransferMessageParser(GOOD_XML).retrieveMessageId()).isEqualTo(1255543);
+        assertThat(transferMessageParser.build(GOOD_XML).retrieveMessageId()).isEqualTo(1255543);
     }
 
     @Test
     void messageParser_willReturnCorrectCount_ofValidRoutingNumbersPresent() throws JDOMException, IOException {
-        assertThat(new TransferMessageParser(GOOD_XML).countRoutingNumbersPresent()).isEqualTo(2);
+        assertThat(transferMessageParser.build(GOOD_XML).countRoutingNumbersPresent()).isEqualTo(2);
     }
 
 
     @Test
     void messageParser_willGetMatchingRoute_whenMessageContainsSameRoute_forBothParties() throws JDOMException, IOException {
-        assertThat(new TransferMessageParser(MATCHING_ROUTE_MSG).getMatchingRoute()).isEqualTo(111L);
+        assertThat(transferMessageParser.build(MATCHING_ROUTE_MSG).getMatchingRoute()).isEqualTo(111L);
     }
 
 

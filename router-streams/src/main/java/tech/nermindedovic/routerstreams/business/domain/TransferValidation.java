@@ -36,16 +36,4 @@ public class TransferValidation {
     private Account creditorAccount;
 
 
-    public String toJsonString() {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            return "error";
-        }
-    }
-
-
-
-
 }

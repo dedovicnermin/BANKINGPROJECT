@@ -22,8 +22,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -43,6 +45,7 @@ import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.TransferStatus;
 import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
 import tech.nermindedovic.routerstreams.business.service.TransferStatusService;
+import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
@@ -65,11 +68,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @EmbeddedKafka(partitions = 1, topics = {RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_ERROR , RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "111", RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "222", RouterTopicNames.INBOUND_VALIDATION_TOPIC, RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "111", RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "222", RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC})
 @DirtiesContext
+@ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TransferFundsProcessorTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired EmbeddedKafkaBroker embeddedKafkaBroker;
+
+    @SpyBean
+    RouterJsonMapper mapper;
 
 
     @AfterAll
@@ -77,7 +84,7 @@ class TransferFundsProcessorTest {
         embeddedKafkaBroker.destroy();
     }
 
-    String xmlWithInvalidRoutes = "<TransferMessage>" +
+    String xmlWith1InvalidRoute = "<TransferMessage>" +
             "<messageId>8785179</messageId>" +
             "<debtor><accountNumber>123</accountNumber><routingNumber>111</routingNumber></debtor>" +
             "<creditor><accountNumber>567</accountNumber>" +
@@ -110,7 +117,7 @@ class TransferFundsProcessorTest {
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
         template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
-        template.sendDefault(xmlWithInvalidRoutes);
+        template.sendDefault(xmlWith1InvalidRoute);
         template.flush();
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
@@ -118,8 +125,52 @@ class TransferFundsProcessorTest {
         assertThat(consumed.value()).containsIgnoringCase("Error");
 
         container.stop();
+        records.clear();
+
 
     }
+
+
+    @Test
+    void onIncomingTransferMessageXML_whenContainsNoValidRoutingNumbers_willDirectToErrorTopic() throws InterruptedException {
+        String xmlWithInvalidRoutes = "<TransferMessage>" +
+                "<messageId>909833</messageId>" +
+                "<debtor><accountNumber>123</accountNumber><routingNumber>356</routingNumber></debtor>" +
+                "<creditor><accountNumber>567</accountNumber>" +
+                "<routingNumber>900</routingNumber>" +
+                "</creditor>" +
+                "<date>12-12-2020</date>" +
+                "<amount>10.00</amount>" +
+                "<memo>here you go friend</memo>" +
+                "</TransferMessage>";
+
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-error-noValidRouting", "false", embeddedKafkaBroker);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        ContainerProperties containerProperties = new ContainerProperties(RouterTopicNames.OUTBOUND_TRANSFER_ERROR);
+        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
+        final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String, String>) records::add);
+
+        container.setBeanName("errorTests-noValidRouting");
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
+
+        records.clear();
+        Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
+        ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
+        KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
+        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
+        template.sendDefault(xmlWithInvalidRoutes);
+        template.flush();
+
+
+        ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
+        assertThat(consumed).isNotNull();
+        assertThat(consumed.value()).containsSequence(xmlWithInvalidRoutes);
+
+        container.stop();
+    }
+
 
 
 
@@ -272,7 +323,7 @@ class TransferFundsProcessorTest {
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
         assertThat(consumed).isNotNull();
-        assertThat(consumed.value()).isEqualTo(transferValidation.toJsonString());
+        assertThat(consumed.value()).isEqualTo(mapper.toJsonString(transferValidation));
 
         container.stop();
 
@@ -321,7 +372,7 @@ class TransferFundsProcessorTest {
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
         assertThat(consumed).isNotNull();
-        assertThat(consumed.value()).isEqualTo(transferValidation.toJsonString());
+        assertThat(consumed.value()).isEqualTo(mapper.toJsonString(transferValidation));
 
         container.stop();
 
@@ -397,6 +448,51 @@ class TransferFundsProcessorTest {
 
 
 
+    @Test
+    void onDifferentRoutes_defaultSwitchCondition_willSendToCreditorForValidation() throws InterruptedException {
+        TransferValidation transferValidation = TransferValidation.builder()
+                .messageId(8785179L)
+                .amount(new BigDecimal("10.00"))
+                .currentLeg(0)
+                .transferMessage(xmlWithDiffRoutes)
+                .debtorAccount(new Account(123, 111))
+                .creditorAccount(new Account(567, 222))
+                .build();
+
+
+
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-errorLeg", "false", embeddedKafkaBroker);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps, new StringDeserializer(), new StringDeserializer());
+        ContainerProperties containerProperties = new ContainerProperties(RouterTopicNames.OUTBOUND_TRANSFER_ERROR);
+        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
+        final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String, String>) records::add);
+
+        container.setBeanName("errorLeg");
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
+
+
+        Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
+        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        ProducerFactory<String, TransferValidation> pf = new DefaultKafkaProducerFactory<>(producerProps);
+        KafkaTemplate<String,TransferValidation> template = new KafkaTemplate<>(pf);
+        template.setDefaultTopic(RouterTopicNames.INBOUND_VALIDATION_TOPIC);
+        template.sendDefault(transferValidation);
+        template.flush();
+
+
+        ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
+        assertThat(consumed).isNotNull();
+        assertThat(consumed.value()).contains(transferValidation.getTransferMessage());
+
+        container.stop();
+
+
+    }
+
+
+
     @Autowired
     TransferFundsProcessor transferFundsProcessor;
 
@@ -406,7 +502,7 @@ class TransferFundsProcessorTest {
         final StreamsBuilder streamsBuilder = new StreamsBuilder();
         final Serde<String> stringSerde = Serdes.String();
 
-//        final KStream<String, TransferStatus> stream = streamsBuilder.stream("funds.transfer.status", Consumed.with(stringSerde, new Serdes.WrapperSerde<>(new JsonSerializer<>(), new JsonDeserializer<>(TransferStatus.class))));
+
         final KStream<String, TransferStatus> stream = streamsBuilder.stream("transfer.status", Consumed.with(stringSerde, new Serdes.WrapperSerde<>(new JsonSerializer<>(), new JsonDeserializer<>(TransferStatus.class))));
 
 
