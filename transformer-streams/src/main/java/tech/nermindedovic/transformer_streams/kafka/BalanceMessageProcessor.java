@@ -16,7 +16,10 @@ import java.util.function.Function;
 public class BalanceMessageProcessor {
 
 
-    private static final XmlMapper mapper = new XmlMapper();
+    private final XmlMapper mapper;
+    public BalanceMessageProcessor(final XmlMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Bean
     public Function<KStream<String, BalanceMessage>, KStream<String, String>> processBalanceLeg1() {

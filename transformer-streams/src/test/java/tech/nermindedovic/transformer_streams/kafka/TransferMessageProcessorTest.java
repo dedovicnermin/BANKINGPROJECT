@@ -5,12 +5,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -46,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 @EmbeddedKafka(partitions = 1, topics = {TransferMessageProcessorTest.TRANSFER_INBOUND, TransferMessageProcessorTest.TRANSFER_OUTBOUND})
 @DirtiesContext
+@ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TransferMessageProcessorTest {
 
@@ -56,7 +57,7 @@ class TransferMessageProcessorTest {
     @Autowired
     EmbeddedKafkaBroker embeddedKafkaBroker;
 
-    private static final XmlMapper mapper = new XmlMapper();
+
 
 
     @AfterAll
@@ -65,10 +66,18 @@ class TransferMessageProcessorTest {
     }
 
 
+    @SpyBean
+    XmlMapper mapper;
+
+
+
     @Test
     @DisplayName("=== REST (TransferMessage POJO  ->  TRANSFORMER  ->  ROUTER (XML)")
     void processTransfer() throws JsonProcessingException, InterruptedException {
         TransferMessage transferMessage = new TransferMessage(123, new Creditor(844, 111), new Debtor(520, 111), LocalDate.now(), new BigDecimal("10.00"), "memo here");
+
+
+
         String expected = mapper.writeValueAsString(transferMessage);
 
 
@@ -96,6 +105,8 @@ class TransferMessageProcessorTest {
 
         container.stop();
     }
+
+
 
 
 }
