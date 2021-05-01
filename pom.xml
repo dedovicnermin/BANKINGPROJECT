@@ -20,6 +20,7 @@
         <module>transformer-streams</module>
         <module>router-streams</module>
         <module>persistence</module>
+        <module>library</module>
     </modules>
     <packaging>pom</packaging>
 
