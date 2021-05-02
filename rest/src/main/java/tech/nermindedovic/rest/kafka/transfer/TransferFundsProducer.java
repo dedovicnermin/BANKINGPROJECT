@@ -8,7 +8,8 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import tech.nermindedovic.rest.business.domain.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
+
 
 import javax.validation.constraints.NotNull;
 import java.util.concurrent.ExecutionException;
@@ -25,8 +26,8 @@ public class TransferFundsProducer {
     }
 
     public String sendTransferMessage(@NotNull final TransferMessage transferMessage) throws ExecutionException, InterruptedException {
-        ProducerRecord<String, TransferMessage> record = new ProducerRecord<>(TOPIC, transferMessage);
-        ListenableFuture<SendResult<String, TransferMessage>> future = transferMessageTemplate.send(record);
+        ProducerRecord<String, TransferMessage> producerRecord = new ProducerRecord<>(TOPIC, transferMessage);
+        ListenableFuture<SendResult<String, TransferMessage>> future = transferMessageTemplate.send(producerRecord);
         future.addCallback(createTransferCallBack());
         SendResult<String, TransferMessage> result = future.completable().get();
         long messageId = result.getProducerRecord().value().getMessageId();

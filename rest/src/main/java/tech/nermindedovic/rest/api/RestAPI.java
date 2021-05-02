@@ -6,8 +6,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import tech.nermindedovic.rest.business.domain.BalanceMessage;
-import tech.nermindedovic.rest.business.domain.TransferMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 

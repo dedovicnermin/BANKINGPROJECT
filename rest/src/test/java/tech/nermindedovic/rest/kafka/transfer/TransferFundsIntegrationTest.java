@@ -26,10 +26,11 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.api.RestAPI;
-import tech.nermindedovic.rest.business.domain.Creditor;
-import tech.nermindedovic.rest.business.domain.Debtor;
-import tech.nermindedovic.rest.business.domain.TransferMessage;
+
 
 
 import java.math.BigDecimal;
