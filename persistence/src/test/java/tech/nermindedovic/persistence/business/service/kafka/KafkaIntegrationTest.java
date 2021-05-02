@@ -309,8 +309,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.ONE)
                 .currentLeg(1)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
@@ -348,8 +348,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.ONE)
                 .currentLeg(2)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
@@ -390,8 +390,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.ONE)
                 .currentLeg(1)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
@@ -430,8 +430,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.ONE)
                 .currentLeg(3)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
@@ -476,8 +476,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.TEN)
                 .currentLeg(1)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);
@@ -520,8 +520,8 @@ class KafkaIntegrationTest {
                 .messageId(messageId)
                 .amount(BigDecimal.ONE)
                 .currentLeg(1)
-                .debtorAccount(new Account(debtor.getAccountNumber(), debtor.getRoutingNumber()))
-                .creditorAccount(new Account(creditor.getAccountNumber(), creditor.getRoutingNumber()))
+                .debtorAccount(debtor)
+                .creditorAccount(creditor)
                 .transferMessage(xml)
                 .build();
         String json = jsonMapper.writeValueAsString(transferValidation);

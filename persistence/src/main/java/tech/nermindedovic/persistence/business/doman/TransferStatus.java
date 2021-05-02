@@ -7,14 +7,6 @@ public enum TransferStatus {
     FAIL,
     PROCESSING,
     PERSISTED;
-
-
-    public String toJsonString() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(this);
-    }
-
-
 }
 
 

@@ -130,11 +130,7 @@ public class MsgProcessor {
      * @param status status of transfer
      */
     private void updateState(String messageId, TransferStatus status) {
-        try {
-            kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.toJsonString()));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.name()));
     }
 
     private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {

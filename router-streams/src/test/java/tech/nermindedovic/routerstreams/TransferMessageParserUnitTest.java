@@ -27,13 +27,7 @@ class TransferMessageParserUnitTest {
             "<creditor><accountNumber>345</accountNumber><routingNumber>222</routingNumber></creditor><date>12-12-2021</date>" +
             "<amount>10.00</amount><memo>My memo line</memo></TransferMessage>";
 
-    String CONTAINING_INVALID_ROUTE = "<TransferMessage><messageId>1255543</messageId><debtor><accountNumber>123</accountNumber><routingNumber>111</routingNumber></debtor>" +
-            "<creditor><accountNumber>345</accountNumber><routingNumber>567</routingNumber></creditor><date>12-12-2021</date>" +
-            "<amount>10.00</amount><memo>My memo line</memo></TransferMessage>";
 
-    String MATCHING_ROUTE_MSG = "<TransferMessage><messageId>1255543</messageId><debtor><accountNumber>123</accountNumber><routingNumber>111</routingNumber></debtor>" +
-            "<creditor><accountNumber>345</accountNumber><routingNumber>111</routingNumber></creditor><date>12-12-2021</date>" +
-            "<amount>10.00</amount><memo>My memo line</memo></TransferMessage>";
 
     @Test
     void messageParser_willCreateParty() throws JDOMException, IOException {

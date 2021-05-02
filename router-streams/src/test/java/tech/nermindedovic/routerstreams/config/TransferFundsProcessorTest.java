@@ -43,7 +43,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
-import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.TransferStatus;
 import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
 import tech.nermindedovic.routerstreams.business.service.TransferStatusService;
