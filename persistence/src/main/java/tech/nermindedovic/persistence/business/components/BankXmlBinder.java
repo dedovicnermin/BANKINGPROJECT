@@ -3,9 +3,9 @@ package tech.nermindedovic.persistence.business.components;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import tech.nermindedovic.persistence.business.doman.BalanceMessage;
-import tech.nermindedovic.persistence.business.doman.TransferMessage;
-import tech.nermindedovic.persistence.business.doman.TransferValidation;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferValidation;
 
 public class BankXmlBinder {
 

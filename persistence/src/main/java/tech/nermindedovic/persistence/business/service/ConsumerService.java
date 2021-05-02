@@ -40,7 +40,7 @@ public class ConsumerService {
 
     /**
      * PRECONDITION: producer has sent an XML message for a funds transfer request
-     * POSTCONDITION: producer commits transaction
+     * POST-CONDITION: producer commits transaction
      * @param transferRecord of key: messageId , value: TransferMessage
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")

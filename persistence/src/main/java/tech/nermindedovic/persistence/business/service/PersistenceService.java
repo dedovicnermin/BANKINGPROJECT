@@ -4,6 +4,9 @@ package tech.nermindedovic.persistence.business.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.persistence.business.doman.*;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
@@ -163,10 +166,10 @@ public class PersistenceService {
      * @param transferMessage carrying valid transaction data
      */
     public void enterTransaction(final TransferMessage transferMessage, PaymentParty paymentParty) throws InvalidTransferMessageException {
-        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessage_id()));
+        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessageId()));
 
         Transaction transaction = new Transaction();
-        transaction.setTransactionId(transferMessage.getMessage_id());
+        transaction.setTransactionId(transferMessage.getMessageId());
         setAccountNumbers(paymentParty, transaction);
         transaction.setAmount(transferMessage.getAmount());
         transaction.setDate(transferMessage.getDate());
@@ -184,9 +187,9 @@ public class PersistenceService {
      */
 
     public void enterTwoBankTransaction(final TransferMessage transferMessage) throws InvalidTransferMessageException {
-        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessage_id()));
+        if (messageExists(transferMessage)) throw new InvalidTransferMessageException(String.format("Transaction with ID {%d} already exists.", transferMessage.getMessageId()));
         Transaction transaction = new Transaction();
-        transaction.setTransactionId(transferMessage.getMessage_id());
+        transaction.setTransactionId(transferMessage.getMessageId());
         transaction.setDebtorAccountNumber(transferMessage.getDebtor().getAccountNumber());
         transaction.setCreditorAccountNumber(transferMessage.getCreditor().getAccountNumber());
         transaction.setAmount(transferMessage.getAmount());
@@ -302,7 +305,7 @@ public class PersistenceService {
 
 
     private boolean messageExists(final TransferMessage transferMessage) {
-        return transactionRepository.findById(transferMessage.getMessage_id()).isPresent();
+        return transactionRepository.findById(transferMessage.getMessageId()).isPresent();
     }
 
 }

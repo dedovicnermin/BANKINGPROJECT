@@ -1,4 +1,4 @@
-package tech.nermindedovic.persistence.business.doman;
+package tech.nermindedovic.transformer_streams.pojos;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -20,18 +20,23 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class TransferMessage {
 
-    @JsonProperty("messageId")
+    @JsonProperty(value = "messageId", index = 0)
     private long message_id;
 
 
+    @JsonProperty(required = true)
     private Creditor creditor;
 
+    @JsonProperty(required = true)
     private Debtor debtor;
+
 
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)
     @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate date;
+
+
 
     private BigDecimal amount;
 

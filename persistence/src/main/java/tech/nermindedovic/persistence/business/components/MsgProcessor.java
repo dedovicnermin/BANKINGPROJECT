@@ -6,7 +6,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import tech.nermindedovic.persistence.business.doman.*;
+import tech.nermindedovic.library.pojos.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 

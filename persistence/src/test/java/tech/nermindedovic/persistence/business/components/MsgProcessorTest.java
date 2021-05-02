@@ -9,12 +9,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 
-import tech.nermindedovic.persistence.business.doman.BalanceMessage;
-import tech.nermindedovic.persistence.business.doman.Creditor;
-import tech.nermindedovic.persistence.business.doman.Debtor;
-import tech.nermindedovic.persistence.business.doman.TransferValidation;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
-import tech.nermindedovic.persistence.data.entity.Account;
 
 import java.math.BigDecimal;
 
@@ -64,7 +63,7 @@ class MsgProcessorTest {
         //given valid TransferValidation
 
         TransferValidation transferValidation = TransferValidation.builder()
-                .messageId(5445)
+                .messageId(5445L)
                 .currentLeg(1)
                 .creditorAccount(new Creditor(123, 111))
                 .debtorAccount(new Debtor(456, 222))
