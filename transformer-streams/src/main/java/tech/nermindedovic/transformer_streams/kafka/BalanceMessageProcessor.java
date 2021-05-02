@@ -7,7 +7,8 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+
 
 import java.util.function.Function;
 

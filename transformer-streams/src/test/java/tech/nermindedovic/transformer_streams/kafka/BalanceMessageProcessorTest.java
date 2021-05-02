@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -26,7 +25,8 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+
 
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -60,10 +60,6 @@ class BalanceMessageProcessorTest {
 
     private static final XmlMapper mapper = new XmlMapper();
 
-    @AfterAll
-    void shutDown () {
-        embeddedKafkaBroker.destroy();
-    }
 
     @Test
     @DisplayName("=== REST (BalanceMessage)  ->  TRANSFORMER  ->  ROUTER (XML STRING) ===")

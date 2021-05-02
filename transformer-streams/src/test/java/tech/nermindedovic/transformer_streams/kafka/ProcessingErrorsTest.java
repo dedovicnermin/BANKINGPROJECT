@@ -6,7 +6,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,10 +27,11 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
-import tech.nermindedovic.transformer_streams.pojos.Creditor;
-import tech.nermindedovic.transformer_streams.pojos.Debtor;
-import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferMessage;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -66,12 +66,6 @@ class ProcessingErrorsTest {
     EmbeddedKafkaBroker embeddedKafkaBroker;
 
 
-
-
-    @AfterAll
-    void shutDown () {
-        embeddedKafkaBroker.destroy();
-    }
 
 
     @SpyBean
@@ -112,7 +106,7 @@ class ProcessingErrorsTest {
         assertThat(record).isNotNull();
         assertThat(record.value()).isEqualTo(expected);
 
-        container.stop();
+        container.stop(false);
     }
 
 
@@ -147,7 +141,7 @@ class ProcessingErrorsTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(expected);
 
-        container.stop();
+        container.stop(false);
     }
 
 
@@ -183,7 +177,7 @@ class ProcessingErrorsTest {
         assertThat(consumerRecord).isNotNull();
         assertThat(consumerRecord.value()).isNull();
 
-        container.stop();
+        container.stop(false);
     }
 
 

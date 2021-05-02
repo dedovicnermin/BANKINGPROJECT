@@ -3,11 +3,13 @@ package tech.nermindedovic.transformer_streams.kafka.config;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.springframework.context.annotation.Bean;
-import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
-import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
 
 
 public final class CustomSerdes {
+
+    private CustomSerdes() {}
 
     public static final class TransferMessageSerde extends Serdes.WrapperSerde<TransferMessage> {
         public TransferMessageSerde() {
