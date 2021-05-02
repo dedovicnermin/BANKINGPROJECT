@@ -23,10 +23,48 @@
     <packaging>jar</packaging>
 
 
+<!--version: "3"
+services:
+  rest:
+    image:
+    networks:
+      - banking-network
+    depends_on:
 
+  transformer-streams:
+    image:
+
+
+
+networks:
+  banking-network-->
 
     <properties>
         <java.version>1.8</java.version>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.4.4</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+
+
 </project>
+

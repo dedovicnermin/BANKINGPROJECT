@@ -1,0 +1,99 @@
+version: "3.5"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - banking-network
+  kafka:
+    build: ./kafka-docker-master
+    ports:
+      - 9092:9092
+      - 29094:29094
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29094,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29094,OUTSIDE://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      # KAFKA_ADVERTISED_HOST_NAME: 192.168.65.0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock%
+    networks:
+      - banking-network
+
+
+
+  rest:
+    image: rest:latest
+    container_name: rest
+    build:
+      context: rest
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    networks:
+      - banking-network
+    depends_on:
+      - kafka
+
+  transformer-streams:
+    image: transformer-streams:latest
+    container_name: transformer-streams
+    build:
+      context: transformer-streams
+      dockerfile: Dockerfile
+    ports:
+      - 8081:8081
+    networks:
+      - banking-network
+    depends_on:
+      - kafka
+
+  router-streams:
+    image: router-streams:latest
+    container_name: router-streams
+    build:
+      context: router-streams
+      dockerfile: Dockerfile
+    ports:
+      - 8082:8082
+    networks:
+      - banking-network
+    depends_on:
+      - kafka
+
+  persistence:
+    image: persistence:latest
+    container_name: persistence
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    ports:
+      - 8083:8083
+    networks:
+      - banking-network
+    depends_on:
+      - kafka
+
+  persistence2:
+    image: persistence:latest
+    container_name: persistence2
+    environment:
+      - "SPRING_PROFILES_ACTIVE=persistence2"
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    ports:
+      - 8084:8084
+    networks:
+      - banking-network
+    depends_on:
+      - kafka
+
+networks:
+  banking-network:
+    driver: bridge
