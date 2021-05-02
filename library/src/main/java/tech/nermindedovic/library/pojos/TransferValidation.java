@@ -1,9 +1,7 @@
-package tech.nermindedovic.routerstreams.business.domain;
+package tech.nermindedovic.library.pojos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,10 +28,10 @@ public class TransferValidation {
     private String transferMessage;
 
     @JsonProperty("debtorAccount")
-    private Account debtorAccount;
+    private Debtor debtorAccount;
 
     @JsonProperty("creditorAccount")
-    private Account creditorAccount;
+    private Creditor creditorAccount;
 
 
 }

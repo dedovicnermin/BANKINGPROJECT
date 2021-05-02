@@ -58,7 +58,7 @@ class TransactionRepoTest {
         int day = localDate.getDayOfMonth();
 
         Transaction transaction = new Transaction(123L, 11L, 22L, BigDecimal.TEN, localDate, "memo");
-        assertThat(transaction.getDate().toString()).isEqualTo(year + "-" + (month < 10 ? "0"+month : month) + "-" + day);
+        assertThat(transaction.getDate()).hasToString(year + "-" + (month < 10 ? "0"+month : month) + "-" + (day < 10 ? "0" + day : day));
     }
 
     @Test

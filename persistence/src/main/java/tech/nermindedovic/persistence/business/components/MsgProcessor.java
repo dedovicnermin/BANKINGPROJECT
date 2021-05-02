@@ -6,7 +6,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import tech.nermindedovic.persistence.business.doman.*;
+import tech.nermindedovic.library.pojos.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
@@ -130,11 +130,7 @@ public class MsgProcessor {
      * @param status status of transfer
      */
     private void updateState(String messageId, TransferStatus status) {
-        try {
-            kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.toJsonString()));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.name()));
     }
 
     private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {

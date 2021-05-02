@@ -2,10 +2,11 @@ package tech.nermindedovic.transformer_streams.kafka.config;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.junit.jupiter.api.Test;
-import tech.nermindedovic.transformer_streams.pojos.BalanceMessage;
-import tech.nermindedovic.transformer_streams.pojos.Creditor;
-import tech.nermindedovic.transformer_streams.pojos.Debtor;
-import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferMessage;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

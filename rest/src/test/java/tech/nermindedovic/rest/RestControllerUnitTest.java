@@ -11,12 +11,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.reactive.function.client.WebClient;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.api.RestAPI;
 
-import tech.nermindedovic.rest.business.domain.BalanceMessage;
-import tech.nermindedovic.rest.business.domain.Creditor;
-import tech.nermindedovic.rest.business.domain.Debtor;
-import tech.nermindedovic.rest.business.domain.TransferMessage;
+
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
@@ -147,7 +148,7 @@ class RestControllerUnitTest {
 
 
     @Test
-    void gettingTransferStatus_willReturnString() throws Exception {
+    void gettingTransferStatus_willReturnString()  {
         // TODO : figure out how to test
         RestAPI api = mock(RestAPI.class);
         when(api.getTransferStatus("123")).thenReturn("PERSISTED");

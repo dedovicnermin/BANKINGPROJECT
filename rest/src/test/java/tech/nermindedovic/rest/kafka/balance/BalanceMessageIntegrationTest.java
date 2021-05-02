@@ -1,7 +1,7 @@
 package tech.nermindedovic.rest.kafka.balance;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -13,8 +13,9 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.rest.api.RestAPI;
-import tech.nermindedovic.rest.business.domain.BalanceMessage;
+
 
 
 

@@ -24,9 +24,9 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import tech.nermindedovic.transformer_streams.pojos.Creditor;
-import tech.nermindedovic.transformer_streams.pojos.Debtor;
-import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferMessage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,13 +57,6 @@ class TransferMessageProcessorTest {
     @Autowired
     EmbeddedKafkaBroker embeddedKafkaBroker;
 
-
-
-
-    @AfterAll
-    void shutDown () {
-        embeddedKafkaBroker.destroy();
-    }
 
 
     @SpyBean

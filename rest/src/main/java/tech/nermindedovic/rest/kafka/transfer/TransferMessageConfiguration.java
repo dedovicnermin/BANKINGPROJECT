@@ -11,7 +11,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import tech.nermindedovic.rest.business.domain.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
 
 import java.util.HashMap;
 import java.util.Map;

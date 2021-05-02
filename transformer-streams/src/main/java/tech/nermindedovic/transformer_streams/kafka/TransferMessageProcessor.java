@@ -8,7 +8,8 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tech.nermindedovic.transformer_streams.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferMessage;
+
 
 
 import java.util.function.Function;

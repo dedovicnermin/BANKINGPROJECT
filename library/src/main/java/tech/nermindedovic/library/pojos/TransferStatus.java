@@ -1,4 +1,4 @@
-package tech.nermindedovic.routerstreams.business.domain;
+package tech.nermindedovic.library.pojos;
 
 public enum TransferStatus {
     FAIL,

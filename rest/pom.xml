@@ -32,6 +32,14 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 
+
+		<dependency>
+			<groupId>tech.nermindedovic</groupId>
+			<artifactId>library</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>

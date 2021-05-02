@@ -1,4 +1,4 @@
-package tech.nermindedovic.rest.business.domain;
+package tech.nermindedovic.library.pojos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -107,7 +107,7 @@ class ProcessorErrorsOnParseTest {
 
 
     @Test
-    void onIncomingInitialTransfer_whenParseExceptionThrown_willDirectToErrorTopic() throws InterruptedException, JDOMException, IOException {
+    void onIncomingInitialTransfer_whenParseExceptionThrown_willDirectToErrorTopic() throws InterruptedException {
         String invalidTransfer = "<TransferMessage>Invalid";
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-transfer-parseError", "false", embeddedKafkaBroker);
