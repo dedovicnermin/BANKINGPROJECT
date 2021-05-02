@@ -4,7 +4,7 @@ package tech.nermindedovic.routerstreams.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
-import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
+import tech.nermindedovic.library.pojos.TransferValidation;
 
 @Component
 public class RouterJsonMapper {

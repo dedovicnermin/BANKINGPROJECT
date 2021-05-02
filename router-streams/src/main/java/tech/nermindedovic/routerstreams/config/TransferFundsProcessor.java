@@ -18,6 +18,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferStatus;
+import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;

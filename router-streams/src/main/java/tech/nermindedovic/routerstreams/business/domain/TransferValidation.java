@@ -2,12 +2,12 @@ package tech.nermindedovic.routerstreams.business.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import tech.nermindedovic.library.pojos.Creditor;
-import tech.nermindedovic.library.pojos.Debtor;
 
 import java.math.BigDecimal;
 
@@ -30,10 +30,22 @@ public class TransferValidation {
     private String transferMessage;
 
     @JsonProperty("debtorAccount")
-    private Debtor debtorAccount;
+    private Account debtorAccount;
 
     @JsonProperty("creditorAccount")
-    private Creditor creditorAccount;
+    private Account creditorAccount;
+
+
+    public String toJsonString() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            return "error";
+        }
+    }
+
+
 
 
 }

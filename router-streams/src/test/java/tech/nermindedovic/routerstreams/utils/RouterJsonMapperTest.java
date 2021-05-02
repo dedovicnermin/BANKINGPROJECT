@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
-import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
+import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.config.BeanConfig;
 
 import java.math.BigDecimal;
