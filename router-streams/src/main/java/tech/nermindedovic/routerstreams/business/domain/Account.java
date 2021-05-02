@@ -11,9 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Account {
-    @JsonProperty("accountNumber")
-    public long accountNumber;
 
-    @JsonProperty("routingNumber")
-    public long routingNumber;
+    private long accountNumber;
+    private long routingNumber;
 }

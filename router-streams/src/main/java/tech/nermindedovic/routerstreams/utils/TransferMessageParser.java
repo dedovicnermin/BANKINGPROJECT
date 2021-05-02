@@ -4,8 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 import org.springframework.stereotype.Component;
-import tech.nermindedovic.routerstreams.business.domain.Account;
-import tech.nermindedovic.routerstreams.business.domain.PaymentParty;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.routerstreams.business.domain.PaymentData;
 
 
 import java.io.ByteArrayInputStream;
@@ -27,63 +28,53 @@ public class TransferMessageParser {
     private static final String AMOUNT           = "amount";
 
     final SAXBuilder builder;
-    private PaymentParty paymentParty;
-
-
+    private PaymentData paymentData;
 
     public TransferMessageParser(final SAXBuilder saxBuilder)  {
         this.builder = saxBuilder;
     }
 
-    public TransferMessageParser build(String xml) throws JDOMException, IOException {
+    public PaymentData build(String xml) throws JDOMException, IOException {
         Document messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Element root = messageDocument.getRootElement();
-        paymentParty = createPaymentParty(root);
-        return this;
+        return createPaymentData(root);
     }
 
 
 
-    public PaymentParty getPaymentParty() {
-        return paymentParty;
-    }
 
-
-    private PaymentParty createPaymentParty(Element root) {
-        paymentParty = new PaymentParty();
+    private PaymentData createPaymentData(Element root) {
+        paymentData = new PaymentData();
         Element debtor = root.getChild(DEBTOR);
         Element creditor = root.getChild(CREDITOR);
         Element messageId = root.getChild(MESSAGE_ID);
         Element amount = root.getChild(AMOUNT);
-        paymentParty.setMessageId(Long.parseLong(messageId.getValue()));
-        paymentParty.setDebtorAccount(retrieveAccount(debtor));
-        paymentParty.setCreditorAccount(retrieveAccount(creditor));
-        paymentParty.setAmount(new BigDecimal(amount.getValue()));
-        return this.paymentParty;
+
+        retrieveAccounts(paymentData, debtor, creditor);
+        paymentData.setMessageId(Long.parseLong(messageId.getValue()));
+        paymentData.setAmount(new BigDecimal(amount.getValue()));
+
+        return this.paymentData;
     }
 
 
 
-    public Long retrieveMessageId() {
-        return paymentParty.getMessageId();
+    private void retrieveAccounts(PaymentData paymentData, Element debtor, Element creditor) {
+
+        Element debtorAN = debtor.getChild(ACCOUNT_NUMBER);
+        Element debtorRN = debtor.getChild(ROUTING_NUMBER);
+        Debtor debtorAccount = new Debtor(Long.parseLong(debtorAN.getValue()), Long.parseLong(debtorRN.getValue()));
+
+        Element creditorAN = creditor.getChild(ACCOUNT_NUMBER);
+        Element creditorRN = creditor.getChild(ROUTING_NUMBER);
+        Creditor creditorAccount = new Creditor(Long.parseLong(creditorAN.getValue()), Long.parseLong(creditorRN.getValue()));
+
+        paymentData.setDebtorAccount(debtorAccount);
+        paymentData.setCreditorAccount(creditorAccount);
+
     }
 
-    public int countRoutingNumbersPresent() {
-        return getPaymentParty().getRoutingSet().size();
-    }
 
-    public Long getMatchingRoute() {
-        return this.getPaymentParty().getDebtorAccount().getRoutingNumber();
-    }
-
-    private Account retrieveAccount(Element element) {
-        Account account = new Account();
-        Element accountNumber = element.getChild(ACCOUNT_NUMBER);
-        Element routingNumber = element.getChild(ROUTING_NUMBER);
-        account.setAccountNumber(Long.parseLong(accountNumber.getValue()));
-        account.setRoutingNumber(Long.parseLong(routingNumber.getValue()));
-        return account;
-    }
 
 
 

@@ -41,6 +41,8 @@ import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.routerstreams.business.domain.Account;
 import tech.nermindedovic.routerstreams.business.domain.TransferStatus;
 import tech.nermindedovic.routerstreams.business.domain.TransferValidation;
@@ -200,10 +202,7 @@ class TransferFundsProcessorTest {
         ContainerProperties containerProperties = new ContainerProperties("funds.transfer.111");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
         final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
-        container.setupMessageListener((MessageListener<String, String>) record -> {
-            System.out.println("TEST CONSUMER :" + record);
-            records.add(record);
-        });
+        container.setupMessageListener((MessageListener<String, String>) records::add);
 
         container.setBeanName("directBankTest");
         container.start();
@@ -298,8 +297,8 @@ class TransferFundsProcessorTest {
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(1)
                 .transferMessage(xmlWithDiffRoutes)
-                .debtorAccount(new Account(123, 111))
-                .creditorAccount(new Account(567, 222))
+                .debtorAccount(new Debtor(123, 111))
+                .creditorAccount(new Creditor(567, 222))
                 .build();
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-leg1", "false", embeddedKafkaBroker);
@@ -343,8 +342,8 @@ class TransferFundsProcessorTest {
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(2)
                 .transferMessage(xmlWithDiffRoutes)
-                .debtorAccount(new Account(123, 111))
-                .creditorAccount(new Account(567, 222))
+                .debtorAccount(new Debtor(123, 111))
+                .creditorAccount(new Creditor(567, 222))
                 .build();
 
 
@@ -391,8 +390,8 @@ class TransferFundsProcessorTest {
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(3)
                 .transferMessage(xmlWithDiffRoutes)
-                .debtorAccount(new Account(123, 111))
-                .creditorAccount(new Account(567, 222))
+                .debtorAccount(new Debtor(123, 111))
+                .creditorAccount(new Creditor(567, 222))
                 .build();
 
 
@@ -455,8 +454,8 @@ class TransferFundsProcessorTest {
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(0)
                 .transferMessage(xmlWithDiffRoutes)
-                .debtorAccount(new Account(123, 111))
-                .creditorAccount(new Account(567, 222))
+                .debtorAccount(new Debtor(123, 111))
+                .creditorAccount(new Creditor(567, 222))
                 .build();
 
 

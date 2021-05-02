@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
+import tech.nermindedovic.library.pojos.Creditor;
+import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;
@@ -24,8 +26,11 @@ import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @Slf4j
@@ -33,6 +38,7 @@ public class TransferFundsProcessor {
 
     public static final String VALIDATE_USER = RouterTopicNames.OUTBOUND_VALIDATION_PREFIX;
     public static final String FUNDS_SINGLE_ACCOUNT = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX;
+    public static final String STORE = RouterTopicNames.TRANSFER_STORE;
 
     private final StreamBridge streamBridge;
     private  final RouterJsonMapper mapper;
@@ -54,19 +60,19 @@ public class TransferFundsProcessor {
     public Consumer<String> consumeInitialTransfer() {
         return transferMessage -> {
             try {
-                TransferMessageParser transferMessageParser = parser.build(transferMessage);
-                if (transferMessageParser.getPaymentParty().invalidRoutingNumbersPresent()) {
+                PaymentData paymentData = parser.build(transferMessage);
+                if (invalidRoutingNumbersPresent(paymentData)) {
                     sendToErrorTopic(transferMessage);
-                    updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.FAIL);
+                    updateMetrics(paymentData.getMessageId(), TransferStatus.FAIL);
                 } else {
-                    switch (transferMessageParser.countRoutingNumbersPresent()) {
+                    switch (getRoutingSet(paymentData).size()) {
                         case 1:
-                            sendDirectlyToBank(transferMessage, transferMessageParser);
-                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.PROCESSING);
+                            sendDirectlyToBank(transferMessage, paymentData);
+                            updateMetrics(paymentData.getMessageId(), TransferStatus.PROCESSING);
                             break;
                         case 2:
-                            processTransactionParty(transferMessage, transferMessageParser);
-                            updateMetrics(transferMessageParser.retrieveMessageId(), TransferStatus.PROCESSING);
+                            processTransactionParty(transferMessage, paymentData);
+                            updateMetrics(paymentData.getMessageId(), TransferStatus.PROCESSING);
                             break;
                         default:
                             break;
@@ -91,23 +97,26 @@ public class TransferFundsProcessor {
 
 
     // ONE ROUTING NUMBER PRESENT
-    private void sendDirectlyToBank(final String transferMessageXML, TransferMessageParser transferMessageParser) {
-        String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + transferMessageParser.getMatchingRoute();
-        Message<String> message = MessageBuilder.withPayload(transferMessageXML).setHeader(KafkaHeaders.MESSAGE_KEY, transferMessageParser.retrieveMessageId().toString().getBytes(StandardCharsets.UTF_8)).build();
+    private void sendDirectlyToBank(final String transferMessageXML, PaymentData paymentData) {
+        String topic = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + getMatchingRoute(paymentData);
+        byte[] bytes = paymentData.getMessageId().toString().getBytes(StandardCharsets.UTF_8);
+        Message<String> message = MessageBuilder
+                .withPayload(transferMessageXML)
+                .setHeader(KafkaHeaders.MESSAGE_KEY, bytes)
+                .build();
         streamBridge.send(topic, message);
     }
 
 
     //TWO BANK PREP
-    private void processTransactionParty(final String transferMessageXML, final TransferMessageParser transferMessageParser) {
-        PaymentParty paymentParty = transferMessageParser.getPaymentParty();
+    private void processTransactionParty(final String transferMessageXML, final PaymentData paymentData) {
         TransferValidation transferValidation = new TransferValidation();
 
-        transferValidation.setMessageId(paymentParty.getMessageId());
+        transferValidation.setMessageId(paymentData.getMessageId());
         transferValidation.setTransferMessage(transferMessageXML);
-        transferValidation.setDebtorAccount(paymentParty.getDebtorAccount());
-        transferValidation.setCreditorAccount(paymentParty.getCreditorAccount());
-        transferValidation.setAmount(paymentParty.getAmount());
+        transferValidation.setDebtorAccount(paymentData.getDebtorAccount());
+        transferValidation.setCreditorAccount(paymentData.getCreditorAccount());
+        transferValidation.setAmount(paymentData.getAmount());
 
         streamBridge.send(RouterTopicNames.INBOUND_VALIDATION_TOPIC, transferValidation);
     }
@@ -166,12 +175,30 @@ public class TransferFundsProcessor {
     }
 
 
-    public static final String STORE = RouterTopicNames.TRANSFER_STORE;
+
     @Bean
     public Function<KStream<String, TransferStatus>, KTable<String, String>> upsertMetric() {
         return stream -> stream
                 .mapValues(Enum::toString)
                 .toTable(Named.as(RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC), Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(STORE).withKeySerde(Serdes.String()).withValueSerde(Serdes.String()));
+    }
+
+    private boolean invalidRoutingNumbersPresent(PaymentData paymentData) {
+        Debtor debtor = paymentData.getDebtorAccount();
+        Creditor creditor = paymentData.getCreditorAccount();
+        if (debtor == null || creditor == null) return true;
+        return Stream.of(debtor.getRoutingNumber(), creditor.getRoutingNumber()).anyMatch(routing -> (!(routing.equals(111L) || routing.equals(222L))));
+    }
+
+
+    private Set<Long> getRoutingSet(PaymentData paymentData) {
+        return Stream.of(paymentData.getDebtorAccount().getRoutingNumber(), paymentData.getCreditorAccount().getRoutingNumber())
+                .collect(Collectors.toSet());
+    }
+
+
+    private Long getMatchingRoute(PaymentData paymentData) {
+        return paymentData.getDebtorAccount().getRoutingNumber();
     }
 
 
