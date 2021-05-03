@@ -1,6 +1,8 @@
 package tech.nermindedovic.persistence.business.components;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ public class MsgProcessor {
     // == dependency ==
     private final PersistenceService persistenceService;
     private final KafkaTemplate<String, String> kafkaTemplate;
+
 
     @Value("${persistence-topics.OUTBOUND_TRANSFER_ERRORS}")
     private String errorTopic;
@@ -129,8 +132,8 @@ public class MsgProcessor {
      * @param messageId transfer ID
      * @param status status of transfer
      */
-    private void updateState(String messageId, TransferStatus status) {
-        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status.name()));
+    private void updateState(String messageId, TransferStatus status)  {
+        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, BankXmlBinder.toJson(status)));
     }
 
     private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {
