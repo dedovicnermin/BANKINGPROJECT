@@ -10,10 +10,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    database: postgresql
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
       groupId: persistence2
+
 
 
 

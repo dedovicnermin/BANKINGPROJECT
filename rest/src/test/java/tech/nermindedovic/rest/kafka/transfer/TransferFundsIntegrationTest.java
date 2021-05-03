@@ -61,7 +61,8 @@ class TransferFundsIntegrationTest {
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired RestAPI restAPI;
-    @SpyBean private TransferErrorConsumer transferErrorConsumer;
+    @SpyBean
+    TransferErrorConsumer transferErrorConsumer;
 
     BlockingQueue<ConsumerRecord<String, TransferMessage>> consumed;
     KafkaMessageListenerContainer<String, TransferMessage> listenerContainer;
@@ -111,7 +112,7 @@ class TransferFundsIntegrationTest {
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence or transformer when it has been unable to process the request sent"));
         producer.flush();
 
-        Mockito.verify(transferErrorConsumer, timeout(8000).times(1)).listen(anyString());
+        Mockito.verify(transferErrorConsumer, timeout(9000).times(1)).listen(anyString());
 
         producer.close();
     }

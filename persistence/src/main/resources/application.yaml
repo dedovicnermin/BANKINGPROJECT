@@ -1,15 +1,17 @@
 
 server:
-  port: 8082
+  port: 8083
 spring:
   datasource:
     password: postgres
     platform: postgres
     url: jdbc:postgresql://localhost:5432/BANK
     username: postgres
+
   jpa:
     hibernate:
       ddl-auto: update
+    database: postgresql
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
