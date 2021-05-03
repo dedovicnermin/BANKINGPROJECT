@@ -6,7 +6,7 @@ CREATE TABLE accounts (
                           routing_number bigint,
                           user_name character varying(255)
 );
-
+CREATE UNIQUE INDEX accounts_pkey ON accounts(account_number int8_ops);
 
 
 
@@ -18,3 +18,4 @@ CREATE TABLE transactions (
                               debtor_account bigint,
                               memo character varying(255)
 );
+CREATE UNIQUE INDEX transactions_pkey ON transactions(transaction_id int8_ops);

@@ -1,29 +1,35 @@
-version: "3.5"
+version: '3'
 services:
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
-    networks:
-      - banking-network
+
+
+
+
+
   kafka:
-    build: ./kafka-docker-master
+    image: wurstmeister/kafka
+    links:
+      - zookeeper
     ports:
-      - 9092:9092
-      - 29094:29094
+      - "9092:9092"
+      - "29094:29094"
     depends_on:
       - zookeeper
     environment:
+      KAFKA_ADVERTISED_HOSTNAME: kafka
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29094,OUTSIDE://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_LISTENERS: INSIDE://0.0.0.0:29094,OUTSIDE://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      # KAFKA_ADVERTISED_HOST_NAME: 192.168.65.0
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock%
-    networks:
-      - banking-network
+
+
+
 
 
 
@@ -33,12 +39,20 @@ services:
     build:
       context: rest
       dockerfile: Dockerfile
+    links:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
     ports:
-      - 8080:8080
-    networks:
-      - banking-network
+      - "8080:8080"
     depends_on:
       - kafka
+
+
+
+
+
+
 
   transformer-streams:
     image: transformer-streams:latest
@@ -46,12 +60,18 @@ services:
     build:
       context: transformer-streams
       dockerfile: Dockerfile
+    links:
+      - kafka
     ports:
-      - 8081:8081
-    networks:
-      - banking-network
+      - "8081:8081"
     depends_on:
       - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+
+
+
+
 
   router-streams:
     image: router-streams:latest
@@ -59,12 +79,38 @@ services:
     build:
       context: router-streams
       dockerfile: Dockerfile
+    links:
+      - kafka
     ports:
-      - 8082:8082
-    networks:
-      - banking-network
+      - "8082:8082"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
     depends_on:
       - kafka
+
+
+
+
+
+
+
+
+  db:
+    image: postgres
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK
+    volumes:
+      - /var/lib/postgresql/data
+
+
+
+
+
+
+
 
   persistence:
     image: persistence:latest
@@ -72,28 +118,59 @@ services:
     build:
       context: persistence
       dockerfile: Dockerfile
+    links:
+      - kafka
+      - db
     ports:
-      - 8083:8083
-    networks:
-      - banking-network
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
     depends_on:
       - kafka
+      - db
+
+
+
+
+
+
+
+  dbTwo:
+    image: postgres
+    container_name: dbTwo
+    ports:
+      - "5442:5442"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK2
+    volumes:
+      - /var/lib/postgresql/dataTwo
+
+
+
+
+
 
   persistence2:
     image: persistence:latest
     container_name: persistence2
+    links:
+      - dbTwo
+      - kafka
     environment:
-      - "SPRING_PROFILES_ACTIVE=persistence2"
+      - SPRING_PROFILES_ACTIVE=persistence2
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
     build:
       context: persistence
       dockerfile: Dockerfile
     ports:
-      - 8084:8084
-    networks:
-      - banking-network
+      - "8084:8084"
     depends_on:
       - kafka
+      - dbTwo
 
-networks:
-  banking-network:
-    driver: bridge
