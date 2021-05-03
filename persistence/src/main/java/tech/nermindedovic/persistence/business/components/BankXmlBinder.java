@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
+import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
 
 public class BankXmlBinder {
@@ -36,6 +37,15 @@ public class BankXmlBinder {
 
     public static String toJson(final TransferValidation transferValidation) throws JsonProcessingException {
         return jsonMapper.writeValueAsString(transferValidation);
+    }
+
+
+    public static String toJson(final TransferStatus status) {
+        try {
+            return jsonMapper.writeValueAsString(status);
+        } catch (JsonProcessingException e) {
+            return String.format("{\n" + "   \"TransferStatus\": \"%s\"" + "\n}", status);
+        }
     }
 
 
