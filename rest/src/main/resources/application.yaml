@@ -9,6 +9,8 @@ spring:
 server:
   port: 8080
 
+router-endpoint: localhost:8082
+
 
 
 

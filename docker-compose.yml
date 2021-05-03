@@ -41,8 +41,10 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
+      - router-streams
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - ROUTER-ENDPOINT=router-streams:8082
     ports:
       - "8080:8080"
     depends_on:
