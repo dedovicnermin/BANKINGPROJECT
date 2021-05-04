@@ -3,44 +3,50 @@ package tech.nermindedovic.persistence.business.components;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.springframework.stereotype.Component;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
 
-public class BankXmlBinder {
 
-    private BankXmlBinder() {}
+@Component
+public class BankBinder {
 
-    private static final XmlMapper xmlMapper = new XmlMapper();
-    private static final ObjectMapper jsonMapper = new ObjectMapper();
+    private final XmlMapper xmlMapper;
+    private final ObjectMapper jsonMapper;
+
+    public BankBinder(final XmlMapper xmlMapper, final ObjectMapper objectMapper) {
+        this.xmlMapper = xmlMapper;
+        this.jsonMapper = objectMapper;
+    }
 
 
-    public static BalanceMessage toBalanceMessage(final String xml) throws JsonProcessingException {
+    public BalanceMessage toBalanceMessage(final String xml) throws JsonProcessingException {
         return xmlMapper.readValue(xml, BalanceMessage.class);
     }
 
 
-    public static String toXml(final BalanceMessage balanceMessage) throws JsonProcessingException {
+    public String toXml(final BalanceMessage balanceMessage) throws JsonProcessingException {
         return xmlMapper.writeValueAsString(balanceMessage);
     }
 
-    public static TransferMessage toTransferMessage(final String xml) throws JsonProcessingException {
+    public TransferMessage toTransferMessage(final String xml) throws JsonProcessingException {
         return xmlMapper.readValue(xml, TransferMessage.class);
     }
 
 
-    public static TransferValidation toTransferValidation(final String json) throws JsonProcessingException {
+    public TransferValidation toTransferValidation(final String json) throws JsonProcessingException {
         return jsonMapper.readValue(json, TransferValidation.class);
     }
 
 
-    public static String toJson(final TransferValidation transferValidation) throws JsonProcessingException {
+    public String toJson(final TransferValidation transferValidation) throws JsonProcessingException {
         return jsonMapper.writeValueAsString(transferValidation);
     }
 
 
-    public static String toJson(final TransferStatus status) {
+    public String toJson(final TransferStatus status) {
         try {
             return jsonMapper.writeValueAsString(status);
         } catch (JsonProcessingException e) {

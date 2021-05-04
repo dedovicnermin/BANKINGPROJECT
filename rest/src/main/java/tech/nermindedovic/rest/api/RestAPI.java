@@ -54,12 +54,7 @@ public class RestAPI {
 
     @GetMapping(value = "transfer/status/{key}")
     public String getTransferStatus(@PathVariable final String key) {
-        Optional<ResponseEntity<String>> response = webClient
-                .get()
-                .uri("/" + key)
-                .retrieve()
-                .toEntity(String.class)
-                .blockOptional();
+        Optional<ResponseEntity<String>> response = webClient.get().uri("/" + key).retrieve().toEntity(String.class).blockOptional();
         if (response.isPresent()) return response.get().getBody();
         else return "ID " + key + " is not valid";
     }
