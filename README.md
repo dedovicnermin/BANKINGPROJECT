@@ -11,6 +11,12 @@
 - JUNIT5
 - Kafka Testing
 
+### Questions / Suggestions
+Any questions or suggestions about the project? Feel free to raise an issue! 
+
+### Enjoy!
+
+
 
 
       
