@@ -16,7 +16,7 @@ class PersistenceApplicationTests {
 
 	@Test
 	void contextLoads() {
-		Assertions.assertTimeout(Duration.ofSeconds(5),() -> PersistenceApplication.main(new String[]{}));
+		Assertions.assertTimeout(Duration.ofSeconds(10),() -> PersistenceApplication.main(new String[]{}));
 	}
 
 }
