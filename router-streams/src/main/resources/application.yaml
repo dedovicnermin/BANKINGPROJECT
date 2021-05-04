@@ -1,15 +1,12 @@
 spring:
   kafka:
     bootstrap-servers: localhost:9092
-#    admin:
-#      client-id: ROUTING-APP
-    client-id: ROUTING-APP
 
   cloud:
     stream:
       function:
         definition: consumeInitialTransfer;validationConsumer;upsertMetric;balanceRequestConsumer
-#        ;supplyTransferStatus
+
 
       bindings:
         upsertMetric-in-0:
@@ -30,7 +27,6 @@ spring:
 
 
 
-
       kafka:
         streams:
           binder:
@@ -39,7 +35,10 @@ spring:
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               commit.interval.ms: 1000
-            auto-create-topics: true
+            min-partition-count: 1
+            application-id: ROUTING-APP
+            deserialization-exception-handler: logandcontinue
+
 
 
 
@@ -47,16 +46,10 @@ spring:
         bindings:
           upsertMetric-in-0:
             keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+
           consumeInitialTransfer-in-0:
             enableDlq: true
             dlqName: funds.transfer.error
-
-
-
-
-
-
-
 
 
 
