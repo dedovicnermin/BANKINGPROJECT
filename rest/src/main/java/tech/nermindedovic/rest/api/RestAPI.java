@@ -1,5 +1,6 @@
 package tech.nermindedovic.rest.api;
 
+import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.MediaType;
@@ -18,10 +19,11 @@ import java.util.concurrent.ExecutionException;
 
 
 @Slf4j
+@Api(tags = {"BANKINGPROJECT"})
 @RestController
 public class RestAPI {
 
-
+    // TODO: enhance swagger-ui. Endpoints should have more description.
 
     private final BalanceProducer balanceProducer;
     private final TransferFundsProducer transferFundsProducer;
