@@ -230,3 +230,21 @@ services:
       - kafka3
       - dbTwo
 
+
+#KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
+  #      KAFKA_CREATE_TOPICS: "balance.transformer.request:3:2
+  #      balance.transformer.response:3:2
+  #      balance.update.request:3:2
+  #      balance.update.request.111:3:2
+  #      balance.update.request.222:3:2
+  #      balance.update.response:3:2
+  #      funds.transfer.111:3:2
+  #      funds.transfer.222:3:2
+  #      funds.transfer.error:3:1
+  #      funds.transfer.single.111:3:2
+  #      funds.transfer.single.222:3:2
+  #      funds.transfer.status:3:2
+  #      funds.transformer.request:3:2
+  #      funds.validate.111:3:2
+  #      funds.validate.222:3:2
+  #      router.validate.transfer:3:2"
