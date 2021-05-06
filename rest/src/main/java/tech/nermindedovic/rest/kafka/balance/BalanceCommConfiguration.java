@@ -32,7 +32,7 @@ public class BalanceCommConfiguration {
     private String GROUP;
 
     @Bean
-    public Map<String, Object> balance_producerConfigs() {
+    public Map<String, Object> balanceProducerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -45,8 +45,8 @@ public class BalanceCommConfiguration {
     }
 
     @Bean
-    public ProducerFactory<String, BalanceMessage> balance_producerFactory() {
-        return new DefaultKafkaProducerFactory<>(balance_producerConfigs());
+    public ProducerFactory<String, BalanceMessage> balanceProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(balanceProducerConfigs());
     }
 
 
@@ -63,13 +63,9 @@ public class BalanceCommConfiguration {
         properties.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+
         containerProperties.getKafkaConsumerProperties().put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, true);
-
-
-
         containerProperties.setKafkaConsumerProperties(properties);
-
-
         return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
     }
 
