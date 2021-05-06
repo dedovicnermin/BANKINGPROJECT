@@ -94,21 +94,6 @@ services:
 
 
 
-#  db:
-#    build:
-#      dockerfile: ./bin/bank/Dockerfile
-#      context: bank
-#    container_name: db
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=postgres
-#      - POSTGRES_DB=BANK
-#      - BANK_FILE=bank
-#    volumes:
-#      - /var/lib/postgresql/data
-
-
-
   db:
     image: postgres
     container_name: db
@@ -117,10 +102,9 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK
     volumes:
+      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/data
-
-
-
 
 
 
@@ -148,22 +132,6 @@ services:
 
 
 
-#  dbTwo:
-#    build:
-#      dockerfile: ./bin/bank2/Dockerfile
-#      context: bank2
-#    container_name: dbTwo
-#    ports:
-#      - "5442:5442"
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=postgres
-#      - POSTGRES_DB=BANK2
-#      - BANK_FILE=bank2
-#    volumes:
-#      - /var/lib/postgresql/dataTwo
-
-
   dbTwo:
     image: postgres
     container_name: dbTwo
@@ -174,10 +142,9 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK2
     volumes:
+      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/dataTwo
-
-
-
 
 
 
