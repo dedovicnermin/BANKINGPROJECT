@@ -85,7 +85,7 @@ services:
       - kafka
       - kafka2
       - kafka3
-      - router-streams
+#      - router-streams
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
       - ROUTER-ENDPOINT=router-streams:8082
