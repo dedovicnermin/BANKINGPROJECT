@@ -4,13 +4,15 @@
 [![codecov](https://codecov.io/gh/dedovicnermin/BANKINGPROJECT/branch/master/graph/badge.svg?token=3STMF7Q3L3)](https://codecov.io/gh/dedovicnermin/BANKINGPROJECT)
 
 > Welcome to BANKINGPROJECT - a personal attempt to improve development and gain familiarity with event-driven programming.
-> To learn more about how this project works, or the purpose behind it, feel free to check out the **Wiki** 
+> To learn more about how this project works, feel free to check out the **Wiki** 
 > section displayed up top. 
 
 ### Features:
+
 - Spring Boot   /    Spring Cloud       / Spring Data
 - Kafka     /    Kafka Streams
-- Docker  
+- Swagger UI (  @ ---> localhost:8080/swagger-ui/  )
+- Docker Compose
 - JUNIT5
 - Kafka Testing
 

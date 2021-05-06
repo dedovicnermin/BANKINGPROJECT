@@ -10,24 +10,66 @@ services:
 
 
   kafka:
+    container_name: kafka_broker_1
     image: wurstmeister/kafka
     links:
       - zookeeper
     ports:
       - "9092:9092"
-      - "29094:29094"
+      - "29092:29092"
     depends_on:
       - zookeeper
     environment:
       KAFKA_ADVERTISED_HOSTNAME: kafka
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29094,OUTSIDE://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:29094,OUTSIDE://0.0.0.0:9092
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock%
 
+
+  kafka2:
+    container_name: kafka_broker_2
+    image: wurstmeister/kafka
+    links:
+      - zookeeper
+    ports:
+      - "9093:9093"
+      - "29093:29093"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOSTNAME: kafka2
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka2:29093,OUTSIDE://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29093,OUTSIDE://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock%
+
+
+  kafka3:
+    container_name: kafka_broker_3
+    image: wurstmeister/kafka
+    links:
+      - zookeeper
+    ports:
+      - "9094:9094"
+      - "29094:29094"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOSTNAME: kafka3
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka3:29094,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29094,OUTSIDE://0.0.0.0:9094
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock%
 
 
 
@@ -41,14 +83,18 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
-      - router-streams
+      - kafka2
+      - kafka3
+#      - router-streams
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
       - ROUTER-ENDPOINT=router-streams:8082
     ports:
       - "8080:8080"
     depends_on:
       - kafka
+      - kafka2
+      - kafka3
 
 
 
@@ -64,12 +110,17 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
+      - kafka2
+      - kafka3
     ports:
       - "8081:8081"
     depends_on:
       - kafka
+      - kafka2
+      - kafka3
+      - rest
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
 
 
 
@@ -83,29 +134,19 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
+      - kafka2
+      - kafka3
     ports:
       - "8082:8082"
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
     depends_on:
       - kafka
+      - kafka2
+      - kafka3
+      - rest
 
 
-
-
-
-#  db:
-#    build:
-#      dockerfile: ./bin/bank/Dockerfile
-#      context: bank
-#    container_name: db
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=postgres
-#      - POSTGRES_DB=BANK
-#      - BANK_FILE=bank
-#    volumes:
-#      - /var/lib/postgresql/data
 
 
 
@@ -117,10 +158,9 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK
     volumes:
+      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/data
-
-
-
 
 
 
@@ -134,34 +174,23 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
+      - kafka2
+      - kafka3
       - db
     ports:
       - "8083:8083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
       - SPRING_JPA_HIBERNATE_DDL-AUTO=update
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
     depends_on:
       - kafka
+      - kafka2
+      - kafka3
       - db
+      - rest
 
 
-
-
-#  dbTwo:
-#    build:
-#      dockerfile: ./bin/bank2/Dockerfile
-#      context: bank2
-#    container_name: dbTwo
-#    ports:
-#      - "5442:5442"
-#    environment:
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=postgres
-#      - POSTGRES_DB=BANK2
-#      - BANK_FILE=bank2
-#    volumes:
-#      - /var/lib/postgresql/dataTwo
 
 
   dbTwo:
@@ -174,10 +203,9 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK2
     volumes:
+      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/dataTwo
-
-
-
 
 
 
@@ -187,11 +215,13 @@ services:
     links:
       - dbTwo
       - kafka
+      - kafka2
+      - kafka3
     environment:
       - SPRING_PROFILES_ACTIVE=persistence2
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
       - SPRING_JPA_HIBERNATE_DDL-AUTO=update
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
     build:
       context: persistence
       dockerfile: Dockerfile
@@ -199,5 +229,26 @@ services:
       - "8084:8084"
     depends_on:
       - kafka
+      - kafka2
+      - kafka3
       - dbTwo
+      - rest
 
+
+#KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
+  #      KAFKA_CREATE_TOPICS: "balance.transformer.request:3:2
+  #      balance.transformer.response:3:2
+  #      balance.update.request:3:2
+  #      balance.update.request.111:3:2
+  #      balance.update.request.222:3:2
+  #      balance.update.response:3:2
+  #      funds.transfer.111:3:2
+  #      funds.transfer.222:3:2
+  #      funds.transfer.error:3:1
+  #      funds.transfer.single.111:3:2
+  #      funds.transfer.single.222:3:2
+  #      funds.transfer.status:3:2
+  #      funds.transformer.request:3:2
+  #      funds.validate.111:3:2
+  #      funds.validate.222:3:2
+  #      router.validate.transfer:3:2"

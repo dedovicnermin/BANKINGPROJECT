@@ -3,7 +3,9 @@ package tech.nermindedovic.routerstreams;
 
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -21,18 +23,21 @@ import java.time.Duration;
 })
 @EmbeddedKafka
 @DirtiesContext
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RouterStreamsApplicationTests {
-
-
 
 	@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 	@Autowired
 	EmbeddedKafkaBroker embeddedKafkaBroker;
 
+	@BeforeAll
+	void setConfig() {
+		System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
+	}
 
 	@Test
 	void contextLoads()  {
-		Assertions.assertTimeout(Duration.ofSeconds(5), () -> System.out.println("hello world"));
+		Assertions.assertDoesNotThrow(() -> RouterStreamsApplication.main(new String[] {}));
 	}
 
 }

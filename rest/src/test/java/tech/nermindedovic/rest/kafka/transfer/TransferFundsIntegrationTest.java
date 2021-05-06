@@ -69,11 +69,12 @@ class TransferFundsIntegrationTest {
 
     @BeforeAll
     void setup() {
+        System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
         setup_receivingEnd();
     }
 
     @AfterAll
-    void destroyBroker() {
+    void destroyBroker()  {
         shutdown();
         embeddedKafkaBroker.destroy();
     }
@@ -106,13 +107,15 @@ class TransferFundsIntegrationTest {
      * testing error consumer will listen to messages on inbound
      */
     @Test
-    void whenTransferErrorArrives_errorConsumerWillConsume()  {
+    void whenTransferErrorArrives_errorConsumerWillConsume() throws InterruptedException {
 
         Producer<String, String> producer = configureProducer();
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence or transformer when it has been unable to process the request sent"));
         producer.flush();
 
-        Mockito.verify(transferErrorConsumer, timeout(9000).times(1)).listen(anyString());
+
+        Mockito.verify(transferErrorConsumer, timeout(100).times(1)).listen(anyString());
+
 
         producer.close();
     }
@@ -123,7 +126,7 @@ class TransferFundsIntegrationTest {
 
 
     void setup_receivingEnd() {
-        Map<String,Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test", "false", embeddedKafkaBroker));
+        Map<String,Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test", "true", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, TransferMessage> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new JsonDeserializer<>(TransferMessage.class));
         ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
         listenerContainer = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);

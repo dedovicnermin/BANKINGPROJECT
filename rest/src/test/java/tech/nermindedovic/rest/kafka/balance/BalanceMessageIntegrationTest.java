@@ -3,6 +3,7 @@ package tech.nermindedovic.rest.kafka.balance;
 
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,11 @@ class BalanceMessageIntegrationTest {
 
     @Autowired
     private RestAPI restAPI;
+
+    @BeforeAll
+    void startup() {
+        System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
+    }
 
     @AfterAll
     void destroyKafka() {

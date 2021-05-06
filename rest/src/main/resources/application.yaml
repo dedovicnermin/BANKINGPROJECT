@@ -1,13 +1,17 @@
 spring:
   kafka:
-
     bootstrap-servers: localhost:9092
     consumer:
       group-id: rest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
 server:
   port: 8080
+
+banking:
+  partitions: 3
+  replicas: 2
 
 router-endpoint: localhost:8082
 

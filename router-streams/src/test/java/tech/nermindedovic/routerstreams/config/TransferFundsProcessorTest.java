@@ -19,6 +19,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,6 +80,10 @@ class TransferFundsProcessorTest {
     @SpyBean
     RouterJsonMapper mapper;
 
+    @BeforeAll
+    void configure() {
+        System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
+    }
 
     @AfterAll
     void shutDown () {
