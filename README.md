@@ -8,9 +8,11 @@
 > section displayed up top. 
 
 ### Features:
+
 - Spring Boot   /    Spring Cloud       / Spring Data
 - Kafka     /    Kafka Streams
-- Docker  
+- Swagger UI (  @ ---> localhost:8080/swagger-ui/  )
+- Docker Compose
 - JUNIT5
 - Kafka Testing
 
