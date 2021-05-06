@@ -1,0 +1,260 @@
+openapi: 3.0.0
+info:
+  title: "Banking Project API"
+  description: "A multi-module maven project with micro-services leveraging event-driven programming. Main goal of the application is to resemble a real-time banking/payment application. Notable applications that reflect the goal of the project include Zelle or Venmo, in which payments are correctly routed and updated into valid accounts. This project relies on leveraging `Spring Boot, Spring Cloud, Kafka API, and Kafka Streams API` to achieve event-driven functionality."
+  version: "0.0.1"
+  contact:
+    name: "BANKING PROJECT API"
+    url: "http://localhost:8080/swagger-ui/"
+    email: "dedovicnermin@outlook.com"
+
+
+
+
+
+tags:
+  - name: Banking Requests
+    externalDocs:
+      description: Find out more about what this API will be doing under the hood
+      url: https://github.com/dedovicnermin/BANKINGPROJECT/wiki/2.-High-Level-Representation
+  - name: BalanceUpdate
+    description: Retrieve an account balance.
+
+  - name: TransferFunds
+    description: "Send a `TransferMessage` to the bank(s)"
+    
+  - name: TransferStatus
+    description: Retrieve the status of your transfer using a messageId
+
+
+
+
+paths:
+  /balance:
+    post:
+      tags:
+        - BalanceUpdate
+      summary: "Given valid account credentials, will return a BalanceMessage with balance property populated. Otherwise, errors flag will be activated."
+      operationId: getBalanceUpdate
+      requestBody:
+        description: "A `BalanceMessage` without extra luggage."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BalanceMessage"
+            examples:
+              routing_111: 
+                value:
+                  accountNumber: 2245
+                  routingNumber: 111
+              routing_222:
+                value:
+                  accountNumber: 4536
+                  routingNumber: 222
+      responses:
+        200:
+          description: "Balance Request returns from the Kafka broker."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceMessage'
+              examples:
+                passing:
+                  value:
+                    accountNumber: 2245
+                    routingNumber: 111
+                    balance: "1100.00"
+                    errors: false
+                failing:
+                  value:
+                    accountNumber: 3524
+                    routingNumber: 234234
+                    balance: "0.00"
+                    errors: true
+        404:
+          description: "Failed operation. Invalid body."
+          
+          
+          
+          
+  /funds/transfer:
+    post:
+      tags:
+        - TransferFunds
+      summary: Send a transfer request using valid creditor/debtor account credentials
+      operationId: fundsTransferRequest
+      requestBody:
+        description: TransferMessage carrying account/payment information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferMessage"
+            examples:
+              single_bank:
+                value:
+                  creditor:
+                    accountNumber: 345
+                    routingNumber: 111
+                  debtor: 
+                    accountNumber: 678
+                    routingNumber: 111
+                  date: "03-15-2021"
+                  amount: "100.00"
+                  memo: "Heres 100 for the bet we made last Thursday, you lucky dawg!"
+              two_bank:
+                value:
+                  creditor:
+                    accountNumber: 345
+                    routingNumber: 111
+                  debtor: 
+                    accountNumber: 789
+                    routingNumber: 222
+                  date: "03-15-2021"
+                  amount: "100.00"
+                  memo: "Heres 100 for the bet we made last Thursday, you lucky dawg!"
+            
+
+      responses:
+        200:
+          description: "Displaying if TransferMessage was sent to the broker. Will return the TransferMessage ID that can be used to query TransferStatus."
+          content:
+            text/html:
+              schema:
+                type: string
+                description: "Notifying user wether the message has been successfully sent to the Kafka broker. Includes the TransferMessage ID."
+                example: "Message with ID {3245345} has been successfully sent."
+
+  /transfer/status/{id}:
+    get:
+      tags:
+        - TransferStatus
+      summary: "Responds with status of transfer witch given id."
+      operationId: getTransferStatus
+      parameters:
+      - name: id
+        in: path
+        description: 'associated with a `TransferMessage`'
+        required: true
+        schema:
+          type: number
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+                enum: [ FAIL, PROCESSING, PERSISTED ]
+                example: PERSISTED
+
+components:
+
+  schemas:
+
+    BalanceMessage:
+      title: BalanceMessage
+      type: object
+      description: "Object that encapsulates balance request data."
+
+      properties:
+        accountNumber:
+          type: number
+          description: "An account number associated with a bank"
+
+        routingNumber:
+          description: "A routing number associated with a bank"
+          type: number
+        balance:
+          type: string
+          description: Balance string that will be populated on response. Does not need to be included in request body.
+        errors:
+          type: boolean
+          description: errors flag.
+            
+      required:
+        - accountNumber
+        - routingNumber
+
+
+
+
+    TransferMessage:
+      title: TransferMessage
+      type: object
+      description: Object that encapsulates transfer request data.
+
+      properties:
+        messageId:
+          type: number
+          description: Transfer ID that will be automatically populated by application.
+        creditor:
+          $ref: "#/components/schemas/Creditor"
+        debtor:
+          $ref: "#/components/schemas/Debtor"
+        date:
+          type: string
+          format: "date"
+          description: Date of transfer (LocalDate).
+        amount:
+          type: number
+          description: Amount of money ready to be transfered.
+          minimum: 0.01
+        memo:
+          type: string
+          description: Additional information relating to the transfer
+          # example: "For the bet we made Thursday. Lucky dog."
+      required:
+        - creditor
+        - debtor
+        - date
+        - amount
+        - memo
+
+
+    Creditor:
+      title: Creditor
+      type: object
+      description: Object that encapsulates Creditor account information
+
+      properties:
+        accountNumber:
+          type: number
+          description: Creditor account number
+        routingNumber:
+          type: number
+          description: Creditor routing number
+
+      required:
+        - accountNumber
+        - routingNumber
+
+    Debtor:
+      title: Debtor
+      type: object
+      description: Object that encapsulates Creditor account information
+
+      properties:
+        accountNumber:
+          type: number
+          description: Debtor account number
+        routingNumber:
+          type: number
+          description: Debtor routing number
+          
+
+      required:
+        - accountNumber
+        - routingNumber
+
+
+
+
+
+
+
+
+
+
+
