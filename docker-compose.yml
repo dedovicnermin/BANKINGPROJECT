@@ -118,6 +118,7 @@ services:
       - kafka
       - kafka2
       - kafka3
+      - rest
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
 
@@ -143,6 +144,7 @@ services:
       - kafka
       - kafka2
       - kafka3
+      - rest
 
 
 
@@ -186,6 +188,7 @@ services:
       - kafka2
       - kafka3
       - db
+      - rest
 
 
 
@@ -229,6 +232,7 @@ services:
       - kafka2
       - kafka3
       - dbTwo
+      - rest
 
 
 #KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
