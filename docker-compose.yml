@@ -94,6 +94,18 @@ services:
 
 
 
+#  db:
+#    build:
+#      dockerfile: ./bin/bank/Dockerfile
+#      context: bank
+#    container_name: db
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=BANK
+#      - BANK_FILE=bank
+#    volumes:
+#      - /var/lib/postgresql/data
 
 
 
@@ -136,7 +148,20 @@ services:
 
 
 
-
+#  dbTwo:
+#    build:
+#      dockerfile: ./bin/bank2/Dockerfile
+#      context: bank2
+#    container_name: dbTwo
+#    ports:
+#      - "5442:5442"
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=BANK2
+#      - BANK_FILE=bank2
+#    volumes:
+#      - /var/lib/postgresql/dataTwo
 
 
   dbTwo:
