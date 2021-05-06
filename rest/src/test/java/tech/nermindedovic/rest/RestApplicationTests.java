@@ -20,13 +20,10 @@ class RestApplicationTests {
 	@Autowired
 	private EmbeddedKafkaBroker embeddedKafkaBroker;
 
-
-
 	@Test
 	void contextLoads() {
 		Assertions.assertDoesNotThrow(() -> RestApplication.main(new String[] {}));
 	}
-
 
 
 }

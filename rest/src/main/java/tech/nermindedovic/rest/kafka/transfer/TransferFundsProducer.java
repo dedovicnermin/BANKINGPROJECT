@@ -2,6 +2,7 @@ package tech.nermindedovic.rest.kafka.transfer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -39,13 +40,16 @@ public class TransferFundsProducer {
     private ListenableFutureCallback<SendResult<String, TransferMessage>> createTransferCallBack() {
         return new ListenableFutureCallback<SendResult<String, TransferMessage>>() {
             @Override
-            public void onFailure(Throwable throwable) {
-                log.error("Could not complete funds transfer request.\n{}", throwable.getMessage());
-            }
+            public void onFailure(Throwable throwable) { log.error("Could not complete funds transfer request.\n{}", throwable.getMessage()); }
 
             @Override
             public void onSuccess(SendResult<String, TransferMessage> stringTransferMessageSendResult) {
-                log.info("Message with ID {} has successfully sent, with offset ({}) and partition ({}).", stringTransferMessageSendResult.getProducerRecord().value().getMessageId(), stringTransferMessageSendResult.getRecordMetadata().offset(), stringTransferMessageSendResult.getRecordMetadata().partition());
+                TransferMessage transferMessage = stringTransferMessageSendResult.getProducerRecord().value();
+                RecordMetadata metadata = stringTransferMessageSendResult.getRecordMetadata();
+                log.info("Message with ID {} has successfully sent, with offset ({}) and partition ({}).",
+                        transferMessage.getMessageId(),
+                        metadata.offset(),
+                        metadata.partition());
             }
         };
     }

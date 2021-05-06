@@ -44,13 +44,45 @@ paths:
             schema:
               $ref: "#/components/schemas/BalanceMessage"
             examples:
-              routing_111: 
+              user1_111:
                 value:
-                  accountNumber: 2245
+                  accountNumber: 1
                   routingNumber: 111
-              routing_222:
+              user2_111:
                 value:
-                  accountNumber: 4536
+                  accountNumber: 2
+                  routingNumber: 111
+              user3_111:
+                value:
+                  accountNumber: 3
+                  routingNumber: 111
+              user4_111:
+                value:
+                  accountNumber: 4
+                  routingNumber: 111
+              user5_111:
+                value:
+                  accountNumber: 5
+                  routingNumber: 111
+              user6_222:
+                value:
+                  accountNumber: 6
+                  routingNumber: 222
+              user7_222:
+                value:
+                  accountNumber: 7
+                  routingNumber: 222
+              user8_222:
+                value:
+                  accountNumber: 8
+                  routingNumber: 222
+              user9_222:
+                value:
+                  accountNumber: 9
+                  routingNumber: 222
+              user10_222:
+                value:
+                  accountNumber: 10
                   routingNumber: 222
       responses:
         200:
@@ -62,9 +94,9 @@ paths:
               examples:
                 passing:
                   value:
-                    accountNumber: 2245
+                    accountNumber: 1
                     routingNumber: 111
-                    balance: "1100.00"
+                    balance: "100.00"
                     errors: false
                 failing:
                   value:
@@ -73,7 +105,7 @@ paths:
                     balance: "0.00"
                     errors: true
         404:
-          description: "Failed operation. Invalid body."
+          description: "Failed operation. Kafka issue / invalid body."
           
           
           
@@ -92,29 +124,80 @@ paths:
             schema:
               $ref: "#/components/schemas/TransferMessage"
             examples:
-              single_bank:
+              singleBank_routing_111:
                 value:
                   creditor:
-                    accountNumber: 345
+                    accountNumber: 3
                     routingNumber: 111
                   debtor: 
-                    accountNumber: 678
+                    accountNumber: 2
                     routingNumber: 111
                   date: "03-15-2021"
-                  amount: "100.00"
-                  memo: "Heres 100 for the bet we made last Thursday, you lucky dawg!"
-              two_bank:
+                  amount: "1000.00"
+                  memo: "Single bank test routing 111. Debtor ($2000.00 -> $1000.00). Creditor ($3000.00 -> $4000.00)"
+
+              singleBank_routing_222:
                 value:
                   creditor:
-                    accountNumber: 345
-                    routingNumber: 111
-                  debtor: 
-                    accountNumber: 789
+                    accountNumber: 9
+                    routingNumber: 222
+                  debtor:
+                    accountNumber: 10
                     routingNumber: 222
                   date: "03-15-2021"
-                  amount: "100.00"
-                  memo: "Heres 100 for the bet we made last Thursday, you lucky dawg!"
-            
+                  amount: "1000.00"
+                  memo: "Single bank test routing 222. Debtor ($5000.00 -> $4000.00). Creditor ($4000.00 -> $5000.00)"
+
+              twoBank_routing:
+                value:
+                  creditor:
+                    accountNumber: 1
+                    routingNumber: 111
+                  debtor: 
+                    accountNumber: 6
+                    routingNumber: 222
+                  date: "03-16-2021"
+                  amount: "500.00"
+                  memo: "two bank test. Debtor($1000.00 -> $500.00). Creditor($1000.00 -> $1500.00)"
+
+
+              insufficient_funds_test:
+                value:
+                  creditor:
+                    accountNumber: 10
+                    routingNumber: 222
+                  debtor:
+                    accountNumber: 6
+                    routingNumber: 222
+                  date: "03-15-2021"
+                  amount: "2000.00"
+                  memo: "Heres for that bet we made last Thursday, you lucky dawg!"
+
+
+              invalidAccount_test:
+                value:
+                  creditor:
+                    accountNumber: 1
+                    routingNumber: 222
+                    debtor:
+                      accountNumber: 8
+                      routingNumber: 222
+                    date: "03-23-2021"
+                    amount: "1.50"
+                    memo: "Buy yourself some coffee. Creditor is invalid."
+
+              invalidRouting_test:
+                value:
+                  creditor:
+                    accountNumber: 10
+                    routingNumber: 123
+                  debtor:
+                    accountNumber: 6
+                    routingNumber: 222
+                  date: "03-25-2021"
+                  amount: "8.00"
+                  memo: "Subway"
+
 
       responses:
         200:
