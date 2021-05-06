@@ -3,6 +3,7 @@ package tech.nermindedovic.routerstreams.config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,10 @@ class BalanceProcessorTest {
     @Autowired
     EmbeddedKafkaBroker embeddedKafkaBroker;
 
+    @BeforeAll
+    void configure() {
+        System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
+    }
 
     @AfterAll
     void shutdown() {
