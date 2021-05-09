@@ -19,6 +19,10 @@ public class TransferStatusService {
     @GetMapping("transfer/{key}")
     public String getStatus(@PathVariable final String key) {
         final ReadOnlyKeyValueStore<String, String> store = iqService.getQueryableStore("transfer.status.store", QueryableStoreTypes.keyValueStore());
-        return store.get(key);
+        String s = store.get(key);
+        if (s.isEmpty() || s.equals("null")) {
+            return String.format("No records with ID (%s)", key);
+        }
+        return s;
     }
 }

@@ -10,10 +10,10 @@ server:
   port: 8080
 
 banking:
-  partitions: 3
-  replicas: 2
+  partitions: 1
+  replicas: 1
 
-router-endpoint: localhost:8082
+router-endpoint: localhost:7082
 
 
 
