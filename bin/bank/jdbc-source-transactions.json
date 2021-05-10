@@ -7,7 +7,7 @@
     "connection.password": "postgres",
     "topic.prefix": "postgres.bank.",
     "topics": "transactions",
-
+    "numeric.mapping": "best_fit",
     "poll.interval.ms" : 3600000,
     "table.whitelist": "transactions",
     "mode": "incrementing",
@@ -29,11 +29,11 @@
 
     "_comment": "--- key/value converters --- ",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "key.converter.schemas.enable": "true",
+    "key.converter.schemas.enable": "false",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "true",
+    "value.converter.schemas.enable": "true"
 
-    "_comment": "--- big decimal conversion sucks ---",
-    "numeric.mapping": "best_fit"
+
+
   }
 }

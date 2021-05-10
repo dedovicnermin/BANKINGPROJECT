@@ -12,6 +12,7 @@
     "mode": "incrementing",
     "incrementing.column.name": "account_number",
     "tasks.max": "1",
+    "numeric.mapping": "best_fit",
 
     "_comment": "--- Single Message Transform (SMT) ---",
     "transforms": "setSchemaName, createKey, extractId",
@@ -28,12 +29,8 @@
 
     "_comment": "--- key/value converters --- ",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "key.converter.schemas.enable": "true",
+    "key.converter.schemas.enable": "false",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "true",
-
-    "_comment": "--- big decimal conversion sucks ---",
-    "numeric.mapping": "best_fit"
-
+    "value.converter.schemas.enable": "true"
   }
 }
