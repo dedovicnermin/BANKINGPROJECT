@@ -2,6 +2,7 @@ version: '2'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    restart: unless-stopped
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -13,6 +14,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:latest
     hostname: kafka
+    restart: unless-stopped
     container_name: kafka
     depends_on:
       - zookeeper
@@ -33,8 +35,8 @@ services:
     hostname: connect
     container_name: connect
     depends_on:
-      - zookeeper
       - kafka
+
     ports:
       - "8083:8083"
     volumes:
@@ -53,25 +55,81 @@ services:
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
+#      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'true'
+#      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'true'
 
-  control-center:
-    image: confluentinc/cp-enterprise-control-center
-    hostname: control-center
-    container_name: control-center
+
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui:0.9.7
+    container_name: kafka-connect-ui
+    restart: unless-stopped
     depends_on:
-      - zookeeper
+      - connect
+    ports:
+      - "8086:8000"
+    environment:
+      CONNECT_URL: http://connect:8083
+      PROXY: "true"
+
+
+#  schema-registry:
+#    image: confluentinc/cp-schema-registry
+#    container_name: schema-registry
+#    hostname: schema-registry
+#    restart: unless-stopped
+#    ports:
+#      - 8081:8081
+#    depends_on:
+#      - kafka
+#    environment:
+#      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181
+#      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+#      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+#
+#  schema-registry-ui:
+#    image: landoop/schema-registry-ui:0.9.5
+#    container_name: kafka-schema-registry-ui
+#    restart: unless-stopped
+#    depends_on:
+#      - schema-registry
+#    ports:
+#    - "8001:8000"
+#    environment:
+#      SCHEMAREGISTRY_URL: schema-registry:8081
+#      PROXY: "true"
+
+
+  kafka-rest-proxy:
+    image: confluentinc/cp-kafka-rest:6.1.1
+    container_name: kafka-rest-proxy
+    restart: unless-stopped
+    depends_on:
       - kafka
     ports:
-      - "9021:9021"
+      - "8082:8082"
     environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka:9092'
-      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-      PORT: 9021
+      KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_REST_HOST_NAME: kafka-rest-proxy
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+      KAFKA_REST_CONSUMER_REQUEST_TIMEOUT_MS: 30000
+#      KAFKA_REST_SCHEMA_REGISTRY_URL: schema-registry:8081
+
+
+  kafka-topics-ui:
+    image: landoop/kafka-topics-ui:0.9.4
+    container_name: kafka-topics-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka-rest-proxy
+    ports:
+      - "8079:8000"
+    environment:
+      KAFKA_REST_PROXY_URL: http://kafka-rest-proxy:8082
+      PROXY: "true"
 
   rest:
     image: rest:latest
@@ -188,3 +246,24 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - dbTwo
+
+
+
+#  control-center:
+#    image: confluentinc/cp-enterprise-control-center
+#    hostname: control-center
+#    container_name: control-center
+#    depends_on:
+#      - zookeeper
+#      - kafka
+#    ports:
+#      - "9021:9021"
+#    environment:
+#      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka:9092'
+#      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+#      CONTROL_CENTER_REPLICATION_FACTOR: 1
+#      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+#      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+#      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+#      CONTROL_CENTER_SCHEMA_REGISTRY_URL: schema-registry:8081
+#      PORT: 9021
