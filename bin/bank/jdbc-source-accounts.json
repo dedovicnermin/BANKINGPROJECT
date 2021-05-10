@@ -6,13 +6,13 @@
     "connection.user": "postgres",
     "connection.password": "postgres",
     "topic.prefix": "postgres.bank.",
-    "topics": "accounts",
-    "poll.interval.ms" : 3600000,
+    "poll.interval.ms" : 10000,
     "table.whitelist": "accounts",
-    "mode": "incrementing",
+    "mode": "timestamp+incrementing",
+    "timestamp.column.name": "updated_at",
     "incrementing.column.name": "account_number",
-    "tasks.max": "1",
     "numeric.mapping": "best_fit",
+    "validate.non.null": "false",
 
     "_comment": "--- Single Message Transform (SMT) ---",
     "transforms": "setSchemaName, createKey, extractId",
@@ -26,6 +26,8 @@
     "transforms.createKey.fields": "account_number",
     "transforms.extractId.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
     "transforms.extractId.field": "account_number",
+
+
 
     "_comment": "--- key/value converters --- ",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
