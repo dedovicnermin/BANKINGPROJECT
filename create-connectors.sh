@@ -13,7 +13,7 @@ curl -i -X POST http://localhost:8083/connectors \
   -H 'Accept: application/json' \
   -d @bin/bank/jdbc-source-accounts.json
 
-printf "\n===== Completed (1/4) =====\n"
+
 
 
 
@@ -25,7 +25,7 @@ curl -i -X POST http://localhost:8083/connectors \
   -H 'Accept: application/json' \
   -d @bin/bank/jdbc-source-transactions.json
 
-printf "\n===== Completed (2/4) =====\n"
+
 
 
 #########################################################
@@ -39,18 +39,28 @@ curl -i -X POST http://localhost:8083/connectors \
   -H 'Accept: application/json' \
   -d @bin/bank2/jdbc-source-accounts.json
 
-printf "\n===== Completed (3/4) =====\n"
+
 
 
 
 printf "\n===== BANK2 config - transactions =====\n"
 
+echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
   -d @bin/bank2/jdbc-source-transactions.json
 
-printf "\n===== Completed (4/4) =====\n"
+
+
+printf "\n===== Elastic config - transactions =====\n"
+
+echo
+curl -i -X POST http://localhost:8083/connectors \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d @bin/elastic/elastic-sink-banks-transaction.json
+
 
 
 printf "\n========"
