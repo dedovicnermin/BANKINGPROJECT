@@ -1,4 +1,5 @@
 version: '3'
+# created to be used with confluent local services CLI
 services:
   rest:
     image: rest:latest
