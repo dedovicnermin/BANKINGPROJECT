@@ -28,6 +28,8 @@ class TransactionRepoTest {
     @Autowired
     EntityManager entityManager;
 
+    private final String memo = "memo";
+
 
     @Test
     void givenTransaction_whenSave_thenOK() {
@@ -36,7 +38,7 @@ class TransactionRepoTest {
         transaction.setDebtorAccountNumber(1);
         transaction.setAmount(new BigDecimal(100));
         transaction.setDate(LocalDate.now());
-        transaction.setMemo("Memo");
+        transaction.setMemo(memo);
 
         transactionRepository.save(transaction);
 
@@ -63,16 +65,20 @@ class TransactionRepoTest {
 
     @Test
     void confirmBuilderWorksAsIntended() {
+        long tId = 1L;
+        long creditorAN = 100L;
+        long debtorAN = 101L;
+        LocalDate localDate = LocalDate.now();
         Transaction transaction = Transaction.builder()
-                .transactionId(1L)
-                .creditorAccountNumber(100L)
-                .debtorAccountNumber(101L)
+                .transactionId(tId)
+                .creditorAccountNumber(creditorAN)
+                .debtorAccountNumber(debtorAN)
                 .amount(BigDecimal.ONE)
-                .date(LocalDate.now())
-                .memo("memo")
+                .date(localDate)
+                .memo(memo)
                 .build();
 
-        assertThat(transaction.toString()).hasToString(new Transaction(1L, 100L, 101L, BigDecimal.ONE, LocalDate.now(), "memo").toString());
+        assertThat(transaction.toString()).hasToString(new Transaction(tId, creditorAN, debtorAN, BigDecimal.ONE, localDate, memo).toString());
     }
 
 

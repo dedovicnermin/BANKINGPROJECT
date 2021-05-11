@@ -116,11 +116,23 @@ class MsgProcessorTest {
 
     @Test
     void processTransferRequest_twoBanks_onInvalidTransferMessage_willSendToErrorTopic() throws JsonProcessingException, InvalidTransferMessageException {
-        TransferMessage transferMessage = new TransferMessage(100L, new Creditor(100L, 100L), new Debtor(1L,111L), LocalDate.now(), new BigDecimal("1.00"), "Here's one dollar");
+        long creditorAN, creditorRN;
+        long messageId = creditorAN = creditorRN = 100L;
+        long debtorAN = 1L, debtorRN = 111L;
+
+
+        TransferMessage transferMessage = TransferMessage.builder()
+                .messageId(messageId)
+                .creditor(new Creditor(creditorAN, creditorRN))
+                .debtor(new Debtor(debtorAN,debtorRN))
+                .date(LocalDate.now())
+                .amount(new BigDecimal("1.00"))
+                .memo("Here's one dollar")
+                .build();
         String xml = mapper.writeValueAsString(transferMessage);
 
         when(bankBinder.toTransferMessage(xml)).thenReturn(transferMessage);
-        doThrow(InvalidTransferMessageException.class).when(persistenceService).processTwoBankTransferMessage(transferMessage, 1L, true);
+        doThrow(InvalidTransferMessageException.class).when(persistenceService).processTwoBankTransferMessage(transferMessage, debtorAN, true);
 
         msgProcessor.processTransferRequestTwoBanks(xml);
 
