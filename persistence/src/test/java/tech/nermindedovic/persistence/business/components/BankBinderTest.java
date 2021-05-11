@@ -28,7 +28,6 @@ class BankBinderTest {
         TransferStatus status = TransferStatus.FAIL;
         when(objectMapper.writeValueAsString(any(TransferStatus.class))).thenThrow(JsonProcessingException.class);
         assertThat(bankBinder.toJson(status)).isEqualTo(String.format("{\n" + "   \"TransferStatus\": \"%s\"" + "\n}", status));
-
     }
 
 }

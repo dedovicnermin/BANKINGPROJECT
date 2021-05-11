@@ -69,13 +69,6 @@ class ProcessorErrorsOnParseTest {
     @Spy
     SAXBuilder saxBuilder;
 
-
-
-
-
-
-
-
     final String balanceMessageXML = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>3452</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
 
     @Test

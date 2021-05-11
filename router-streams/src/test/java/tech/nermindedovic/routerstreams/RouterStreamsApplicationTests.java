@@ -37,7 +37,7 @@ class RouterStreamsApplicationTests {
 
 	@Test
 	void contextLoads()  {
-		Assertions.assertDoesNotThrow(() -> RouterStreamsApplication.main(new String[] {}));
+		Assertions.assertTimeout(Duration.ofSeconds(5),() -> RouterStreamsApplication.main(new String[]{}));
 	}
 
 }
