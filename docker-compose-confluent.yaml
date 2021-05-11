@@ -1,0 +1,243 @@
+version: '2'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    restart: unless-stopped
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    restart: unless-stopped
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+
+  connect:
+    image: custom-confluent-image
+    build: .
+    hostname: connect
+    container_name: connect
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./bin/connect-plugins:/shared-folder
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
+
+
+
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui:0.9.7
+    container_name: kafka-connect-ui
+    restart: unless-stopped
+    depends_on:
+      - connect
+    ports:
+      - "8086:8000"
+    environment:
+      CONNECT_URL: http://connect:8083
+      PROXY: "true"
+
+
+
+
+  kafka-rest-proxy:
+    image: confluentinc/cp-kafka-rest:6.1.1
+    container_name: kafka-rest-proxy
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_REST_HOST_NAME: kafka-rest-proxy
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+      KAFKA_REST_CONSUMER_REQUEST_TIMEOUT_MS: 30000
+
+
+
+  kafka-topics-ui:
+    image: landoop/kafka-topics-ui:0.9.4
+    container_name: kafka-topics-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka-rest-proxy
+    ports:
+      - "8079:8000"
+    environment:
+      KAFKA_REST_PROXY_URL: http://kafka-rest-proxy:8082
+      PROXY: "true"
+
+  rest:
+    image: rest:latest
+    container_name: rest
+    build:
+      context: rest
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+      - ROUTER-ENDPOINT=router-streams:7082
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+
+
+  transformer-streams:
+    image: transformer-streams:latest
+    container_name: transformer-streams
+    build:
+      context: transformer-streams
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    ports:
+      - "7081:7081"
+    depends_on:
+      - kafka
+      - rest
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+
+
+  router-streams:
+    image: router-streams:latest
+    container_name: router-streams
+    ports:
+      - "7082:7082"
+    build:
+      context: router-streams
+      dockerfile: Dockerfile
+    depends_on:
+      - rest
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+      - SERVER_PORT=7082
+
+
+
+
+
+  db:
+    image: postgres
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK
+    ports:
+    - 5432:5432
+    volumes:
+      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - /var/lib/postgresql/data
+
+
+  persistence:
+    image: persistence:latest
+    container_name: persistence
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    ports:
+      - "7083:7083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SERVER_PORT=7083
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+    depends_on:
+      - db
+      - kafka
+
+
+  dbTwo:
+    image: postgres
+    container_name: dbTwo
+    ports:
+      - "5442:5442"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK2
+    volumes:
+      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - /var/lib/postgresql/dataTwo
+
+
+  persistence2:
+    image: persistence:latest
+    container_name: persistence2
+    environment:
+      - SPRING_PROFILES_ACTIVE=persistence2
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+    ports:
+      - "8084:8084"
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    depends_on:
+      - dbTwo
+
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
+    container_name: elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      cluster.name: bank-elastic-cluster
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+

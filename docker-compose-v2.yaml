@@ -1,125 +1,71 @@
 version: '3'
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:5.4.0
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
+    image: confluentinc/cp-zookeeper:latest
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-
-
-
-
-
-
+    ports:
+      - 22181:2181
 
   kafka:
-    image: confluentinc/cp-server:5.4.0
-    container_name: kafka
+    image: confluentinc/cp-kafka:latest
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - 29092:29092
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
-      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
-      CONFLUENT_METRICS_ENABLE: "true"
-      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
-
-
-  kafka2:
-    image: confluentinc/cp-server:5.4.0
-    container_name: kafka2
-    depends_on:
-      - zookeeper
-    ports:
-      - "9093:9093"
-      - "29093:29093"
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka2:29093,OUTSIDE://localhost:9093
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:29093,OUTSIDE://0.0.0.0:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka2:29093
-      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
-      CONFLUENT_METRICS_ENABLE: "true"
-      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
-
-
-  kafka3:
-    image: confluentinc/cp-server:5.4.0
-    hostname: kafka3
-    container_name: kafka3
-    depends_on:
-      - zookeeper
-    ports:
-      - "9094:9094"
-      - "29094:29094"
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka3:29094,OUTSIDE://localhost:9094
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:29094,OUTSIDE://0.0.0.0:9094
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka3:29094
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:9092
       CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
       CONFLUENT_METRICS_ENABLE: "true"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
 
   kafka-tools:
-    image: confluentinc/cp-kafka:5.4.0
+    image: confluentinc/cp-kafka
     hostname: kafka-tools
     container_name: kafka-tools
     command: [ "tail", "-f", "/dev/null" ]
+    depends_on:
+      - zookeeper
 
 
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:5.4.0
+    image: confluentinc/cp-schema-registry
     hostname: schema-registry
     container_name: schema-registry
     depends_on:
       - zookeeper
       - kafka
-      - kafka2
-      - kafka3
     ports:
       - "8090:8090"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_DEBUG: 'true'
+      SCHEMA_REGISTRY_LISTENERS: schema-registry:8090
+
   control-center:
-    image: confluentinc/cp-enterprise-control-center:5.4.0
-    hostname: control-center
+    image: confluentinc/cp-enterprise-control-center
     container_name: control-center
     depends_on:
       - zookeeper
       - kafka
-      - kafka2
-      - kafka3
       - schema-registry
     ports:
       - "9021:9021"
     environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'kafka:29092,kafka2:29093,kafka3:29094'
-      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-#      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8090"
-      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "schema-registry:8090"
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: schema-registry:8090
       CONTROL_CENTER_REPLICATION_FACTOR: 1
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
@@ -134,17 +80,14 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
-      - kafka2
-      - kafka3
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
       - ROUTER-ENDPOINT=router-streams:8082
     ports:
       - "8080:8080"
     depends_on:
       - kafka
-      - kafka2
-      - kafka3
+
 
 
 
@@ -160,17 +103,14 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
-      - kafka2
-      - kafka3
     ports:
-      - "8081:8081"
+      - "7081:7081"
     depends_on:
       - kafka
-      - kafka2
-      - kafka3
       - rest
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+      - SERVER_PORT=7081
 
 
 
@@ -184,21 +124,13 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
-      - kafka2
-      - kafka3
     ports:
       - "8082:8082"
     environment:
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
     depends_on:
       - kafka
-      - kafka2
-      - kafka3
       - rest
-
-
-
-
 
   db:
     image: postgres
@@ -224,21 +156,18 @@ services:
       dockerfile: Dockerfile
     links:
       - kafka
-      - kafka2
-      - kafka3
       - db
     ports:
       - "8083:8083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
       - SPRING_JPA_HIBERNATE_DDL-AUTO=update
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
     depends_on:
       - kafka
-      - kafka2
-      - kafka3
       - db
       - rest
+
 
 
 
@@ -265,13 +194,11 @@ services:
     links:
       - dbTwo
       - kafka
-      - kafka2
-      - kafka3
     environment:
       - SPRING_PROFILES_ACTIVE=persistence2
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
       - SPRING_JPA_HIBERNATE_DDL-AUTO=update
-      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
     build:
       context: persistence
       dockerfile: Dockerfile
@@ -279,9 +206,6 @@ services:
       - "8084:8084"
     depends_on:
       - kafka
-      - kafka2
-      - kafka3
-      - dbTwo
       - rest
 
 

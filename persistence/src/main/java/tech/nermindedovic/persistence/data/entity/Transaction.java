@@ -1,11 +1,13 @@
 package tech.nermindedovic.persistence.data.entity;
 
+
 import lombok.*;
 import tech.nermindedovic.persistence.data.utils.TransactionAttributes;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
 
 
 @Entity
@@ -17,7 +19,13 @@ import java.time.LocalDate;
 @Table(name = "TRANSACTIONS")
 public class Transaction {
 
+
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
+    private long id;
+
+
     @Column(name = TransactionAttributes.TRANSACTION_ID)
     private long transactionId;
 
@@ -35,6 +43,20 @@ public class Transaction {
 
     @Column(name = TransactionAttributes.MEMO)
     private String memo;
+
+
+    public Transaction(long transactionId, long creditorAccountNumber, long debtorAccountNumber, BigDecimal amount, LocalDate date,  String memo) {
+        this.transactionId = transactionId;
+        this.creditorAccountNumber = creditorAccountNumber;
+        this.debtorAccountNumber = debtorAccountNumber;
+        this.amount = amount;
+        this.date = date;
+        this.memo = memo;
+    }
+
+
+
+
 
 
 

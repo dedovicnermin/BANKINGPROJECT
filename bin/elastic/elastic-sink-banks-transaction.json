@@ -1,0 +1,21 @@
+{
+  "name": "elastic-sink-banks-transaction",
+  "config": {
+    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "topics": "postgres.bank.transactions, postgres.bank2.transactions",
+    "connection.url": "http://elasticsearch:9200",
+    "type.name": "transaction",
+
+    "transforms": "createKey,extractId",
+    "transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.createKey.fields": "transaction_id",
+    "transforms.extractId.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+    "transforms.extractId.field": "transaction_id",
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "true"
+
+  }
+}

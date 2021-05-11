@@ -13,7 +13,6 @@ import java.time.Duration;
 @DirtiesContext
 class PersistenceApplicationTests {
 
-
 	@Test
 	void contextLoads() {
 		Assertions.assertTimeout(Duration.ofSeconds(10),() -> PersistenceApplication.main(new String[]{}));

@@ -11,6 +11,7 @@ import tech.nermindedovic.persistence.data.repository.AccountRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -26,6 +27,7 @@ class AccountRepoTest {
 
     @Test
     void givenAccount_whenSave_thenGetOk() {
+
         Account account = new Account(1L,1L, "Bob", new BigDecimal("200.00"));
         entityManager.persist(account);
         Account actual = repository.findById(1L).orElse(new Account());
@@ -33,6 +35,10 @@ class AccountRepoTest {
         assertEquals(account.getUserName(), actual.getUserName());
         assertEquals(account.getRoutingNumber(), actual.getRoutingNumber());
         assertEquals(account.getAccountBalance(), actual.getAccountBalance());
+        assertThat(account.getCreatedAt()).isNotNull();
+        assertThat(account.getUpdatedAt()).isNotNull();
+
+
     }
 
     @Test

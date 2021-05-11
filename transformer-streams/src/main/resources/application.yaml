@@ -42,7 +42,7 @@ spring:
               commit.interval.ms: 1000
 
 server:
-  port: 8081
+  port: 7081
 
 
 

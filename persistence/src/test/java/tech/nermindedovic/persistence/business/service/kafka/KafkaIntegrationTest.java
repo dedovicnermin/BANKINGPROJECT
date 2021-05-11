@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
-
+import static org.assertj.core.api.Assertions.fail;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
@@ -153,14 +153,18 @@ class KafkaIntegrationTest {
     @Test
     @Order(1)
     void onValidTransfer_willConsumeAndPersist() throws JsonProcessingException, InterruptedException {
-        accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
-        accountRepository.save(new Account(22,22,"Ken", BigDecimal.TEN));
+        long creditorAN = 11, creditorRN = 111;
+        long debtorAN = 22, debtorRN = 22;
+        long tId = 100;
+        accountRepository.save(new Account(creditorAN,creditorRN,"Ben", BigDecimal.TEN));
+        accountRepository.save(new Account(debtorAN,debtorRN,"Ken", BigDecimal.TEN));
 
 
-        TransferMessage transferMessage = new TransferMessage(100L, new Creditor(11, 111), new Debtor(22,222), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
+
+        TransferMessage transferMessage = new TransferMessage(tId, new Creditor(creditorAN, creditorRN), new Debtor(debtorAN,debtorRN), LocalDate.now(), BigDecimal.ONE, "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
 
-        producer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, Long.toString(100), xml));
+        producer.send(new ProducerRecord<>(INBOUND_TRANSFER_REQUEST, Long.toString(tId), xml));
         producer.flush();
 
         //check error consumer is empty
@@ -169,13 +173,14 @@ class KafkaIntegrationTest {
 
 
         // check transaction was persisted without generating id
-        assertThat(transactionRepository.findById(100L)).isNotEmpty();
+        assertThat(transactionRepository.findByTransactionId(tId)).isNotEmpty();
         // check balances of users to ensure they have been updated
+        if (!accountRepository.findById(creditorAN).isPresent() || !accountRepository.findById(debtorAN).isPresent()) {
+            fail("Both accounts could not be found.");
+        }
 
-
-
-        assertThat(accountRepository.findById(11L).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"));
-        assertThat(accountRepository.findById(22L).get().getAccountBalance()).isEqualTo(new BigDecimal("9.00"));
+        assertThat(accountRepository.findById(creditorAN).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"));
+        assertThat(accountRepository.findById(debtorAN).get().getAccountBalance()).isEqualTo(new BigDecimal("9.00"));
     }
 
 
@@ -225,32 +230,38 @@ class KafkaIntegrationTest {
     @Test
     @Order(4)
     void onIncomingSingleUserFundsTransfer_willPersistTransactionAndUpdateUserBalance() throws JsonProcessingException, InterruptedException {
-        accountRepository.save(new Account(779,111,"Ben", BigDecimal.TEN));
+        long creditorAN = 779, creditorRN = 111;
+        long debtorAN = 345, debtorRN = 222;
+        long messageId = 344566;
+
+        accountRepository.save(new Account(creditorAN,creditorRN,"Ben", BigDecimal.TEN));
         Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         Producer<String, String> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new StringSerializer()).createProducer();
 
-        long messageId = 344566;
+
         LocalDate date = LocalDate.now();
-        TransferMessage transferMessage = new TransferMessage(messageId, new Creditor(779, 111), new Debtor(345,222), date, BigDecimal.ONE, "Here's one dollar");
+        TransferMessage transferMessage = new TransferMessage(messageId, new Creditor(creditorAN, creditorRN), new Debtor(debtorAN,debtorRN), date, BigDecimal.ONE, "Here's one dollar");
         String xml = mapper.writeValueAsString(transferMessage);
-
-
-
 
         myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_SINGLE_USER, xml));
         myProducer.flush();
 
+        Thread.sleep(3000);
+        Optional<Transaction> transaction = transactionRepository.findByTransactionId(messageId);
 
-        Thread.sleep(10000);
-        Optional<Transaction> transaction = transactionRepository.findById(messageId);
-        Assertions.assertAll(
-                () -> assertThat(transaction).isPresent(),
-                () -> assertThat(transaction).contains(new Transaction(messageId, 779, 345, new BigDecimal("1.00"), date,  "Here's one dollar")),
-                () -> assertThat(accountRepository.findById(779L)).isNotEmpty(),
-                () -> assertThat(accountRepository.findById(779L).get().getAccountBalance()).isEqualTo(new BigDecimal("11.00"))
-        );
+        if (!transaction.isPresent()) {
+            fail("Transaction not present.");
+        }
+        transaction.ifPresent(transaction1 -> {
+            transaction1.setId(0);
+            assertThat(transaction1).isEqualTo(new Transaction(messageId, creditorAN, debtorAN, new BigDecimal("1.00"), date,  "Here's one dollar"));
+        });
 
 
+        BigDecimal expectedBalance = new BigDecimal("11.00");
+
+        assertThat(accountRepository.findById(creditorAN)).isPresent();
+        accountRepository.findById(creditorAN).ifPresent(acct -> assertThat(acct.getAccountBalance()).isEqualTo(expectedBalance));
         myProducer.close(Duration.ofMillis(2000));
     }
 
@@ -258,29 +269,37 @@ class KafkaIntegrationTest {
     @Test
     @Order(5)
     void onIncomingSingleUserFundsTransfer_whenDebtorIsNativeAccount_willSubtractFromDebtorBalance() throws JsonProcessingException, InterruptedException {
-        accountRepository.save(new Account(808773,111,"Kai", BigDecimal.TEN));
-        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
-        Producer<String, String> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new StringSerializer()).createProducer();
-
+        long debtorAN = 808773, debtorRN = 111;
+        long creditorAN = 779, creditorRN = 222;
         long messageId = 8021058394L;
         LocalDate date = LocalDate.now();
-        TransferMessage transferMessage = new TransferMessage(messageId, new Creditor(779, 222), new Debtor(808773,111), date, BigDecimal.ONE, "Here's one dollar");
-        String xml = mapper.writeValueAsString(transferMessage);
+        String memo = "Here's one dollar";
+        BigDecimal amount = new BigDecimal("1.00");
 
+        accountRepository.save(new Account(debtorAN,debtorRN,"Kai", BigDecimal.TEN));
 
+        TransferMessage transferMessage = new TransferMessage(messageId, new Creditor(creditorAN, creditorRN), new Debtor(debtorAN,debtorRN), date, amount, memo);
+        String transferXml = mapper.writeValueAsString(transferMessage);
 
-
-        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_SINGLE_USER, xml));
+        //config producer
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
+        Producer<String, String> myProducer = new DefaultKafkaProducerFactory<>(configs, new StringSerializer(), new StringSerializer()).createProducer();
+        myProducer.send(new ProducerRecord<>(INBOUND_TRANSFER_SINGLE_USER, transferXml));
         myProducer.flush();
 
 
-        Thread.sleep(10000);
-        Optional<Transaction> transaction = transactionRepository.findById(messageId);
+        Thread.sleep(5000);
+        BigDecimal expectedDebtorBalance = new BigDecimal("9.00");
+        Transaction expectedTransaction = new Transaction(messageId, creditorAN, debtorAN, amount, date, memo);
+        Optional<Transaction> transaction = transactionRepository.findByTransactionId(messageId);
         Assertions.assertAll(
                 () -> assertThat(transaction).isPresent(),
-                () -> assertThat(transaction).contains(new Transaction(messageId, 779, 808773, new BigDecimal("1.00"), date,  "Here's one dollar")),
-                () -> assertThat(accountRepository.findById(808773L)).isNotEmpty(),
-                () -> assertThat(accountRepository.findById(808773L).get().getAccountBalance()).isEqualTo(new BigDecimal("9.00"))
+                () -> transaction.ifPresent(t -> {
+                        t.setId(0);
+                        assertThat((t)).isEqualTo(expectedTransaction);
+                }),
+                () -> assertThat(accountRepository.findById(debtorAN)).isNotEmpty(),
+                () -> accountRepository.findById(debtorAN).ifPresent(acct -> assertThat(acct.getAccountBalance()).isEqualTo(expectedDebtorBalance))
         );
 
 
@@ -556,21 +575,20 @@ class KafkaIntegrationTest {
     @Test
     @Order(12)
     void test_balanceMessages_WillBeConsumedAndProduced() throws JsonProcessingException, InterruptedException {
+        long accountNumber = 11, routingNumber = 111;
 
-        accountRepository.save(new Account(11,11,"Ben", BigDecimal.TEN));
+        accountRepository.save(new Account(accountNumber,routingNumber,"Ben", BigDecimal.TEN));
 
-        BalanceMessage balanceMessage = new BalanceMessage(11, 11, "", false);
+        BalanceMessage balanceMessage = new BalanceMessage(accountNumber, routingNumber, "", false);
         String balanceMessageXML = mapper.writeValueAsString(balanceMessage);
-
         ProducerRecord<String, String> record = new ProducerRecord<>(INBOUND_BALANCE_REQUEST, balanceMessageXML);
         record.headers().add(KafkaHeaders.REPLY_TOPIC, OUTBOUND_BALANCE_RESPONSE.getBytes());
-
         producer.send(record);
         producer.flush();
 
         ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(consumed).isNotNull();
-        assertThat(consumed.value()).isEqualTo(mapper.writeValueAsString(new BalanceMessage(11,11,"10.00", false)));
+        assertThat(consumed.value()).isEqualTo(mapper.writeValueAsString(new BalanceMessage(accountNumber,routingNumber,"10.00", false)));
     }
 
 
