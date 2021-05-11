@@ -107,7 +107,7 @@ class TransferFundsIntegrationTest {
      * testing error consumer will listen to messages on inbound
      */
     @Test
-    void whenTransferErrorArrives_errorConsumerWillConsume() throws InterruptedException {
+    void whenTransferErrorArrives_errorConsumerWillConsume() {
 
         Producer<String, String> producer = configureProducer();
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence or transformer when it has been unable to process the request sent"));
