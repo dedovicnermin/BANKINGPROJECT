@@ -42,6 +42,8 @@ public class Account {
         this.routingNumber = routingNumber;
         this.userName = userName;
         this.accountBalance = amount;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Column(nullable = false)
