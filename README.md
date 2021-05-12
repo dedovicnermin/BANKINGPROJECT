@@ -10,8 +10,10 @@
 ### Features:
 
 - Spring Boot   /    Spring Cloud       / Spring Data
-- Kafka     /    Kafka Streams
+- Kafka     /    Kafka Streams          / Kafka Connect
+- Postgresql / ElasticSearch
 - Swagger UI (  @ ---> localhost:8080/swagger-ui/  )
+- Landoop UIs  
 - Docker Compose
 - JUNIT5
 - Kafka Testing
