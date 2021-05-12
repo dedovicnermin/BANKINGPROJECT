@@ -116,6 +116,7 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
       - ROUTER-ENDPOINT=router-streams:7082
+      - ELASTIC-ENDPOINT=elasticsearch:9200
     ports:
       - "8080:8080"
     depends_on:
@@ -239,5 +240,18 @@ services:
       memlock:
         soft: -1
         hard: -1
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.9.3
+    container_name: kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
 
 
