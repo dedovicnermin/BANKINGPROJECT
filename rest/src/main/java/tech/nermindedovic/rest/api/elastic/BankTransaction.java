@@ -1,14 +1,14 @@
 package tech.nermindedovic.rest.api.elastic;
 
+import lombok.Data;
 import nonapi.io.github.classgraph.json.Id;
 import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.LocalDate;
 
-
+@Data
 public class BankTransaction {
 
     @Id

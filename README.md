@@ -21,6 +21,7 @@
 
 ### Upcoming:
 - Neo4j 
+- Apache Avro
 
 ### Questions / Suggestions
 Any questions or suggestions about the project? Feel free to raise an issue! 
