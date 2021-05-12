@@ -17,6 +17,10 @@
 - Docker Compose
 - JUNIT5
 - Kafka Testing
+- Kibana
+
+### Upcoming:
+- Neo4j 
 
 ### Questions / Suggestions
 Any questions or suggestions about the project? Feel free to raise an issue! 
