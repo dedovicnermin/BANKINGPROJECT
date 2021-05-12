@@ -66,17 +66,17 @@ public class RestAPI {
     }
 
 
-    @GetMapping(value = "/transactions")
+    @GetMapping(value = "transactions")
     public SearchHits<BankTransaction> getAllTransactions() {
         return elasticService.retrieveAllTransactions();
     }
 
-    @GetMapping(value = "/transactions/bank1")
+    @GetMapping(value = "transactions/bank1")
     public SearchHits<BankTransaction> getAllBank1Transactions() {
         return elasticService.retrieveAllFromBank1();
     }
 
-    @GetMapping(value = "/transactions/bank2")
+    @GetMapping(value = "transactions/bank2")
     public SearchHits<BankTransaction> getAllBank2Transactions() {
         return elasticService.retrieveAllFromBank2();
     }
