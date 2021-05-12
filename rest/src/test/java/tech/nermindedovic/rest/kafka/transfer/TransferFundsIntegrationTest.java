@@ -114,7 +114,7 @@ class TransferFundsIntegrationTest {
         producer.flush();
 
 
-        Mockito.verify(transferErrorConsumer, timeout(100).times(1)).listen(anyString());
+        Mockito.verify(transferErrorConsumer, timeout(500).times(1)).listen(anyString());
 
 
         producer.close();

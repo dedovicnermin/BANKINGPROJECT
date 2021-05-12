@@ -4,7 +4,7 @@
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
     "topics": "postgres.bank.transactions, postgres.bank2.transactions",
     "connection.url": "http://elasticsearch:9200",
-    "type.name": "transaction",
+    "type.name": "BankTransaction",
 
     "transforms": "createKey,extractId",
     "transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
