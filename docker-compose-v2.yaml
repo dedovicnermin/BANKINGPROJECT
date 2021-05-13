@@ -1,0 +1,228 @@
+version: '3'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_ENABLE: "true"
+      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+
+  kafka-tools:
+    image: confluentinc/cp-kafka
+    hostname: kafka-tools
+    container_name: kafka-tools
+    command: [ "tail", "-f", "/dev/null" ]
+    depends_on:
+      - zookeeper
+
+
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8090:8090"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_DEBUG: 'true'
+      SCHEMA_REGISTRY_LISTENERS: schema-registry:8090
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center
+    container_name: control-center
+    depends_on:
+      - zookeeper
+      - kafka
+      - schema-registry
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: schema-registry:8090
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+      PORT: 9021
+
+  rest:
+    image: rest:latest
+    container_name: rest
+    build:
+      context: rest
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+      - ROUTER-ENDPOINT=router-streams:8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+
+
+
+
+
+
+
+
+  transformer-streams:
+    image: transformer-streams:latest
+    container_name: transformer-streams
+    build:
+      context: transformer-streams
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    ports:
+      - "7081:7081"
+    depends_on:
+      - kafka
+      - rest
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+      - SERVER_PORT=7081
+
+
+
+
+
+  router-streams:
+    image: router-streams:latest
+    container_name: router-streams
+    build:
+      context: router-streams
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+    depends_on:
+      - kafka
+      - rest
+
+  db:
+    image: postgres
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK
+    volumes:
+      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - /var/lib/postgresql/data
+
+
+
+
+
+  persistence:
+    image: persistence:latest
+    container_name: persistence
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    links:
+      - kafka
+      - db
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+    depends_on:
+      - kafka
+      - db
+      - rest
+
+
+
+
+
+  dbTwo:
+    image: postgres
+    container_name: dbTwo
+    ports:
+      - "5442:5442"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=BANK2
+    volumes:
+      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - /var/lib/postgresql/dataTwo
+
+
+
+  persistence2:
+    image: persistence:latest
+    container_name: persistence2
+    links:
+      - dbTwo
+      - kafka
+    environment:
+      - SPRING_PROFILES_ACTIVE=persistence2
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
+    build:
+      context: persistence
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    depends_on:
+      - kafka
+      - rest
+
+
+  #KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
+  #      KAFKA_CREATE_TOPICS: "balance.transformer.request:3:2
+  #      balance.transformer.response:3:2
+  #      balance.update.request:3:2
+  #      balance.update.request.111:3:2
+  #      balance.update.request.222:3:2
+  #      balance.update.response:3:2
+  #      funds.transfer.111:3:2
+  #      funds.transfer.222:3:2
+  #      funds.transfer.error:3:1
+  #      funds.transfer.single.111:3:2
+  #      funds.transfer.single.222:3:2
+  #      funds.transfer.status:3:2
+  #      funds.transformer.request:3:2
+  #      funds.validate.111:3:2
+  #      funds.validate.222:3:2
+  #      router.validate.transfer:3:2"
