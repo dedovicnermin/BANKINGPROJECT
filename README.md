@@ -19,6 +19,12 @@
 - Kafka Testing
 - Kibana
 
+### Endpoints:
+> - Swagger UI: http://localhost:8080/swagger-ui/
+> - Kafka Topics UI: http://localhost:8079/
+> - Kafka Connect UI: http://localhost:8086/
+> - Kibana: http://localhost:5601/
+> - Elasticsearch Index: http://localhost:9200/_cat/indices?v
 ### Upcoming:
 - Neo4j 
 - Apache Avro
