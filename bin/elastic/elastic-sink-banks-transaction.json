@@ -4,13 +4,27 @@
     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
     "topics": "postgres.bank.transactions, postgres.bank2.transactions",
     "connection.url": "http://elasticsearch:9200",
-    "type.name": "transaction",
+    "type.name": "_doc",
+    "write.method": "upsert",
 
-    "transforms": "createKey,extractId",
+
+    "transforms": "createKey,extractId,insertTS,formatTS,renameTopic",
     "transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
     "transforms.createKey.fields": "transaction_id",
     "transforms.extractId.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
     "transforms.extractId.field": "transaction_id",
+
+    "transforms.insertTS.type": "org.apache.kafka.connect.transforms.InsertField$Value",
+    "transforms.insertTS.timestamp.field": "timestamp",
+
+    "transforms.formatTS.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+    "transforms.formatTS.format": "yyyy-MM-dd HH:mm:ss:SSS",
+    "transforms.formatTS.field": "messageTS",
+    "transforms.formatTS.target.type": "string",
+
+    "transforms.renameTopic.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.renameTopic.regex": "postgres.bank.*transactions",
+    "transforms.renameTopic.replacement": "postgres.bank.transactions",
 
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
     "key.converter.schemas.enable": "false",

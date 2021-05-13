@@ -32,7 +32,6 @@ import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.api.RestAPI;
 
 
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -106,18 +105,18 @@ class TransferFundsIntegrationTest {
     /**
      * testing error consumer will listen to messages on inbound
      */
+
     @Test
     void whenTransferErrorArrives_errorConsumerWillConsume() {
 
         Producer<String, String> producer = configureProducer();
-        producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence or transformer when it has been unable to process the request sent"));
+        producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence/transformer/router when it has been unable to process the request sent"));
         producer.flush();
 
+        Mockito.verify(transferErrorConsumer, timeout(10000).times(1)).listen(anyString());
 
-        Mockito.verify(transferErrorConsumer, timeout(100).times(1)).listen(anyString());
 
 
-        producer.close();
     }
 
 

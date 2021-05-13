@@ -22,11 +22,12 @@ tags:
 
   - name: TransferFunds
     description: "Send a `TransferMessage` to the bank(s)"
-    
+
   - name: TransferStatus
     description: Retrieve the status of your transfer using a messageId
 
-
+  - name: ElasticSearch
+    description: Retrieve all documents from `postgres.bank.transactions` index.
 
 
 paths:
@@ -106,10 +107,10 @@ paths:
                     errors: true
         404:
           description: "Failed operation. Kafka issue / invalid body."
-          
-          
-          
-          
+
+
+
+
   /funds/transfer:
     post:
       tags:
@@ -129,7 +130,7 @@ paths:
                   creditor:
                     accountNumber: 3
                     routingNumber: 111
-                  debtor: 
+                  debtor:
                     accountNumber: 2
                     routingNumber: 111
                   date: "03-15-2021"
@@ -153,7 +154,7 @@ paths:
                   creditor:
                     accountNumber: 1
                     routingNumber: 111
-                  debtor: 
+                  debtor:
                     accountNumber: 6
                     routingNumber: 222
                   date: "03-16-2021"
@@ -213,15 +214,15 @@ paths:
     get:
       tags:
         - TransferStatus
-      summary: "Responds with status of transfer witch given id."
+      summary: "Responds with status of transfer given transfer id."
       operationId: getTransferStatus
       parameters:
-      - name: id
-        in: path
-        description: 'associated with a `TransferMessage`'
-        required: true
-        schema:
-          type: number
+        - name: id
+          in: path
+          description: 'associated with a `TransferMessage`'
+          required: true
+          schema:
+            type: number
       responses:
         200:
           description: Successful operation
@@ -231,6 +232,25 @@ paths:
                 type: string
                 enum: [ FAIL, PROCESSING, PERSISTED ]
                 example: PERSISTED
+
+  /transactions:
+    get:
+      tags:
+        - ElasticSearch
+      summary: "Retrieves SearchHits<BankTransaction> - Elasticsearch."
+      operationId: getAllTransactions
+      responses:
+        200:
+          description: Successful operation.
+        400:
+          description: Unsuccessful operation.
+
+
+
+
+
+
+
 
 components:
 
@@ -255,7 +275,7 @@ components:
         errors:
           type: boolean
           description: errors flag.
-            
+
       required:
         - accountNumber
         - routingNumber
@@ -325,7 +345,7 @@ components:
         routingNumber:
           type: number
           description: Debtor routing number
-          
+
 
       required:
         - accountNumber
