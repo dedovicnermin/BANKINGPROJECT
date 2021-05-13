@@ -2,6 +2,9 @@ package tech.nermindedovic.rest;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.lucene.search.TotalHits;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +22,7 @@ import tech.nermindedovic.rest.api.RestAPI;
 
 
 import tech.nermindedovic.rest.api.TransactionSearchService;
+import tech.nermindedovic.rest.api.elastic.BankTransaction;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
@@ -152,13 +156,15 @@ class RestControllerUnitTest {
 
 
     @Test
-    void gettingTransferStatus_willReturnString()  {
+    void getTransferStatus_willReturnString()  {
         // TODO : figure out how to test
         RestAPI api = mock(RestAPI.class);
         when(api.getTransferStatus("123")).thenReturn("PERSISTED");
 
         assertThat(api.getTransferStatus("123")).isEqualTo("PERSISTED");
     }
+
+
 
     
 
