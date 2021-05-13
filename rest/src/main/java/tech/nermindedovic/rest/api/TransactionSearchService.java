@@ -14,9 +14,6 @@ import tech.nermindedovic.rest.api.elastic.BankTransaction;
 @Slf4j
 public class TransactionSearchService {
     private static final String BANK_INDEX = "postgres.bank.transactions";
-    private static final String BANK2_INDEX = "postgres.bank2.transactions";
-
-
     private final ElasticsearchOperations elasticsearchOperations;
 
     public TransactionSearchService(final ElasticsearchOperations elasticsearchOperations) {
@@ -27,21 +24,8 @@ public class TransactionSearchService {
     private final Query searchQuery = new CriteriaQuery(criteria);
 
     public SearchHits<BankTransaction> retrieveAllTransactions() {
-        return elasticsearchOperations.search(searchQuery, BankTransaction.class, IndexCoordinates.of(BANK_INDEX, BANK2_INDEX));
-    }
-
-    public SearchHits<BankTransaction> retrieveAllFromBank1() {
         return elasticsearchOperations.search(searchQuery, BankTransaction.class, IndexCoordinates.of(BANK_INDEX));
     }
-
-    public SearchHits<BankTransaction> retrieveAllFromBank2() {
-        return elasticsearchOperations.search(searchQuery, BankTransaction.class, IndexCoordinates.of(BANK2_INDEX));
-    }
-
-
-
-
-
 
 
 }

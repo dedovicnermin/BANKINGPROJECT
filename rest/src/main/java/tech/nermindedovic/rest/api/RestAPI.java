@@ -71,24 +71,6 @@ public class RestAPI {
         return elasticService.retrieveAllTransactions();
     }
 
-    @GetMapping(value = "transactions/bank1")
-    public SearchHits<BankTransaction> getAllBank1Transactions() {
-        return elasticService.retrieveAllFromBank1();
-    }
-
-    @GetMapping(value = "transactions/bank2")
-    public SearchHits<BankTransaction> getAllBank2Transactions() {
-        return elasticService.retrieveAllFromBank2();
-    }
-
-
-
-
-
-
-
-
-
 
 
 

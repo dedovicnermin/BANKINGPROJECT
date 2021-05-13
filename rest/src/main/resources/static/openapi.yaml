@@ -26,6 +26,8 @@ tags:
   - name: TransferStatus
     description: Retrieve the status of your transfer using a messageId
 
+  - name: ElasticSearch
+    description: Retrieve all documents from `postgres.bank.transactions` index.
 
 
 paths:
@@ -234,8 +236,8 @@ paths:
   /transactions:
     get:
       tags:
-        - getAllTransactions
-      summary: "Retrieves all transactions - Elasticsearch."
+        - ElasticSearch
+      summary: "Retrieves SearchHits<BankTransaction> - Elasticsearch."
       operationId: getAllTransactions
       responses:
         200:
@@ -243,29 +245,7 @@ paths:
         400:
           description: Unsuccessful operation.
 
-  /transactions/bank1:
-    get:
-      tags:
-        - getAllBank1Transactions
-      summary: "Retrieves all transactions from Bank1 - ElasticSearch."
-      operationId: getAllBank1Transactions
-      responses:
-        200:
-          description: Successful operation.
-        400:
-          description: Unsuccessful operation.
 
-  /transactions/bank2:
-    get:
-      tags:
-        - getAllBank2Transactions
-      summary: "Retrieves all transactions from Bank2 - Elasticsearch."
-      operationId: getAllBank2Transactions
-      responses:
-        200:
-          description: Successful operation.
-        400:
-          description: Unsuccessful operation.
 
 
 
