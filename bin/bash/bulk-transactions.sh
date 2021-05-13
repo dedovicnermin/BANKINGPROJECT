@@ -22,7 +22,7 @@ do
 	-d "$OBJ" \
 	http://localhost:8080/funds/transfer
 
-	sleep .5
+	sleep 1s
 	let "i+=1"
 done
 
