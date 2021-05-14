@@ -5,7 +5,7 @@
     "connection.url": "jdbc:postgresql://db:5432/BANK",
     "connection.user": "postgres",
     "connection.password": "postgres",
-    "topic.prefix": "postgres.bank.",
+    "topic.prefix": "postgres.",
     "poll.interval.ms" : 10000,
     "table.whitelist": "accounts",
     "mode": "timestamp+incrementing",

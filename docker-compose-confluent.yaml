@@ -169,8 +169,8 @@ services:
     ports:
     - 5432:5432
     volumes:
-      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - ./bash/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bash/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/data
 
 
@@ -202,8 +202,8 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK2
     volumes:
-      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - ./bash/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bash/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/dataTwo
 
 

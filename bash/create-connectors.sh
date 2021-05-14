@@ -11,7 +11,7 @@ echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
-  -d @bin/bank/jdbc-source-accounts.json
+  -d @bank/jdbc-source-accounts.json
 
 
 
@@ -23,7 +23,7 @@ echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
-  -d @bin/bank/jdbc-source-transactions.json
+  -d @bank/jdbc-source-transactions.json
 
 
 
@@ -37,7 +37,7 @@ echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
-  -d @bin/bank2/jdbc-source-accounts.json
+  -d @bank2/jdbc-source-accounts.json
 
 
 
@@ -49,7 +49,7 @@ echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
-  -d @bin/bank2/jdbc-source-transactions.json
+  -d @bank2/jdbc-source-transactions.json
 
 
 
@@ -59,10 +59,21 @@ echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
-  -d @bin/elastic/elastic-sink-banks-transaction.json
+  -d @elastic/elastic-sink-banks-transaction.json
 
+
+
+printf "\n=== Kibana Import Starting  ===\n"
+
+echo
+curl -X POST "http://localhost:5601/api/saved_objects/_import" -H "kbn-xsrf: true" --form file=@kibana_config.ndjson
+
+printf "\n\n=== DONE ===\n"
 
 
 printf "\n========"
 echo "Done!"
 printf "========\n"
+
+
+
