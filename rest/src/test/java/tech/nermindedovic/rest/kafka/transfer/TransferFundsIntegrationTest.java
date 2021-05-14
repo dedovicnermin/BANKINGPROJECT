@@ -7,25 +7,19 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
+import org.springframework.kafka.listener.*;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.annotation.DirtiesContext;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferMessage;
@@ -33,24 +27,18 @@ import tech.nermindedovic.rest.api.RestAPI;
 
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 @EmbeddedKafka(partitions = 1, topics = {TransferFundsIntegrationTest.ERROR_TOPIC, TransferFundsIntegrationTest.OUTBOUND_TOPIC })
-@DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransferFundsIntegrationTest {
 
     public static final String OUTBOUND_TOPIC = "funds.transformer.request";
@@ -60,6 +48,10 @@ class TransferFundsIntegrationTest {
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private EmbeddedKafkaBroker embeddedKafkaBroker;
+
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Autowired
+    KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
 
     @Autowired RestAPI restAPI;
     @SpyBean
@@ -78,6 +70,7 @@ class TransferFundsIntegrationTest {
     void destroyBroker()  {
         shutdown();
         embeddedKafkaBroker.destroy();
+        kafkaListenerEndpointRegistry.destroy();
     }
 
 
@@ -85,6 +78,7 @@ class TransferFundsIntegrationTest {
      * testing if producer will producer to transfer topic
      */
     @Test
+    @Order(2)
     void givenValidTransferMessage_willProduceToTransformerTopic() throws ExecutionException, InterruptedException {
         TransferMessage transferMessage = TransferMessage.builder()
                 .messageId(0)
@@ -97,26 +91,44 @@ class TransferFundsIntegrationTest {
 
 
         restAPI.fundsTransferRequest(transferMessage);
-        ConsumerRecord<String, TransferMessage> consumerRecord = consumed.poll(100, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, TransferMessage> consumerRecord = consumed.poll(200, TimeUnit.MILLISECONDS);
         assertThat(consumerRecord).isNotNull();
         assertThat(consumerRecord.value()).isEqualTo(transferMessage);
+
+
 
     }
 
 
     /**
      * testing error consumer will listen to messages on inbound
+     * overrides errorMessage listener functionality to use countDown latch
      */
 
+
     @Test
-    void whenTransferErrorArrives_errorConsumerWillConsume() {
+    @Order(1)
+    @Timeout(15)
+    void whenTransferErrorArrives_errorConsumerWillConsume() throws InterruptedException {
+        ConcurrentMessageListenerContainer<?, ?> container = (ConcurrentMessageListenerContainer<?, ?>) kafkaListenerEndpointRegistry.getListenerContainer("dlqListener");
+        container.stop();
+
+        @SuppressWarnings("unchecked")
+        AcknowledgingConsumerAwareMessageListener<String, String> messageListener = (AcknowledgingConsumerAwareMessageListener<String, String>) container.getContainerProperties().getMessageListener();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        container.getContainerProperties().setMessageListener((AcknowledgingConsumerAwareMessageListener<String, String>) (consumerRecord, acknowledgment, consumer) -> {
+            messageListener.onMessage(consumerRecord, acknowledgment, consumer);
+            latch.countDown();
+        });
+        container.start();
 
         Producer<String, String> producer = configureProducer();
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence/transformer/router when it has been unable to process the request sent"));
         producer.flush();
-        Mockito.verify(transferErrorConsumer, timeout(150).times(1)).listen(anyString());
 
-        producer.close(Duration.ofMillis(1000));
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+        producer.close();
 
     }
 
