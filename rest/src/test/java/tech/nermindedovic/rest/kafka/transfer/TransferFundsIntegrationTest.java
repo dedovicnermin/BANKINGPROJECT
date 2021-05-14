@@ -26,8 +26,6 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferMessage;
@@ -116,7 +114,7 @@ class TransferFundsIntegrationTest {
         Producer<String, String> producer = configureProducer();
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence/transformer/router when it has been unable to process the request sent"));
         producer.flush();
-        Mockito.verify(transferErrorConsumer, timeout(100).times(1)).listen(anyString());
+        Mockito.verify(transferErrorConsumer, timeout(150).times(1)).listen(anyString());
 
         producer.close(Duration.ofMillis(1000));
 
