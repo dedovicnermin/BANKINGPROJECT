@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -53,6 +54,7 @@ class ElasticIntegrationTest {
         assertThat(elasticsearchContainer.isRunning()).isTrue();
         template.indexOps(BankTransaction.class).create();
         assertThat(restAPI.getAllTransactions()).isNotNull();
+        assertThat(restAPI.getAllTransactions()).isInstanceOf(SearchHits.class);
     }
 
 
