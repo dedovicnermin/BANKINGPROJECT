@@ -1,0 +1,44 @@
+{
+  "name": "postgres-bank-transactions",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+    "connection.url": "jdbc:postgresql://db:5432/BANK",
+    "connection.user": "postgres",
+    "connection.password": "postgres",
+    "topic.prefix": "postgres.",
+    "numeric.mapping": "best_fit",
+    "poll.interval.ms" : 10000,
+    "table.whitelist": "transactions",
+    "mode": "incrementing",
+    "incrementing.column.name": "id",
+
+
+
+
+    "transforms": "setSchemaName, createKey, extractId, insertTopic",
+    "transforms.setSchemaName.type": "org.apache.kafka.connect.transforms.SetSchemaMetadata$Value",
+    "transforms.setSchemaName.schema.name": "tech.nermindedovic.persistence.data.entity.Transaction",
+
+
+    "transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.createKey.fields": "id",
+    "transforms.extractId.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+    "transforms.extractId.field": "id",
+
+
+
+    "transforms.insertTopic.type": "org.apache.kafka.connect.transforms.InsertField$Value",
+    "transforms.insertTopic.topic.field": "origin",
+
+
+
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "true"
+
+
+
+  }
+}

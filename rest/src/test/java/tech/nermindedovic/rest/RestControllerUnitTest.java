@@ -2,9 +2,6 @@ package tech.nermindedovic.rest;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.lucene.search.TotalHits;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,7 +19,6 @@ import tech.nermindedovic.rest.api.RestAPI;
 
 
 import tech.nermindedovic.rest.api.TransactionSearchService;
-import tech.nermindedovic.rest.api.elastic.BankTransaction;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 

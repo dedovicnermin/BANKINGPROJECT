@@ -33,6 +33,7 @@ import tech.nermindedovic.rest.api.RestAPI;
 
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,7 @@ class TransferFundsIntegrationTest {
 
     public static final String OUTBOUND_TOPIC = "funds.transformer.request";
     public static final String ERROR_TOPIC = "funds.transfer.error";
+
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
@@ -112,10 +114,9 @@ class TransferFundsIntegrationTest {
         Producer<String, String> producer = configureProducer();
         producer.send(new ProducerRecord<>(ERROR_TOPIC, "This is an error sent from either persistence/transformer/router when it has been unable to process the request sent"));
         producer.flush();
+        Mockito.verify(transferErrorConsumer, timeout(150).times(1)).listen(anyString());
 
-        Mockito.verify(transferErrorConsumer, timeout(10000).times(1)).listen(anyString());
-
-
+        producer.close(Duration.ofMillis(1000));
 
     }
 
