@@ -72,25 +72,75 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock%
 
 
-  schema_registry:
-    image: confluentinc/cp-schema-registry
-    hostname: schema_registry
-    container_name: schema_registry
+#  schema_registry:
+#    image: confluentinc/cp-schema-registry
+#    hostname: schema_registry
+#    container_name: schema_registry
+#    depends_on:
+#      - zookeeper
+#      - kafka
+#      - kafka2
+#      - kafka3
+#    ports:
+#      - "9090:9090"
+#    links:
+#      - zookeeper
+#    environment:
+#      SCHEMA_REGISTRY_HOST_NAME: schema_registry
+#      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: localhost:9092,localhost:9093,localhost:9094
+##      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: localhost:2181
+#      SCHEMA_REGISTRY_LISTENERS: PLAINTEXT://localhost:9090
+#      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+
+
+
+  connect:
+    image: custom-confluent-image
+    build: .
+    hostname: connect
+    container_name: connect
+    restart: unless-stopped
     depends_on:
-      - zookeeper
       - kafka
       - kafka2
       - kafka3
     ports:
-      - "9090:9090"
-    links:
-      - zookeeper
+      - "8083:8083"
+    volumes:
+      - ./bin/connect-plugins:/shared-folder
     environment:
-      SCHEMA_REGISTRY_HOST_NAME: schema_registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: localhost:9092,localhost:9093,localhost:9094
-#      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: localhost:2181
-      SCHEMA_REGISTRY_LISTENERS: PLAINTEXT://localhost:9090
-      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
+
+
+
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui:0.9.7
+    container_name: kafka-connect-ui
+    restart: unless-stopped
+    depends_on:
+      - connect
+    ports:
+      - "8086:8000"
+    environment:
+      CONNECT_URL: http://connect:8083
+      PROXY: "true"
+
+
 
 
 
@@ -107,6 +157,10 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
       - ROUTER-ENDPOINT=router-streams:8082
+      - SERVER_PORT=8080
+      - ELASTIC-ENDPOINT=elasticsearch:9200
+      - BANKING_PARTITIONS=3
+      - BANKING_REPLICAS=2
     ports:
       - "8080:8080"
     depends_on:
@@ -176,8 +230,8 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK
     volumes:
-      - ./bin/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./bin/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - ./bash/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bash/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/data
 
 
@@ -196,11 +250,12 @@ services:
       - kafka3
       - db
     ports:
-      - "8083:8083"
+      - "7083:7083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
       - SPRING_JPA_HIBERNATE_DDL-AUTO=update
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SERVER_PORT=7083
     depends_on:
       - kafka
       - kafka2
@@ -221,8 +276,8 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=BANK2
     volumes:
-      - ./bin/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./bin/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+      - ./bash/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./bash/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/dataTwo
 
 
@@ -252,6 +307,36 @@ services:
       - dbTwo
       - rest
 
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
+    container_name: elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      cluster.name: bank-elastic-cluster
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.9.3
+    container_name: kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
 
 #KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
   #      KAFKA_CREATE_TOPICS: "balance.transformer.request:3:2
