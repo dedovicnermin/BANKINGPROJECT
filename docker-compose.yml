@@ -72,25 +72,25 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock%
 
 
-#  schema_registry:
-#    image: confluentinc/cp-schema-registry
-#    hostname: schema_registry
-#    container_name: schema_registry
-#    depends_on:
-#      - zookeeper
-#      - kafka
-#      - kafka2
-#      - kafka3
-#    ports:
-#      - "9090:9090"
-#    links:
-#      - zookeeper
-#    environment:
-#      SCHEMA_REGISTRY_HOST_NAME: schema_registry
-#      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: localhost:9092,localhost:9093,localhost:9094
-##      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: localhost:2181
-#      SCHEMA_REGISTRY_LISTENERS: PLAINTEXT://localhost:9090
-#      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+  schema_registry:
+    image: confluentinc/cp-schema-registry
+    hostname: schema_registry
+    container_name: schema_registry
+    depends_on:
+      - zookeeper
+      - kafka
+      - kafka2
+      - kafka3
+    ports:
+      - "9090:9090"
+    links:
+      - zookeeper
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema_registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
+#      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: localhost:2181
+      SCHEMA_REGISTRY_LISTENERS: http://localhost:9090
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
 
 
 
@@ -125,23 +125,6 @@ services:
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
-
-
-
-  kafka-connect-ui:
-    image: landoop/kafka-connect-ui:0.9.7
-    container_name: kafka-connect-ui
-    restart: unless-stopped
-    depends_on:
-      - connect
-    ports:
-      - "8086:8000"
-    environment:
-      CONNECT_URL: http://connect:8083
-      PROXY: "true"
-
-
-
 
 
   rest:
