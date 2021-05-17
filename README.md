@@ -18,6 +18,7 @@
 - JUNIT5
 - Kafka Testing
 - Kibana
+- Apache Avro
 
 ### Endpoints:
 > - Swagger UI: http://localhost:8080/swagger-ui/
@@ -25,9 +26,10 @@
 > - Kafka Connect UI: http://localhost:8086/
 > - Kibana: http://localhost:5601/
 > - Elasticsearch Index: http://localhost:9200/_cat/indices?v
+> - Schema Registry UI: http://localhost:8001
 ### Upcoming:
 - Neo4j 
-- Apache Avro
+- KSQL
 
 ### Questions / Suggestions
 Any questions or suggestions about the project? Feel free to raise an issue! 
