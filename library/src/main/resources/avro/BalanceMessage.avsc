@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "namespace": "tech.nermindedovic.library.avro",
+  "name": "BalanceMessage",
+  "fields": [
+    {
+      "name":  "accountNumber",
+      "type": "long",
+      "default": 0
+    },
+    {
+      "name": "routingNumber",
+      "type": "long",
+      "default": 0
+    },
+    {
+      "name": "balance",
+      "type": "string",
+      "default": "0"
+    },
+    {
+      "name": "errors",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}
