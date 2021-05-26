@@ -1,9 +1,10 @@
-package tech.nermindedovic.rest.kafka.transfer;
+package tech.nermindedovic.rest.kafka.transfer.json;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
+@Profile("!avro")
 public class TransferFundsProducer {
 
     private static final String TOPIC = "funds.transformer.request";

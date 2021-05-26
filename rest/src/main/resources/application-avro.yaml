@@ -1,4 +1,7 @@
 spring:
+  config:
+    activate:
+      on-profile: avro
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -6,6 +9,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       bootstrap-servers: ${spring.kafka.bootstrap-servers}
+    properties:
+      schema.registry.url: localhost:8081
 
 server:
   port: 8080
@@ -16,9 +21,6 @@ banking:
 
 router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
+schema-registry-endpoint: localhost:8081
 
 
-
-
-#properties:
-#      schema.registry.url: ${SCHEMA_REGISTRY_ENDPOINT}

@@ -1,7 +1,8 @@
-package tech.nermindedovic.rest.kafka.balance;
+package tech.nermindedovic.rest.kafka.balance.json;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.requestreply.RequestReplyFuture;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import tech.nermindedovic.library.pojos.BalanceMessage;
 import java.util.concurrent.ExecutionException;
 
 @Component
+@Profile("!avro")
 public class BalanceProducer {
 
     private static final String TOPIC = "balance.transformer.request";

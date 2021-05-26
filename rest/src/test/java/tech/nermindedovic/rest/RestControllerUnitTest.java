@@ -19,8 +19,8 @@ import tech.nermindedovic.rest.api.RestAPI;
 
 
 import tech.nermindedovic.rest.api.TransactionSearchService;
-import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
-import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
+import tech.nermindedovic.rest.kafka.balance.json.BalanceProducer;
+import tech.nermindedovic.rest.kafka.transfer.json.TransferFundsProducer;
 
 
 import java.math.BigDecimal;
