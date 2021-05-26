@@ -2,11 +2,13 @@ package tech.nermindedovic.generator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.converter.GsonMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tech.nermindedovic.library.pojos.Creditor;
@@ -54,6 +56,7 @@ public class GeneratorService {
 
     long[][] accounts;
     final ObjectMapper objectMapper = new ObjectMapper();
+    final Gson gson = new Gson();
     final RestTemplate restTemplate = new RestTemplate();
 
 
@@ -81,6 +84,14 @@ public class GeneratorService {
                     .date(date)
                     .memo(memo)
                     .build();
+            tech.nermindedovic.library.avro.TransferMessage message = new tech.nermindedovic.library.avro.TransferMessage(
+                    transferMessage.getMessageId(),
+                    new tech.nermindedovic.library.avro.Creditor(creditor.getAccountNumber(), creditor.getRoutingNumber()),
+                    new tech.nermindedovic.library.avro.Debtor(debtor.getAccountNumber(), debtor.getRoutingNumber()),
+                    date.toString(),
+                    amount.toString(),
+                    memo
+            );
 
 
             HttpEntity<String> request;
@@ -88,14 +99,12 @@ public class GeneratorService {
             headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
             Thread.sleep(sleepAmount);
 
-            try {
-                request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
-                log.info(request.toString());
-                restTemplate.postForLocation("http://localhost:8080/funds/transfer", request);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                continue;
-            }
+
+            //                request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
+//            request = new HttpEntity<>(objectMapper.writeValueAsString(message), headers);
+            request = new HttpEntity<>(gson.toJson(message), headers);
+            log.info(request.toString());
+            restTemplate.postForLocation("http://localhost:8080/funds/transfer", request);
 
 
             i++;j++;
