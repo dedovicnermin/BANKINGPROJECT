@@ -28,8 +28,8 @@
         ]
       }
     },
-    {"name": "date", "type": "int", "logicalType": "date"},
-    {"name": "amount", "type": "bytes", "logicalType": "decimal", "precision": 2},
-    {"name": "memo", "type": "string", "default":  null}
+    {"name": "date", "type": "string"},
+    {"name": "amount", "type": "string"},
+    {"name": "memo", "type": ["string", "null"], "default": "Default memo string"}
   ]
 }
