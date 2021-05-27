@@ -1,4 +1,10 @@
 spring:
+  devtools:
+    livereload:
+      enabled: false
+    restart:
+      enabled: false
+    add-properties: false
   config:
     activate:
       on-profile: avro
@@ -11,37 +17,28 @@ spring:
           binder:
             functions:
               processTransfer:
-                applicationId: transformerApp-1
+                applicationId: transformerApp-processTransfer
+                groupId: transformer
               processBalanceLeg1:
-                applicationId: transformerApp-2
+                applicationId: transformerApp-processBalanceL1
+                groupId: transformer
               processBalanceLeg2:
-                applicationId: transformerApp-3
+                applicationId: transformerApp-processBalanceL2
+                groupId: transformer
             brokers: localhost:9092
             configuration:
               default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               auto.create.topics: false
-              schema.registry.url: http://127.0.0.1:2181
+              schema.registry.url: http://127.0.0.1:8081
               specific.avro.reader: true
             deserialization-exception-handler: logandcontinue
-          bindings:
-            processTransfer-in-0:
-              consumer:
-                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
-            processBalanceLeg1-in-0:
-              consumer:
-                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
-            processBalanceLeg2-out-0:
-              producer:
-                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+
       bindings:
         processTransfer-in-0:
           destination: funds.transformer.request
         processTransfer-out-0:
-          destination: funds.transformer.request
+          destination: funds.transfer.request
         processBalanceLeg1-in-0:
           destination: balance.transformer.request
         processBalanceLeg1-out-0:
@@ -51,6 +48,9 @@ spring:
         processBalanceLeg2-out-0:
           destination: balance.transformer.response
 
+logging:
+  level:
+    web: debug
 
 
 server:

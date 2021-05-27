@@ -16,11 +16,9 @@ import java.time.Duration;
 @DirtiesContext
 class TransformerStreamsApplicationTests {
 
-
-
 	@Test
 	void contextLoads() {
-		Assertions.assertTimeout(Duration.ofSeconds(5), () -> TransformerStreamsApplication.main(new String[]{}));
+		Assertions.assertTimeout(Duration.ofSeconds(10), () -> TransformerStreamsApplication.main(new String[]{}));
 	}
 
 }

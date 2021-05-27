@@ -15,6 +15,7 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<spring-cloud.version>2020.0.1</spring-cloud.version>
+		<confluent.version>6.1.1</confluent.version>
 	</properties>
 
 
@@ -30,6 +31,7 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-stream</artifactId>
+			<version>3.1.2</version>
 		</dependency>
 
 		<dependency>
@@ -57,7 +59,7 @@
 		<dependency>
 			<groupId>io.confluent</groupId>
 			<artifactId>kafka-avro-serializer</artifactId>
-			<version>5.2.1</version>
+			<version>${confluent.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.apache.zookeeper</groupId>
@@ -70,8 +72,16 @@
 		<dependency>
 			<groupId>io.confluent</groupId>
 			<artifactId>kafka-streams-avro-serde</artifactId>
-			<version>5.2.1</version>
+			<version>${confluent.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-schema</artifactId>
+			<version>2.1.4.RELEASE</version>
+		</dependency>
+
+
 
 
 
@@ -83,6 +93,7 @@
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
+
 
 
 	</dependencies>
@@ -120,6 +131,7 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<excludeDevtools>true</excludeDevtools>
 				</configuration>
 			</plugin>
 		</plugins>
