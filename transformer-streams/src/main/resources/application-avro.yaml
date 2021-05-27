@@ -1,0 +1,61 @@
+spring:
+  config:
+    activate:
+      on-profile: avro
+  cloud:
+    function:
+      definition: processTransfer;processBalanceLeg1;processBalanceLeg2
+    stream:
+      kafka:
+        streams:
+          binder:
+            functions:
+              processTransfer:
+                applicationId: transformerApp-1
+              processBalanceLeg1:
+                applicationId: transformerApp-2
+              processBalanceLeg2:
+                applicationId: transformerApp-3
+            brokers: localhost:9092
+            configuration:
+              default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              auto.create.topics: false
+              schema.registry.url: http://127.0.0.1:2181
+              specific.avro.reader: true
+            deserialization-exception-handler: logandcontinue
+          bindings:
+            processTransfer-in-0:
+              consumer:
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+            processBalanceLeg1-in-0:
+              consumer:
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+            processBalanceLeg2-out-0:
+              producer:
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                valueSerde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+      bindings:
+        processTransfer-in-0:
+          destination: funds.transformer.request
+        processTransfer-out-0:
+          destination: funds.transformer.request
+        processBalanceLeg1-in-0:
+          destination: balance.transformer.request
+        processBalanceLeg1-out-0:
+          destination: balance.update.request
+        processBalanceLeg2-in-0:
+          destination: balance.update.response
+        processBalanceLeg2-out-0:
+          destination: balance.transformer.response
+
+
+
+server:
+  port: 7081
+
+
+
+

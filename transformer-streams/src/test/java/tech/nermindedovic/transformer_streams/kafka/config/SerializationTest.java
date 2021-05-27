@@ -3,6 +3,8 @@ package tech.nermindedovic.transformer_streams.kafka.config;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tech.nermindedovic.transformer_streams.kafka.config.serde.json.JsonDeserializer;
+import tech.nermindedovic.transformer_streams.kafka.config.serde.json.JsonSerializer;
 
 
 import java.util.HashMap;

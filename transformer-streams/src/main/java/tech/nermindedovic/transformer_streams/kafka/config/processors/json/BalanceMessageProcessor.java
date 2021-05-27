@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer_streams.kafka;
+package tech.nermindedovic.transformer_streams.kafka.config.processors.json;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,11 +7,13 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 
 
 import java.util.function.Function;
 
+@Profile("!avro")
 @Configuration
 @EnableAutoConfiguration
 public class BalanceMessageProcessor {

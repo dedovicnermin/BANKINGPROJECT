@@ -1,11 +1,13 @@
-package tech.nermindedovic.transformer_streams.kafka.config;
+package tech.nermindedovic.transformer_streams.kafka.config.serde.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.Serializer;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Map;
 
+@Profile("!avro")
 public class JsonSerializer<T> implements Serializer<T> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

@@ -6,6 +6,7 @@ import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferMessage;
+import tech.nermindedovic.transformer_streams.kafka.config.serde.json.CustomSerdes;
 
 
 import java.math.BigDecimal;

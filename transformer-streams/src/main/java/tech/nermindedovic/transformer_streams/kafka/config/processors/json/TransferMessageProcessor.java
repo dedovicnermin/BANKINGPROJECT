@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer_streams.kafka;
+package tech.nermindedovic.transformer_streams.kafka.config.processors.json;
 
 
 
@@ -8,12 +8,14 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import tech.nermindedovic.library.pojos.TransferMessage;
 
 
 
 import java.util.function.Function;
 
+@Profile("!avro")
 @Configuration
 @EnableAutoConfiguration
 public class TransferMessageProcessor {

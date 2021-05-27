@@ -1,12 +1,13 @@
-package tech.nermindedovic.transformer_streams.kafka.config;
+package tech.nermindedovic.transformer_streams.kafka.config.serde.json;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 
-
+@Profile("!avro")
 public final class CustomSerdes {
 
     private CustomSerdes() {}
