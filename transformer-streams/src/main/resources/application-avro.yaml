@@ -1,10 +1,4 @@
 spring:
-  devtools:
-    livereload:
-      enabled: false
-    restart:
-      enabled: false
-    add-properties: false
   config:
     activate:
       on-profile: avro
