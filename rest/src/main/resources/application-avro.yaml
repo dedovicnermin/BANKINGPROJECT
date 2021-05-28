@@ -21,6 +21,6 @@ banking:
 
 router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
-schema-registry-endpoint: localhost:8081
+schema-registry-endpoint: http://localhost:8081
 
 

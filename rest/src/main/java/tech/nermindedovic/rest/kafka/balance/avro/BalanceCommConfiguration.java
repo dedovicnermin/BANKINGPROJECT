@@ -32,12 +32,16 @@ public class BalanceCommConfiguration {
     @Value("${spring.kafka.consumer.group-id}")
     private String GROUP;
 
+    @Value("${schema-registry-endpoint:http://127.0.0.1:8081}")
+    private String schemaRegistry;
+
     @Bean
     public Map<String, Object> balanceProducerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+        configs.put("schema.registry.url", schemaRegistry);
         configs.put(ProducerConfig.RETRIES_CONFIG, 15);
         return configs;
     }
@@ -56,6 +60,7 @@ public class BalanceCommConfiguration {
         Properties properties = new Properties();
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class);
+        properties.put("schema.registry.url", schemaRegistry);
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
 

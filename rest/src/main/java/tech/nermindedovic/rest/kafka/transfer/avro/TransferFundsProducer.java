@@ -10,7 +10,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import tech.nermindedovic.library.avro.TransferMessage;
+import tech.nermindedovic.TransferMessage;
 
 import javax.validation.constraints.NotNull;
 import java.util.concurrent.ExecutionException;

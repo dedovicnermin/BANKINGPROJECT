@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import tech.nermindedovic.library.avro.BalanceMessage;
-import tech.nermindedovic.library.avro.TransferMessage;
+import tech.nermindedovic.TransferMessage;
 import tech.nermindedovic.rest.api.elastic.BankTransaction;
 import tech.nermindedovic.rest.kafka.balance.avro.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.avro.TransferFundsProducer;
