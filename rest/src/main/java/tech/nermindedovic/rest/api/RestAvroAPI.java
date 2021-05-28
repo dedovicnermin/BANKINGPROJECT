@@ -38,12 +38,11 @@ public class RestAvroAPI {
 
 
     @PostMapping(value = "balance", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public BalanceMessage getBalanceUpdate(@RequestBody @Valid BalanceMessage balanceMessage) {
+    public Object getBalanceUpdate(@RequestBody @Valid tech.nermindedovic.library.pojos.BalanceMessage balanceMessagePojo) {
         try {
-            return balanceProducer.sendAndReceive(balanceMessage);
+            return balanceProducer.sendAndReceive(new BalanceMessage(balanceMessagePojo.getAccountNumber(), balanceMessagePojo.getRoutingNumber(), "0.00", false));
         } catch (ExecutionException | InterruptedException exception) {
-            balanceMessage.setErrors(true);
-            return balanceMessage;
+            return new tech.nermindedovic.library.pojos.BalanceMessage(balanceMessagePojo.getAccountNumber(), balanceMessagePojo.getRoutingNumber(), "0.00", true);
         }
     }
 
