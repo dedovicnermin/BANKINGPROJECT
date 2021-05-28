@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "namespace": "tech.nermindedovic.library.avro",
+  "namespace": "tech.nermindedovic",
   "name": "TransferMessage",
   "fields": [
     {"name": "messageId", "type":  "long"},
@@ -9,7 +9,7 @@
       "type": {
         "type": "record",
         "name": "Creditor",
-        "namespace": "tech.nermindedovic.library.avro",
+        "namespace": "tech.nermindedovic",
         "fields": [
           {"name": "accountNumber", "type": "long"},
           {"name": "routingNumber", "type": "long"}
@@ -21,7 +21,7 @@
       "type": {
         "type": "record",
         "name": "Debtor",
-        "namespace": "tech.nermindedovic.library.avro",
+        "namespace": "tech.nermindedovic",
         "fields": [
           {"name": "accountNumber", "type": "long"},
           {"name": "routingNumber", "type": "long"}
