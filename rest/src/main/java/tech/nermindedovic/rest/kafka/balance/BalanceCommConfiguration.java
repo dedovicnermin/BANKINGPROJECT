@@ -1,5 +1,8 @@
-package tech.nermindedovic.rest.kafka.balance.json;
+package tech.nermindedovic.rest.kafka.balance;
 
+
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -7,15 +10,15 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
+import tech.nermindedovic.AvroBalanceMessage;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 
 
@@ -24,7 +27,6 @@ import java.util.Map;
 import java.util.Properties;
 
 @Configuration
-@Profile("!avro")
 public class BalanceCommConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers}")
@@ -33,25 +35,36 @@ public class BalanceCommConfiguration {
     @Value("${spring.kafka.consumer.group-id}")
     private String GROUP;
 
+    @Value("${spring.kafka.properties.schema.registry.url:http://127.0.0.1:8081}")
+    private String schemaRegistry;
+
     @Bean
     public Map<String, Object> balanceProducerConfigs() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+        configs.put("schema.registry.url", schemaRegistry);
         configs.put(ProducerConfig.RETRIES_CONFIG, 15);
-        configs.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
-
-
         return configs;
     }
 
     @Bean
-    public ProducerFactory<String, BalanceMessage> balanceProducerFactory() {
+    public ProducerFactory<String, AvroBalanceMessage> balanceProducerFactory() {
         return new DefaultKafkaProducerFactory<>(balanceProducerConfigs());
     }
 
 
+    @Bean
+    public ConsumerFactory<String, BalanceMessage> consumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(BalanceMessage.class));
+    }
 
     @Bean
     public KafkaMessageListenerContainer<String, BalanceMessage> balanceReplyContainer(ConsumerFactory<String, BalanceMessage> consumerFactory) {
@@ -61,19 +74,15 @@ public class BalanceCommConfiguration {
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         properties.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BalanceMessage.class);
-        properties.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        properties.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
-
-        containerProperties.getKafkaConsumerProperties().put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, true);
         containerProperties.setKafkaConsumerProperties(properties);
         return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
     }
 
 
     @Bean
-    public ReplyingKafkaTemplate<String, BalanceMessage, BalanceMessage> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, BalanceMessage> pf, KafkaMessageListenerContainer<String, BalanceMessage> container) {
+    public ReplyingKafkaTemplate<String, AvroBalanceMessage, BalanceMessage> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, AvroBalanceMessage> pf, KafkaMessageListenerContainer<String, BalanceMessage> container) {
         return new ReplyingKafkaTemplate<>(pf, container);
     }
 

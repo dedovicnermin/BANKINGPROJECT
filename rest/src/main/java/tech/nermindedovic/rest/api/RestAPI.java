@@ -4,7 +4,7 @@ package tech.nermindedovic.rest.api;
 import lombok.extern.slf4j.Slf4j;
 
 
-import org.springframework.context.annotation.Profile;
+
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +13,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.api.elastic.BankTransaction;
-import tech.nermindedovic.rest.kafka.balance.json.BalanceProducer;
-import tech.nermindedovic.rest.kafka.transfer.json.TransferFundsProducer;
+
+import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
+import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
 import javax.validation.Valid;
 import java.util.Optional;
@@ -24,7 +25,6 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RestController
-@Profile("!avro")
 public class RestAPI {
 
     private final BalanceProducer balanceProducer;

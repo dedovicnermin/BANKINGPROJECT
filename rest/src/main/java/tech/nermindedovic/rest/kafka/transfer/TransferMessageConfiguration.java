@@ -1,4 +1,7 @@
-package tech.nermindedovic.rest.kafka.transfer.avro;
+package tech.nermindedovic.rest.kafka.transfer;
+
+
+
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -7,23 +10,21 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import tech.nermindedovic.TransferMessage;
+import tech.nermindedovic.AvroTransferMessage;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@Profile("avro")
-public class TransferMessageAvroConfig {
+public class TransferMessageConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String BROKER;
 
-    @Value("${schema-registry-endpoint:http://127.0.0.1:8081}")
+    @Value("${spring.kafka.properties.schema.registry.url:http://127.0.0.1:8081}")
     private String schemaRegistry;
 
     @Bean
@@ -40,7 +41,7 @@ public class TransferMessageAvroConfig {
 
 
     @Bean
-    public ProducerFactory<String, TransferMessage> transferProducerFactory() {
+    public ProducerFactory<String, AvroTransferMessage> transferProducerFactory() {
         return new DefaultKafkaProducerFactory<>(transferProducerConfig());
     }
 
@@ -48,9 +49,11 @@ public class TransferMessageAvroConfig {
 
     @Bean
     @Qualifier("transferTemplate")
-    public KafkaTemplate<String, TransferMessage> transferMessageKafkaTemplate() {
+    public KafkaTemplate<String, AvroTransferMessage> transferMessageKafkaTemplate() {
         return new KafkaTemplate<>(transferProducerFactory());
     }
+
+
 
 
 }
