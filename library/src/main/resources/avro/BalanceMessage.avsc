@@ -1,7 +1,7 @@
 {
   "type": "record",
-  "namespace": "tech.nermindedovic.library.avro",
-  "name": "BalanceMessage",
+  "namespace": "tech.nermindedovic",
+  "name": "AvroBalanceMessage",
   "fields": [
     {
       "name":  "accountNumber",
@@ -16,7 +16,7 @@
     {
       "name": "balance",
       "type": "string",
-      "default": "0"
+      "default": "0.00"
     },
     {
       "name": "errors",

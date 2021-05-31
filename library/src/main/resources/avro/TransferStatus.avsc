@@ -1,6 +1,6 @@
 {
   "type": "enum",
-  "namespace": "tech.nermindedovic.library.avro",
-  "name": "TransferStatus",
+  "namespace": "tech.nermindedovic",
+  "name": "AvroTransferStatus",
   "symbols": ["FAIL", "PROCESSING", "PERSISTED"]
 }

@@ -1,14 +1,14 @@
 {
   "type": "record",
   "namespace": "tech.nermindedovic",
-  "name": "TransferMessage",
+  "name": "AvroTransferMessage",
   "fields": [
     {"name": "messageId", "type":  "long"},
     {
       "name": "creditor",
       "type": {
         "type": "record",
-        "name": "Creditor",
+        "name": "AvroCreditor",
         "namespace": "tech.nermindedovic",
         "fields": [
           {"name": "accountNumber", "type": "long"},
@@ -20,7 +20,7 @@
       "name": "debtor",
       "type": {
         "type": "record",
-        "name": "Debtor",
+        "name": "AvroDebtor",
         "namespace": "tech.nermindedovic",
         "fields": [
           {"name": "accountNumber", "type": "long"},
