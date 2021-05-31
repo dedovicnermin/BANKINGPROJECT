@@ -20,14 +20,12 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import tech.nermindedovic.library.pojos.Creditor;
-import tech.nermindedovic.library.pojos.Debtor;
+import org.springframework.test.context.ActiveProfiles;
 import tech.nermindedovic.library.pojos.TransferMessage;
+import tech.nermindedovic.rest.Topics;
 import tech.nermindedovic.rest.api.RestAPI;
 
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -36,12 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1, topics = {TransferFundsIntegrationTest.ERROR_TOPIC, TransferFundsIntegrationTest.OUTBOUND_TOPIC })
+@EmbeddedKafka(partitions = 1, topics = {TransferFundsIntegrationTest.ERROR_TOPIC, Topics.BALANCE_OUTBOUND})
+@ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransferFundsIntegrationTest {
 
-    public static final String OUTBOUND_TOPIC = "funds.transformer.request";
     public static final String ERROR_TOPIC = "funds.transfer.error";
 
 
@@ -74,31 +71,6 @@ class TransferFundsIntegrationTest {
     }
 
 
-    /**
-     * testing if producer will producer to transfer topic
-     */
-    @Test
-    @Order(2)
-    void givenValidTransferMessage_willProduceToTransformerTopic() throws ExecutionException, InterruptedException {
-        TransferMessage transferMessage = TransferMessage.builder()
-                .messageId(0)
-                .creditor(new Creditor(1111, 1111))
-                .debtor(new Debtor(2222,2222))
-                .amount(BigDecimal.TEN)
-                .memo("Message sent from rest application")
-                .date(LocalDate.now())
-                .build();
-
-
-        restAPI.fundsTransferRequest(transferMessage);
-        ConsumerRecord<String, TransferMessage> consumerRecord = consumed.poll(200, TimeUnit.MILLISECONDS);
-        assertThat(consumerRecord).isNotNull();
-        assertThat(consumerRecord.value()).isEqualTo(transferMessage);
-
-
-
-    }
-
 
     /**
      * testing error consumer will listen to messages on inbound
@@ -107,7 +79,6 @@ class TransferFundsIntegrationTest {
 
 
     @Test
-    @Order(1)
     @Timeout(15)
     void whenTransferErrorArrives_errorConsumerWillConsume() throws InterruptedException {
         ConcurrentMessageListenerContainer<?, ?> container = (ConcurrentMessageListenerContainer<?, ?>) kafkaListenerEndpointRegistry.getListenerContainer("dlqListener");
@@ -140,7 +111,7 @@ class TransferFundsIntegrationTest {
     void setup_receivingEnd() {
         Map<String,Object> consumerConfig = new HashMap<>(KafkaTestUtils.consumerProps("test", "true", embeddedKafkaBroker));
         DefaultKafkaConsumerFactory<String, TransferMessage> consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig, new StringDeserializer(), new JsonDeserializer<>(TransferMessage.class));
-        ContainerProperties containerProperties = new ContainerProperties(OUTBOUND_TOPIC);
+        ContainerProperties containerProperties = new ContainerProperties(Topics.TRANSFER_OUTBOUND);
         listenerContainer = new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
         consumed = new LinkedBlockingQueue<>();
 

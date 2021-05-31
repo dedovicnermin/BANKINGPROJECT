@@ -1,14 +1,13 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
     consumer:
       group-id: restTest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-    producer:
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
     properties:
-      schema.registry.url: http://127.0.0.1:8081
+      schema.registry.url: http://mock:8081
       specific.avro.reader: true
 
 

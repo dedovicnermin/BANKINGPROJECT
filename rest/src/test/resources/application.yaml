@@ -1,22 +1,33 @@
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
   kafka:
-    bootstrap-servers: localhost:9099
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
     consumer:
-      group-id: rest
+      group-id: restTest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      bootstrap-servers: ${spring.kafka.bootstrap-servers}
+      value-deserializer: tech.nermindedovic.rest.kafka.transfer.CustomKafkaAvroDeserializer
+      properties:
+        schema.registry.url: not-used
+    producer:
+      value-serializer: tech.nermindedovic.rest.kafka.transfer.CustomKafkaAvroSerializer
+      properties:
+        schema.registry.url: not-used
+    properties:
+      schema.registry.url: mock://mock:8081
+      specific.avro.reader: true
+
+
+server:
+  port: 8080
 
 banking:
   partitions: 1
   replicas: 1
-server:
-  port: 8080
 
+router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
-
-
 
 
 
