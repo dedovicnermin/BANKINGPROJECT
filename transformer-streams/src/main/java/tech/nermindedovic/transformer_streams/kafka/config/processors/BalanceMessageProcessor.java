@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer_streams.kafka.config.processors.avro;
+package tech.nermindedovic.transformer_streams.kafka.config.processors;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,13 +8,13 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import tech.nermindedovic.library.avro.BalanceMessage;
+import tech.nermindedovic.AvroBalanceMessage;
+import tech.nermindedovic.library.pojos.BalanceMessage;
+
 import java.util.function.Function;
 
 @Configuration
 @EnableAutoConfiguration
-@Profile("avro")
 @Slf4j
 public class BalanceMessageProcessor {
 
@@ -23,31 +23,36 @@ public class BalanceMessageProcessor {
         this.mapper = mapper;
     }
 
-
-
+    // LEG1 : Rest -> (avro->xml) -> Router
     @Bean
-    public Function<KStream<String, BalanceMessage>, KStream<String, String>> processBalanceLeg1() {
+    public Function<KStream<String, AvroBalanceMessage>, KStream<String, String>> processBalanceLeg1() {
         return input -> input
                 .mapValues(val -> {
                     try {
-                        return mapper.writeValueAsString(val);
+                        log.info(mapper.writeValueAsString(toPojo(val)));
+                        return mapper.writeValueAsString(toPojo(val));
                     } catch (JsonProcessingException exception) {
+                        log.error(val + "ERROR");
                         return val.toString();
                     }
                 });
     }
 
 
+    // LEG2: Persistence -> (xml->pojo) -> Rest
     @Bean
     public Function<KStream<String, String>, KStream<String, BalanceMessage>> processBalanceLeg2() {
         return input -> input.mapValues(val -> {
             try {
-                log.info(mapper.readValue(val, BalanceMessage.class).toString());
                 return mapper.readValue(val, BalanceMessage.class);
             } catch (JsonProcessingException exception) {
                 return null;
             }
         });
+    }
+
+    private BalanceMessage toPojo(AvroBalanceMessage balanceMessage) {
+        return new BalanceMessage(balanceMessage.getAccountNumber(), balanceMessage.getRoutingNumber(), balanceMessage.getBalance(), balanceMessage.getErrors());
     }
 
 

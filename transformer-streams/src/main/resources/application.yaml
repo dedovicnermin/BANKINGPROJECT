@@ -1,33 +1,44 @@
 spring:
-  kafka:
-    admin:
-      properties:
-        connections.max.idle.ms: 10000
-        request.timeout.ms: 10000
-        metrics.recording.level: DEBUG
-        retries: 10
-      fail-fast: true
-      client-id: TRANSFORMER-APP
-    bootstrap-servers: localhost:9092
-
-
   cloud:
     function:
       definition: processTransfer;processBalanceLeg1;processBalanceLeg2
     stream:
+      kafka:
+        streams:
+          binder:
+            functions:
+              processTransfer:
+                applicationId: transformerApp-processTransfer
+              processBalanceLeg1:
+                applicationId: transformerApp-processBalanceL1
+              processBalanceLeg2:
+                applicationId: transformerApp-processBalanceL2
+            brokers: localhost:9092
+            configuration:
+              default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              schema.registry.url: 127.0.0.1:8081
+              specific.avro.reader: true
+            deserialization-exception-handler: sendtodlq
+          bindings:
+            processTransfer-in-0:
+              consumer:
+                dlqName: funds.transfer.error
+
+
+
+
+
+
       bindings:
         processTransfer-in-0:
           destination: funds.transformer.request
         processTransfer-out-0:
           destination: funds.transfer.request
-
-
         processBalanceLeg1-in-0:
           destination: balance.transformer.request
         processBalanceLeg1-out-0:
           destination: balance.update.request
-
-
         processBalanceLeg2-in-0:
           destination: balance.update.response
         processBalanceLeg2-out-0:
@@ -35,15 +46,15 @@ spring:
 
 
 
-      kafka:
-        streams:
-          binder:
-            configuration:
-              commit.interval.ms: 1000
+logging:
+  level:
+    web: debug
+
 
 server:
   port: 7081
 
+schema-endpoint: http://127.0.0.1:8081
 
 
 

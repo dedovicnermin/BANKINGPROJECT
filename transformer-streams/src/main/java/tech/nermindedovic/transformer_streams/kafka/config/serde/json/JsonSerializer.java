@@ -3,11 +3,10 @@ package tech.nermindedovic.transformer_streams.kafka.config.serde.json;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.Serializer;
-import org.springframework.context.annotation.Profile;
+
 
 import java.util.Map;
 
-@Profile("!avro")
 public class JsonSerializer<T> implements Serializer<T> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -15,7 +14,7 @@ public class JsonSerializer<T> implements Serializer<T> {
     @SneakyThrows
     @Override
     public byte[] serialize(String s, T data) {
-        if (data == null) return null;
+        if (data == null) return new byte[]{};
         return objectMapper.writeValueAsBytes(data);
     }
 

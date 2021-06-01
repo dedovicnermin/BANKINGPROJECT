@@ -1,22 +1,12 @@
 package tech.nermindedovic.transformer_streams.kafka.config.serde.json;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Profile;
 import tech.nermindedovic.library.pojos.BalanceMessage;
-import tech.nermindedovic.library.pojos.TransferMessage;
 
-@Profile("!avro")
 public final class CustomSerdes {
 
     private CustomSerdes() {}
 
-    public static final class TransferMessageSerde extends Serdes.WrapperSerde<TransferMessage> {
-        public TransferMessageSerde() {
-            super(new JsonSerializer<>(), new JsonDeserializer<>(TransferMessage.class));
-        }
-    }
 
     public static final class BalanceMessageSerde extends Serdes.WrapperSerde<BalanceMessage> {
         public BalanceMessageSerde() {
@@ -24,13 +14,5 @@ public final class CustomSerdes {
         }
     }
 
-    @Bean
-    public static Serde<TransferMessage> TransferMessage() {
-        return new CustomSerdes.TransferMessageSerde();
-    }
 
-    @Bean
-    public static Serde<BalanceMessage> BalanceMessage() {
-        return new CustomSerdes.BalanceMessageSerde();
-    }
 }
