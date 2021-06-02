@@ -46,7 +46,8 @@ public class BalanceMessageProcessor {
             try {
                 return mapper.readValue(val, BalanceMessage.class);
             } catch (JsonProcessingException exception) {
-                return null;
+                log.error(exception.getMessage() + "\nERROR");
+                return new BalanceMessage(0,0,"0.00", true);
             }
         });
     }

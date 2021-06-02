@@ -17,7 +17,7 @@ spring:
             configuration:
               default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-              schema.registry.url: 127.0.0.1:8081
+              schema.registry.url: ${schema-endpoint}
               specific.avro.reader: true
             deserialization-exception-handler: sendtodlq
           bindings:
