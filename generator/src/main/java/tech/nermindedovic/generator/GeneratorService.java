@@ -2,18 +2,15 @@ package tech.nermindedovic.generator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.messaging.converter.GsonMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
-//import TransferMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 
 import javax.annotation.PostConstruct;
@@ -57,7 +54,6 @@ public class GeneratorService {
 
     long[][] accounts;
     final ObjectMapper objectMapper = new ObjectMapper();
-    final Gson gson = new Gson();
     final RestTemplate restTemplate = new RestTemplate();
 
 
@@ -66,8 +62,9 @@ public class GeneratorService {
 
 
 
-    public void generate() throws InterruptedException {
-        int i = 0, j  = 5;
+    public void generate() throws InterruptedException, JsonProcessingException {
+        int i = 0;
+        int j  = 5;
         int len = totalAccounts;
         while (true) {
             i = i % len;
@@ -88,29 +85,14 @@ public class GeneratorService {
 
 
 
-            tech.nermindedovic.TransferMessage message = new tech.nermindedovic.TransferMessage(
-                    transferMessage.getMessageId(),
-                    new tech.nermindedovic.Creditor(creditor.getAccountNumber(), creditor.getRoutingNumber()),
-                    new tech.nermindedovic.Debtor(debtor.getAccountNumber(), debtor.getRoutingNumber()),
-                    date.toString(),
-                    amount.toString(),
-                    memo
-            );
-
-
             HttpEntity<String> request;
             HttpHeaders headers = new HttpHeaders();
             headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            Thread.sleep(sleepAmount);
-
-
-            //                request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
-//            request = new HttpEntity<>(objectMapper.writeValueAsString(message), headers);
-            request = new HttpEntity<>(gson.toJson(message), headers);
+            request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
             log.info(request.toString());
             restTemplate.postForLocation("http://localhost:8080/funds/transfer", request);
 
-
+            Thread.sleep(sleepAmount);
             i++;j++;
         }
     }
