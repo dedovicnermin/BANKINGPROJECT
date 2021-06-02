@@ -14,7 +14,7 @@ spring:
       properties:
         schema.registry.url: not-used
     properties:
-      schema.registry.url: mock://mock:8081
+      schema.registry.url: not-used
       specific.avro.reader: true
 
 
