@@ -7,7 +7,6 @@ spring:
     consumer:
       group-id: restTest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: tech.nermindedovic.rest.kafka.transfer.CustomKafkaAvroDeserializer
       properties:
         schema.registry.url: not-used
     producer:
