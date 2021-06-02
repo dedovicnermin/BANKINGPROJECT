@@ -2,7 +2,6 @@ package tech.nermindedovic.rest.kafka.balance;
 
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
