@@ -12,6 +12,9 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.AvroCreditor;
 import tech.nermindedovic.AvroDebtor;
 import tech.nermindedovic.AvroTransferMessage;
@@ -26,9 +29,14 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
-
+@ExtendWith(MockitoExtension.class)
 class TransferMessageProcessorTest {
+
+    @Mock
+    XmlMapper mapperMock;
 
     private final XmlMapper xmlMapper = new XmlMapper();
     private static final String SCHEMA_REGISTRY_SCOPE = TransferMessageProcessorTest.class.getName();
@@ -44,7 +52,7 @@ class TransferMessageProcessorTest {
         //create topology to handle stream of avro transfer messages
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, AvroTransferMessage> stream = builder.stream("funds.transformer.request");
-        KStream<String, String> apply = new TransferMessageProcessor(xmlMapper).processTransfer().apply(stream);
+        KStream<String, String> apply = new TransferMessageProcessor(mapperMock).processTransfer().apply(stream);
         apply.to("funds.transfer.request", Produced.with(Serdes.String(), Serdes.String()));
         Topology topology = builder.build();
 
@@ -83,7 +91,7 @@ class TransferMessageProcessorTest {
     }
 
     @Test
-    void shouldOutputCorrectly() throws JsonProcessingException {
+    void givenAvroBalanceMessage_willConvertToXML() throws JsonProcessingException {
         long MSG_ID = 1, CRED_AN = 1, CRED_RN = 111, DEBT_AN = 2, DEBT_RN = 222;
         BigDecimal amount = new BigDecimal("187.90");
         LocalDate date = LocalDate.now();
@@ -99,8 +107,36 @@ class TransferMessageProcessorTest {
         TransferMessage toBeXML = new TransferMessage(MSG_ID, new Creditor(CRED_AN, CRED_RN), new Debtor(DEBT_AN, DEBT_RN), date, amount, memo);
         String expected = xmlMapper.writeValueAsString(toBeXML);
 
+
+        when(mapperMock.writeValueAsString(toBeXML)).thenReturn(expected);
+
         requestTopic.pipeInput(transferMessage);
         assertThat(responseTopic.readValue()).isEqualTo(expected);
+    }
+
+    @Test
+    void whenJsonProcessingException_returnsErrorString() throws JsonProcessingException {
+        long MSG_ID = 1, CRED_AN = 1, CRED_RN = 111, DEBT_AN = 2, DEBT_RN = 222;
+        BigDecimal amount = new BigDecimal("187.90");
+        LocalDate date = LocalDate.now();
+        String memo = "test memo";
+        AvroTransferMessage transferMessage = AvroTransferMessage.newBuilder()
+                .setMessageId(MSG_ID)
+                .setCreditor(new AvroCreditor(CRED_AN, CRED_RN))
+                .setDebtor(new AvroDebtor(DEBT_AN, DEBT_RN))
+                .setAmount(amount.toPlainString())
+                .setDate(date.toString())
+                .setMemo(memo)
+                .build();
+        TransferMessage toBeXML = new TransferMessage(MSG_ID, new Creditor(CRED_AN, CRED_RN), new Debtor(DEBT_AN, DEBT_RN), date, amount, memo);
+
+        doThrow(JsonProcessingException.class).when(mapperMock).writeValueAsString(toBeXML);
+        requestTopic.pipeInput(transferMessage);
+        assertThat(responseTopic.readValue()).contains("error!");
+
+
+
+
     }
 
 

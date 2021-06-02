@@ -1,4 +1,4 @@
-package tech.nermindedovic.transformer_streams.kafka.config;
+package tech.nermindedovic.transformer_streams.kafka.config.serde;
 
 
 import org.junit.jupiter.api.Assertions;
