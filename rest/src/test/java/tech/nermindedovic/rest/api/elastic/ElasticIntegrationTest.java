@@ -1,5 +1,6 @@
 package tech.nermindedovic.rest.api.elastic;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
@@ -17,8 +19,9 @@ import tech.nermindedovic.rest.api.RestAPI;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
-@EmbeddedKafka(partitions = 1)
+@SpringBootTest
+@EmbeddedKafka(partitions = 1, controlledShutdown = true)
+@ActiveProfiles("test")
 @DirtiesContext
 @Testcontainers
 @Slf4j

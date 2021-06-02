@@ -142,6 +142,7 @@ services:
       - ELASTIC-ENDPOINT=elasticsearch:9200
       - BANKING_PARTITIONS=3
       - BANKING_REPLICAS=2
+      - SCHEMA-ENDPOINT=http://schema-registry:8081
     ports:
       - "8080:8080"
     depends_on:
@@ -175,6 +176,7 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
       - SERVER_PORT=7081
+      - SCHEMA-ENDPOINT=http://schema-registry:8081
 
 
 

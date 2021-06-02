@@ -1,50 +1,63 @@
 spring:
-  kafka:
-    admin:
-      properties:
-        connections.max.idle.ms: 10000
-        request.timeout.ms: 10000
-        metrics.recording.level: DEBUG
-        retries: 1
-      fail-fast: true
-      client-id: TRANSFORMER-APP
-    bootstrap-servers: localhost:9092
-
-
+  main:
+    allow-bean-definition-overriding: true
   cloud:
     function:
       definition: processTransfer;processBalanceLeg1;processBalanceLeg2
     stream:
+      kafka:
+        streams:
+          binder:
+            functions:
+              processTransfer:
+                applicationId: transformerApp-processTransfer
+              processBalanceLeg1:
+                applicationId: transformerApp-processBalanceL1
+              processBalanceLeg2:
+                applicationId: transformerApp-processBalanceL2
+            brokers: ${spring.embedded.kafka.brokers}
+            configuration:
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              schema.registry.url: ${schema-endpoint}
+              specific.avro.reader: true
+            deserialization-exception-handler: logandcontinue
+          bindings:
+            processTransfer-in-0:
+              consumer:
+                dlqName: funds.transfer.error
+
+
+
+
+
+
+
+
+
       bindings:
         processTransfer-in-0:
           destination: funds.transformer.request
         processTransfer-out-0:
           destination: funds.transfer.request
-
-
         processBalanceLeg1-in-0:
           destination: balance.transformer.request
         processBalanceLeg1-out-0:
           destination: balance.update.request
-
-
         processBalanceLeg2-in-0:
           destination: balance.update.response
         processBalanceLeg2-out-0:
           destination: balance.transformer.response
-  profiles:
-    include: test
-    active: test
 
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration,org.springframework.cloud.stream.binder.kafka.streams.KafkaStreamsBinderSupportAutoConfiguration,org.springframework.cloud.stream.binder.kafka.streams.function.KafkaStreamsFunctionAutoConfiguration,org.springframework.cloud.stream.binder.kafka.streams.endpoint.KafkaStreamsTopologyEndpointAutoConfiguration
+
 
 
 
 
 server:
-  port: 8081
+  port: 7081
 
+schema-endpoint: mock://unused:8081
 
 
 

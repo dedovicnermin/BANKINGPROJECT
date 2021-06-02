@@ -62,8 +62,9 @@ public class GeneratorService {
 
 
 
-    public void generate() throws InterruptedException {
-        int i = 0, j  = 5;
+    public void generate() throws InterruptedException, JsonProcessingException {
+        int i = 0;
+        int j  = 5;
         int len = totalAccounts;
         while (true) {
             i = i % len;
@@ -83,21 +84,15 @@ public class GeneratorService {
                     .build();
 
 
+
             HttpEntity<String> request;
             HttpHeaders headers = new HttpHeaders();
             headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
+            log.info(request.toString());
+            restTemplate.postForLocation("http://localhost:8080/funds/transfer", request);
+
             Thread.sleep(sleepAmount);
-
-            try {
-                request = new HttpEntity<>(objectMapper.writeValueAsString(transferMessage), headers);
-                log.info(request.toString());
-                restTemplate.postForLocation("http://localhost:8080/funds/transfer", request);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                continue;
-            }
-
-
             i++;j++;
         }
     }

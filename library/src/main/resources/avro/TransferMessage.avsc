@@ -1,0 +1,35 @@
+{
+  "type": "record",
+  "namespace": "tech.nermindedovic",
+  "name": "AvroTransferMessage",
+  "fields": [
+    {"name": "messageId", "type":  "long"},
+    {
+      "name": "creditor",
+      "type": {
+        "type": "record",
+        "name": "AvroCreditor",
+        "namespace": "tech.nermindedovic",
+        "fields": [
+          {"name": "accountNumber", "type": "long"},
+          {"name": "routingNumber", "type": "long"}
+        ]
+      }
+    },
+    {
+      "name": "debtor",
+      "type": {
+        "type": "record",
+        "name": "AvroDebtor",
+        "namespace": "tech.nermindedovic",
+        "fields": [
+          {"name": "accountNumber", "type": "long"},
+          {"name": "routingNumber", "type": "long"}
+        ]
+      }
+    },
+    {"name": "date", "type": "string"},
+    {"name": "amount", "type": "string"},
+    {"name": "memo", "type": ["string", "null"], "default": "Default memo string"}
+  ]
+}

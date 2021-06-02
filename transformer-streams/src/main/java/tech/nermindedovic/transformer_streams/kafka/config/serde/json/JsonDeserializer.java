@@ -1,10 +1,12 @@
-package tech.nermindedovic.transformer_streams.kafka.config;
+package tech.nermindedovic.transformer_streams.kafka.config.serde.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.Deserializer;
 
+
 import java.util.Map;
+
 
 public class JsonDeserializer<T> implements Deserializer<T> {
     private final ObjectMapper objectMapper = new ObjectMapper();

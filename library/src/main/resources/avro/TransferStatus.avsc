@@ -1,0 +1,6 @@
+{
+  "type": "enum",
+  "namespace": "tech.nermindedovic",
+  "name": "AvroTransferStatus",
+  "symbols": ["FAIL", "PROCESSING", "PERSISTED"]
+}
