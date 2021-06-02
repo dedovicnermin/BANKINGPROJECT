@@ -8,7 +8,7 @@ spring:
     producer:
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
     properties:
-      schema.registry.url: ${schema-endpoint}
+      schema.registry.url: http://${schema-endpoint}
       specific.avro.reader: true
 
 
