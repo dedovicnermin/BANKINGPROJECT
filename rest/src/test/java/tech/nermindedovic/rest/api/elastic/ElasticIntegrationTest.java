@@ -1,5 +1,6 @@
 package tech.nermindedovic.rest.api.elastic;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest
-@EmbeddedKafka(partitions = 1)
+@EmbeddedKafka(partitions = 1, controlledShutdown = true)
 @ActiveProfiles("test")
 @DirtiesContext
 @Testcontainers
