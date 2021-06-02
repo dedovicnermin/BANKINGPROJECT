@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
+//import TransferMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 
 import javax.annotation.PostConstruct;
@@ -84,10 +85,13 @@ public class GeneratorService {
                     .date(date)
                     .memo(memo)
                     .build();
-            tech.nermindedovic.library.avro.TransferMessage message = new tech.nermindedovic.library.avro.TransferMessage(
+
+
+
+            tech.nermindedovic.TransferMessage message = new tech.nermindedovic.TransferMessage(
                     transferMessage.getMessageId(),
-                    new tech.nermindedovic.library.avro.Creditor(creditor.getAccountNumber(), creditor.getRoutingNumber()),
-                    new tech.nermindedovic.library.avro.Debtor(debtor.getAccountNumber(), debtor.getRoutingNumber()),
+                    new tech.nermindedovic.Creditor(creditor.getAccountNumber(), creditor.getRoutingNumber()),
+                    new tech.nermindedovic.Debtor(debtor.getAccountNumber(), debtor.getRoutingNumber()),
                     date.toString(),
                     amount.toString(),
                     memo
