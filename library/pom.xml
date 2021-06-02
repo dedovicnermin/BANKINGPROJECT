@@ -112,9 +112,9 @@
                         </goals>
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/resources/avro</sourceDirectory>
-                            <includes>
-                                <include>**/*.avsc</include>
-                            </includes>
+<!--                            <includes>-->
+<!--                                <include>**/*.avsc</include>-->
+<!--                            </includes>-->
                             <stringType>String</stringType>
                             <createSetters>true</createSetters>
                             <enableDecimalLogicalType>true</enableDecimalLogicalType>
