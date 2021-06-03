@@ -1,0 +1,85 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+  cloud:
+    stream:
+      function:
+        definition: processInitialTransfer;transferErrorHandler;validationConsumer;upsertMetric;balanceRequestProcessor
+
+
+      bindings:
+        upsertMetric-in-0:
+          destination: funds.transfer.status
+        upsertMetric-out-0:
+          destination: transfer.status
+
+        processInitialTransfer-in-0:
+          destination: funds.transfer.request
+        processInitialTransfer-out-0:
+          destination: router.trsf.error.handler
+        processInitialTransfer-out-1:
+          destination: router.trsf.singlebank.processor
+        processInitialTransfer-out-2:
+          destination: router.trsf.doublebank.processor
+
+        transferErrorHandler-in-0:
+          destination: ${spring.cloud.stream.bindings.processInitialTransfer-out-0.destination}
+        transferErrorHandler-out-0:
+          destination: funds.transfer.error
+
+
+        validationConsumer-in-0:
+          destination: router.validate.transfer
+
+        balanceRequestProcessor-in-0:
+          destination: balance.update.request
+        balanceRequestProcessor-out-0:
+          destination: balance.update.request.111
+        balanceRequestProcessor-out-1:
+          destination: balance.update.request.222
+        balanceRequestProcessor-out-2:
+          destination: balance.update.response
+
+
+      kafka:
+        streams:
+          binder:
+            configuration:
+              default:
+                key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              commit.interval.ms: 1000
+            min-partition-count: 1
+            application-id: ROUTING-APP
+            deserialization-exception-handler: logandcontinue
+
+
+
+
+
+        bindings:
+          upsertMetric-in-0:
+            keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde
+
+          consumeInitialTransfer-in-0:
+            enableDlq: true
+            dlqName: funds.transfer.error
+
+
+
+
+
+#balanceRequestConsumer
+#consumeInitialTransfer
+
+
+server:
+  port: 7082
+
+
+logging:
+  level: debug
+
+#        balanceRequestConsumer-in-0:
+#          destination: balance.update.request

@@ -30,14 +30,21 @@ public class BalanceMessageParser {
         this.builder = builder;
     }
 
-    public Long getRoute(String xml) throws JDOMException, IOException, InvalidRoutingNumberException {
-        Document messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    public String getRoute(String xml)
+    {
+        if (xml == null) return "0";
+        Document messageDocument = null;
+        try {
+            messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+        } catch (JDOMException | IOException e) {
+            return "0";
+        }
         final Element root = messageDocument.getRootElement();
-        Long route = Long.parseLong(root.getChild(ROUTING_NUMBER).getValue());
-        if (!validRoutes.contains(route)) throw new InvalidRoutingNumberException(route + " is not a valid route.");
 
-        return route;
 
+        String value = root.getChild(ROUTING_NUMBER).getValue();
+        return validRoutes.contains(Long.parseLong(value)) ? value : "0";
+//        return value;
 
     }
 

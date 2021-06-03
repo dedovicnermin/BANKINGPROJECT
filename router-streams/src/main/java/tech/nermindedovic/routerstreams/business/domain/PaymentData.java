@@ -20,4 +20,5 @@ public class PaymentData {
     private BigDecimal amount;
     private Debtor debtorAccount;
     private Creditor creditorAccount;
+    private String transferMessageXml;
 }

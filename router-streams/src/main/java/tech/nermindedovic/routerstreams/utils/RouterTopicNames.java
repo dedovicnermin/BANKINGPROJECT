@@ -32,7 +32,9 @@ public final class RouterTopicNames {
     public static final String OUTBOUND_BALANCE_RETURN_TOPIC = "balance.update.response";
 
 
-
+    public static final String TRANSFER_ERROR_HANDLER_TOPIC = "router.trsf.error.handler";
+    public static final String TRANSFER_SINGLEBANK_PROCESSOR = "router.trsf.singlebank.processor";
+    public static final String TRANSFER_DOUBLEBANK_PROCESSOR = "router.trsf.doublebank.processor";
 
 
 

@@ -28,14 +28,21 @@ public class TransferMessageParser {
     private static final String AMOUNT           = "amount";
 
     final SAXBuilder builder;
-    private PaymentData paymentData;
 
     public TransferMessageParser(final SAXBuilder saxBuilder)  {
         this.builder = saxBuilder;
     }
 
-    public PaymentData build(String xml) throws JDOMException, IOException {
-        Document messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    public PaymentData build(String xml)  {
+        Document messageDocument;
+        try {
+            messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+        } catch (JDOMException | IOException e) {
+            e.printStackTrace();
+            PaymentData paymentData = new PaymentData();
+            paymentData.setTransferMessageXml(xml);
+            return paymentData;
+        }
         Element root = messageDocument.getRootElement();
         return createPaymentData(root);
     }
@@ -44,7 +51,7 @@ public class TransferMessageParser {
 
 
     private PaymentData createPaymentData(Element root) {
-        paymentData = new PaymentData();
+        PaymentData paymentData = new PaymentData();
         Element debtor = root.getChild(DEBTOR);
         Element creditor = root.getChild(CREDITOR);
         Element messageId = root.getChild(MESSAGE_ID);
@@ -54,24 +61,26 @@ public class TransferMessageParser {
         paymentData.setMessageId(Long.parseLong(messageId.getValue()));
         paymentData.setAmount(new BigDecimal(amount.getValue()));
 
-        return this.paymentData;
+        return paymentData;
     }
 
 
 
     private void retrieveAccounts(PaymentData paymentData, Element debtor, Element creditor) {
+        paymentData.setDebtorAccount(retrieveDebtorAccount(debtor));
+        paymentData.setCreditorAccount(retrieveCreditorAccount(creditor));
+    }
 
+    private Debtor retrieveDebtorAccount(Element debtor) {
         Element debtorAN = debtor.getChild(ACCOUNT_NUMBER);
         Element debtorRN = debtor.getChild(ROUTING_NUMBER);
-        Debtor debtorAccount = new Debtor(Long.parseLong(debtorAN.getValue()), Long.parseLong(debtorRN.getValue()));
+        return new Debtor(Long.parseLong(debtorAN.getValue()), Long.parseLong(debtorRN.getValue()));
+    }
 
+    private Creditor retrieveCreditorAccount(Element creditor) {
         Element creditorAN = creditor.getChild(ACCOUNT_NUMBER);
         Element creditorRN = creditor.getChild(ROUTING_NUMBER);
-        Creditor creditorAccount = new Creditor(Long.parseLong(creditorAN.getValue()), Long.parseLong(creditorRN.getValue()));
-
-        paymentData.setDebtorAccount(debtorAccount);
-        paymentData.setCreditorAccount(creditorAccount);
-
+        return new Creditor(Long.parseLong(creditorAN.getValue()), Long.parseLong(creditorRN.getValue()));
     }
 
 
