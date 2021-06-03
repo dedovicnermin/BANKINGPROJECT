@@ -1,42 +1,38 @@
 package tech.nermindedovic.routerstreams.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jdom2.JDOMException;
-import org.springframework.cloud.stream.function.StreamBridge;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Predicate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.Message;
-import tech.nermindedovic.routerstreams.exception.InvalidRoutingNumberException;
 import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
-import tech.nermindedovic.routerstreams.utils.RouterAppUtils;
-import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
-import java.io.IOException;
-import java.util.function.Consumer;
+
+
+import java.util.function.Function;
 
 @Configuration
 @Slf4j
 public class BalanceProcessor {
 
-    private final StreamBridge streamBridge;
+
+    public static final Predicate<String, String> isRoute111 = (key,val) -> key.equals("111");
+    public static final Predicate<String, String> isRoute222 = (key,val) -> key.equals("222");
+    public static final Predicate<String, String> isUnknownRoute = (key, val) -> true;
+
     private final BalanceMessageParser parser;
-    public BalanceProcessor(final StreamBridge streamBridge, final BalanceMessageParser balanceMessageParser) {
-        this.streamBridge = streamBridge;
+    public BalanceProcessor(final BalanceMessageParser balanceMessageParser) {
         this.parser = balanceMessageParser;
     }
 
 
+
     @Bean
-    public Consumer<Message<String>> balanceRequestConsumer() {
-        return balanceMessage -> {
-            try {
-                Long route = parser.getRoute(balanceMessage.getPayload());
-                streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + route, balanceMessage);
-            } catch (JDOMException | IOException | InvalidRoutingNumberException e) {
-                log.error(e.getMessage());
-                streamBridge.send(RouterTopicNames.OUTBOUND_BALANCE_RETURN_TOPIC, RouterAppUtils.BALANCE_ERROR_XML);
-            }
-        };
+    @SuppressWarnings("unchecked")
+    public Function<KStream<String, String>, KStream<String, String>[]> balanceRequestProcessor() {
+         return input -> input
+                .selectKey((key, value) -> parser.getRoute(value))
+                .branch(isRoute111, isRoute222, isUnknownRoute);
     }
 
 
