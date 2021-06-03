@@ -1,18 +1,17 @@
-package tech.nermindedovic.routerstreams.config;
+package tech.nermindedovic.routerstreams.config.processors;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.jdom2.input.SAXBuilder;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tech.nermindedovic.routerstreams.config.BalanceProcessor;
 import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
