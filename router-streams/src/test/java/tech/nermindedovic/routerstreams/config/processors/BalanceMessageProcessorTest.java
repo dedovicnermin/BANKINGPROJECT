@@ -5,13 +5,10 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tech.nermindedovic.routerstreams.config.BalanceProcessor;
 import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
@@ -23,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceMessageProcessorTest {
 
     private TopologyTestDriver testDriver;
@@ -37,7 +35,17 @@ class BalanceMessageProcessorTest {
     @Mock
     BalanceMessageParser balanceMessageParser;
 
+    private static final Properties props = new Properties();
 
+
+    @BeforeAll
+    void setup() {
+        // dummy props for test driver
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "test-balanceProcessors");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy:773");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringSerde.getClass());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, stringSerde.getClass());
+    }
 
 
     @BeforeEach
@@ -52,14 +60,6 @@ class BalanceMessageProcessorTest {
         Topology topology = builder.build();
 
 
-        // dummy props for test driver
-        Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "test-routerBalanceProcessor");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy:773");
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringSerde.getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, stringSerde.getClass());
-
-
         // create test driver
         testDriver = new TopologyTestDriver(topology, props);
 
@@ -69,7 +69,6 @@ class BalanceMessageProcessorTest {
         route111Topic = testDriver.createOutputTopic(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "111", stringSerde.deserializer(), stringSerde.deserializer());
         route222Topic = testDriver.createOutputTopic(RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "222", stringSerde.deserializer(), stringSerde.deserializer());
         errorOutboundTopic = testDriver.createOutputTopic(RouterTopicNames.OUTBOUND_BALANCE_RETURN_TOPIC, stringSerde.deserializer(), stringSerde.deserializer());
-        
     }
     
     

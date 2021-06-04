@@ -1,4 +1,4 @@
-package tech.nermindedovic.routerstreams.config;
+package tech.nermindedovic.routerstreams.config.processors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.KStream;
@@ -15,6 +15,7 @@ import java.util.function.Function;
 @Slf4j
 public class BalanceProcessor {
 
+    //  TESTED : 👍🏼
 
     public static final Predicate<String, String> isRoute111 = (key,val) -> key.equals("111");
     public static final Predicate<String, String> isRoute222 = (key,val) -> key.equals("222");
