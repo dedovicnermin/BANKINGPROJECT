@@ -5,14 +5,30 @@ spring:
   cloud:
     stream:
       function:
-        definition: processInitialTransfer;transferErrorHandler;validationConsumer;upsertMetric;balanceRequestProcessor
+        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;balanceRequestProcessor
 
 
       bindings:
+        failedTransferMetricHandler-in-0:
+          destination: router.metrics.handler-failed
+        failedTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
+        processingTransferMetricHandler-in-0:
+          destination: router.metrics.handler-processing
+        processingTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
+        persistedTransferMetricHandler-in-0:
+          destination: router.metrics.handler-persist
+        persistedTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
         upsertMetric-in-0:
           destination: funds.transfer.status
         upsertMetric-out-0:
           destination: transfer.status
+
 
         processInitialTransfer-in-0:
           destination: funds.transfer.request
@@ -24,13 +40,56 @@ spring:
           destination: router.trsf.doublebank.processor
 
         transferErrorHandler-in-0:
-          destination: ${spring.cloud.stream.bindings.processInitialTransfer-out-0.destination}
+          destination: router.trsf.error.handler
         transferErrorHandler-out-0:
           destination: funds.transfer.error
 
+        singleBankProcessor-in-0:
+          destination: router.trsf.singlebank.processor
+        singleBankProcessor-out-0:
+          destination: funds.transfer.111
+        singleBankProcessor-out-1:
+          destination: funds.transfer.222
 
-        validationConsumer-in-0:
+        doubleBankProcessor-in-0:
+          destination: router.trsf.doublebank.processor
+        doubleBankProcessor-out-0:
           destination: router.validate.transfer
+
+        validationProcessor-in-0:
+          destination: router.validate.transfer
+        validationProcessor-out-0:
+          destination: router.validation.error.handler
+        validationProcessor-out-1:
+          destination: funds.validate.111
+        validationProcessor-out-2:
+          destination: funds.validate.222
+        validationProcessor-out-3:
+          destination: funds.validate.111
+        validationProcessor-out-4:
+          destination: funds.validate.222
+        validationProcessor-out-5:
+          destination: 
+
+        validatedProcessor-in-0:
+          destination: router.validated.fanout
+
+        validationErrorHandler-in-0:
+          destination: router.validation.error.handler
+        validationErrorHandler-out-0:
+          destination: funds.transfer.error
+
+
+
+
+
+
+
+
+
+
+
+
 
         balanceRequestProcessor-in-0:
           destination: balance.update.request
@@ -72,6 +131,7 @@ spring:
 
 #balanceRequestConsumer
 #consumeInitialTransfer
+#validationConsumer
 
 
 server:
@@ -83,3 +143,7 @@ logging:
 
 #        balanceRequestConsumer-in-0:
 #          destination: balance.update.request
+
+
+#     validationConsumer-in-0:
+#          destination: router.validate.transfer

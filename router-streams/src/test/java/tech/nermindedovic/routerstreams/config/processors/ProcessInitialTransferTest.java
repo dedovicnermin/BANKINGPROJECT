@@ -1,23 +1,20 @@
 package tech.nermindedovic.routerstreams.config.processors;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.routerstreams.business.domain.PaymentData;
-import tech.nermindedovic.routerstreams.config.TransferFundsProcessor;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
 import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
@@ -32,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProcessInitialTransferTest {
 
 
@@ -51,6 +49,17 @@ class ProcessInitialTransferTest {
     Serde<String> stringSerde = Serdes.String();
     Serde<PaymentData> paymentDataSerde = new CustomSerdes.PaymentDataSerde();
 
+    final Properties props = new Properties();
+
+
+    @BeforeAll
+    void setupProps() {
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "test-routerProcessInitialTransfer");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy:773");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringSerde.getClass());
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, paymentDataSerde.getClass());
+    }
+
     @BeforeEach
     void setup() {
         StreamsBuilder builder = new StreamsBuilder();
@@ -61,12 +70,6 @@ class ProcessInitialTransferTest {
         outboundStreams[1].to(RouterTopicNames.TRANSFER_SINGLEBANK_PROCESSOR, Produced.with(stringSerde, paymentDataSerde));
         outboundStreams[2].to(RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, Produced.with(stringSerde, paymentDataSerde));
         Topology topology = builder.build();
-
-        Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "test-routerProcessInitialTransfer");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "dummy:773");
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringSerde.getClass());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, paymentDataSerde.getClass());
 
         testDriver = new TopologyTestDriver(topology, props);
 
@@ -80,8 +83,6 @@ class ProcessInitialTransferTest {
     @AfterEach
     void reset() { testDriver.close(); }
 
-
-    final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void onBogusTransferMessageXML_willRouteMessageToErrorHandler() {
