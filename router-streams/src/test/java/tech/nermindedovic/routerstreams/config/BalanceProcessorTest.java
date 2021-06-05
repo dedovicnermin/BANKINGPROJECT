@@ -1,7 +1,11 @@
 package tech.nermindedovic.routerstreams.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -9,6 +13,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.integration.annotation.Router;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,6 +27,7 @@ import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import tech.nermindedovic.routerstreams.config.processors.BalanceProcessor;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 import java.util.Map;
@@ -31,15 +37,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
+//, topics = {RouterTopicNames.INBOUND_BALANCE_REQUEST_TOPIC, RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "111", RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "222", RouterTopicNames.OUTBOUND_BALANCE_RETURN_TOPIC}
 @Slf4j
-@SpringBootTest(properties = {"spring.autoconfigure.exclude="
-        + "org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration",
-        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
+@SpringBootTest(properties = {"spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}"
 })
 @ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, topics = {RouterTopicNames.INBOUND_BALANCE_REQUEST_TOPIC, RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "111", RouterTopicNames.OUTBOUND_BALANCE_REQUEST_PREFIX + "222"})
+@EmbeddedKafka(partitions = 1)
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BalanceProcessorTest {
@@ -64,6 +68,8 @@ class BalanceProcessorTest {
     @Test
     void onBalanceMessagesWith_111_routesToCorrectBank() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-balance-111", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         ContainerProperties containerProperties = new ContainerProperties("balance.update.request.111");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
@@ -97,6 +103,8 @@ class BalanceProcessorTest {
     @Test
     void onBalanceMessagesWith_222_routesToCorrectBank() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-balance-222", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         ContainerProperties containerProperties = new ContainerProperties("balance.update.request.222");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
