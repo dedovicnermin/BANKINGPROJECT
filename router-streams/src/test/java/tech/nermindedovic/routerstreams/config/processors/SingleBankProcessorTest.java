@@ -40,7 +40,7 @@ class SingleBankProcessorTest {
     private static final String IN         = RouterTopicNames.TRANSFER_SINGLEBANK_PROCESSOR;
     private static final String OUT_111    = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "111";
     private static final String OUT_222    = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "222";
-    private static final String OUT_METRIC = RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER;
+    private static final String OUT_METRIC = RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER;
 
     private final Properties props = new Properties();
     private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);

@@ -85,7 +85,7 @@ class ProcessInitialTransferTest {
 
 
     @Test
-    void onBogusTransferMessageXML_willRouteMessageToErrorHandler() {
+    void onBogusTransferMessageXML_andNoMsgId_ignoresMessage() {
         String bogusXML = "<BOGUS>";
         PaymentData paymentData = new PaymentData();
         paymentData.setTransferMessageXml(bogusXML);
@@ -95,7 +95,7 @@ class ProcessInitialTransferTest {
         inputTopic.pipeInput(bogusXML);
         assertThrows(NoSuchElementException.class, () -> singleBankTopic.readValue());
         assertThrows(NoSuchElementException.class, () -> doubleBankTopic.readValue());
-        assertThat(invalidTransferMessageTopic.readValue()).isEqualTo(paymentData);
+
 
     }
 

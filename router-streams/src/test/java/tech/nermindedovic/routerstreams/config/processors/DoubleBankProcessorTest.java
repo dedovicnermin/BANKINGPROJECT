@@ -32,7 +32,7 @@ class DoubleBankProcessorTest {
     @Mock RouterJsonMapper mapper;
     @Mock TransferMessageParser parser;
 
-    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER;
+    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER;
     private final Properties props = new Properties();
     private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);
 
@@ -94,7 +94,7 @@ class DoubleBankProcessorTest {
         PaymentData data = new PaymentData(msgId, BigDecimal.ONE, debtor, creditor, transferXML);
         TransferValidation transferValidation = new TransferValidation(msgId, BigDecimal.ONE, 1, null, debtor, creditor);
 
-        testInputTopic.pipeInput(data);
+        testInputTopic.pipeInput(msgId+"",data);
         TestRecord<String, PaymentData> actualMetricOutput = testMetricOutput.readRecord();
         TestRecord<String, TransferValidation> actualOutput = testOutputTopic.readRecord();
         assertThat(actualOutput.getKey()).isEqualTo(msgId + "");

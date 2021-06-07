@@ -29,8 +29,8 @@ public class ValidatedProcessorTest {
     @Mock TransferMessageParser parser;
 
     private static final String IN      = RouterTopicNames.VALIDATED_FANOUT_TOPIC,
-                                OUT111  = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "111",
-                                OUT222  = RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "222",
+                                OUT111  = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX + "111",
+                                OUT222  = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX + "222",
                                 OUTSTATUS = RouterTopicNames.TRANSFER_STATUS_SUCCESS_HANDLER;
 
     private final Properties props = new Properties();
