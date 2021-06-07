@@ -1,27 +1,18 @@
-package tech.nermindedovic.routerstreams.config;
+package tech.nermindedovic.routerstreams;
 
 
 
 
 
+
+import kafka.server.KafkaServer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.TestInputTopic;
-import org.apache.kafka.streams.TopologyTestDriver;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.state.KeyValueStore;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +25,6 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -44,35 +34,30 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
-import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
-import tech.nermindedovic.routerstreams.business.service.TransferStatusService;
 import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-@SpringBootTest(properties = {"spring.autoconfigure.exclude="
-        + "org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration",
-        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
+@SpringBootTest(properties = {
+        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
 })
 @ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, topics = {RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_ERROR , RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "111", RouterTopicNames.OUTBOUND_SINGLE_BANK_PREFIX + "222", RouterTopicNames.INBOUND_VALIDATION_TOPIC, RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "111", RouterTopicNames.OUTBOUND_VALIDATION_PREFIX + "222", RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC})
+@EmbeddedKafka(partitions = 1, brokerProperties = { "request.timeout.ms=1000", "max.poll.interval.ms=5000", "reconnect.backoff.ms=5000" }, controlledShutdown = true, zkConnectionTimeout = 2000, zkSessionTimeout = 2000)
 @DirtiesContext
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TransferFundsProcessorTest {
+class RouterStreamsIntegrationTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -83,11 +68,17 @@ class TransferFundsProcessorTest {
     @BeforeAll
     void configure() {
         System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
+        embeddedKafkaBroker.setAdminTimeout(1000);
     }
 
     @AfterAll
     void shutDown () {
+        embeddedKafkaBroker.getKafkaServers().forEach(KafkaServer::shutdown);
+        embeddedKafkaBroker.getKafkaServers().forEach(KafkaServer::awaitShutdown);
+        embeddedKafkaBroker.getZooKeeperClient().close();
         embeddedKafkaBroker.destroy();
+
+
     }
 
     String xmlWith1InvalidRoute = "<TransferMessage>" +
@@ -106,6 +97,8 @@ class TransferFundsProcessorTest {
     @Test
     void onIncomingTransferMessageXML_whenContainsUnknownRoutingNumber_willDirectToErrorTopic() throws InterruptedException {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-error", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         ContainerProperties containerProperties = new ContainerProperties(RouterTopicNames.OUTBOUND_TRANSFER_ERROR);
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
@@ -151,6 +144,8 @@ class TransferFundsProcessorTest {
                 "</TransferMessage>";
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-error-noValidRouting", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         ContainerProperties containerProperties = new ContainerProperties(RouterTopicNames.OUTBOUND_TRANSFER_ERROR);
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
@@ -172,7 +167,7 @@ class TransferFundsProcessorTest {
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
         assertThat(consumed).isNotNull();
-        assertThat(consumed.value()).containsSequence(xmlWithInvalidRoutes);
+        assertThat(consumed.value()).containsSequence("ERROR");
 
         container.stop();
     }
@@ -217,7 +212,7 @@ class TransferFundsProcessorTest {
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
         template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
         template.sendDefault(xmlWithMatchingRoutes_111);
-        template.flush();
+//        template.flush();
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
         assertThat(consumed).isNotNull();
@@ -300,7 +295,7 @@ class TransferFundsProcessorTest {
                 .messageId(8785179L)
                 .amount(new BigDecimal("10.00"))
                 .currentLeg(1)
-                .transferMessage(xmlWithDiffRoutes)
+                .transferMessage(null)
                 .debtorAccount(new Debtor(123, 111))
                 .creditorAccount(new Creditor(567, 222))
                 .build();
@@ -401,6 +396,8 @@ class TransferFundsProcessorTest {
 
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-leg3_111", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         ContainerProperties containerProperties = new ContainerProperties("funds.transfer.single.111");
         KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
@@ -414,6 +411,8 @@ class TransferFundsProcessorTest {
 
 
         Map<String, Object> consumerProps2 = KafkaTestUtils.consumerProps("test-leg3_222", "false", embeddedKafkaBroker);
+        consumerProps2.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps2.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf2 = new DefaultKafkaConsumerFactory<>(consumerProps2);
         ContainerProperties containerProperties2 = new ContainerProperties("funds.transfer.single.222");
         KafkaMessageListenerContainer<String, String> container2 = new KafkaMessageListenerContainer<>(cf2, containerProperties2);
@@ -427,20 +426,24 @@ class TransferFundsProcessorTest {
 
 
 
+
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         ProducerFactory<String, TransferValidation> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,TransferValidation> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic(RouterTopicNames.INBOUND_VALIDATION_TOPIC);
-        template.sendDefault(transferValidation);
+        template.setDefaultTopic(RouterTopicNames.VALIDATED_FANOUT_TOPIC);
+//        template.setDefaultTopic("router.validate.transfer");
+        template.sendDefault(transferValidation.getMessageId().toString(),transferValidation);
         template.flush();
 
 
-        ConsumerRecord<String, String> bankA_record = records.poll(5, TimeUnit.SECONDS);
+
+        ConsumerRecord<String, String> bankA_record = records.poll(10, TimeUnit.SECONDS);
         assertThat(bankA_record).isNotNull();
         assertThat(bankA_record.value()).isEqualTo(xmlWithDiffRoutes);
 
-        ConsumerRecord<String, String> bankB_record = records2.poll(5, TimeUnit.SECONDS);
+        ConsumerRecord<String, String> bankB_record = records2.poll(10, TimeUnit.SECONDS);
         assertThat(bankB_record).isNotNull();
         assertThat(bankB_record.value()).isEqualTo(xmlWithDiffRoutes);
 
@@ -452,7 +455,7 @@ class TransferFundsProcessorTest {
 
 
     @Test
-    void onDifferentRoutes_defaultSwitchCondition_willSendToCreditorForValidation() throws InterruptedException {
+    void onDifferentRoutes_willSendToCreditorForValidation() throws InterruptedException {
         TransferValidation transferValidation = TransferValidation.builder()
                 .messageId(8785179L)
                 .amount(new BigDecimal("10.00"))
@@ -487,7 +490,7 @@ class TransferFundsProcessorTest {
 
         ConsumerRecord<String, String> consumed = records.poll(5, TimeUnit.SECONDS);
         assertThat(consumed).isNotNull();
-        assertThat(consumed.value()).contains(transferValidation.getTransferMessage());
+        assertThat(consumed.value()).contains("ERROR");
 
         container.stop();
 
@@ -496,76 +499,80 @@ class TransferFundsProcessorTest {
 
 
 
-    @Autowired
-    TransferFundsProcessor transferFundsProcessor;
+
+    // BALANCE REQUEST
+
+
+    final String balanceMessageXML_111 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>111</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
+    final String balanceMessageXML_222 = "<BalanceMessage><accountNumber>200040</accountNumber><routingNumber>222</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
 
 
     @Test
-    void test_upsertMetricTopology() {
-        final StreamsBuilder streamsBuilder = new StreamsBuilder();
-        final Serde<String> stringSerde = Serdes.String();
+    void onBalanceMessagesWith_111_routesToCorrectBank() throws InterruptedException {
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-balance-111", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        ContainerProperties containerProperties = new ContainerProperties("balance.update.request.111");
+        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
+        final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String, String>) record -> {
+            log.info("TEST CONSUMER :" + record);
+            records.add(record);
+        });
 
-
-        final KStream<String, TransferStatus> stream = streamsBuilder.stream("transfer.status", Consumed.with(stringSerde, new Serdes.WrapperSerde<>(new JsonSerializer<>(), new JsonDeserializer<>(TransferStatus.class))));
-
-
-
-
-        final Function<KStream<String, TransferStatus>, KTable<String, String>> kStreamKTableFunction = transferFundsProcessor.upsertMetric();
-        final KTable<String, String> apply = kStreamKTableFunction.apply(stream);
-
-        Properties properties = new Properties();
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "tester");
-        properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, embeddedKafkaBroker.getBrokersAsString());
-
-        try (TopologyTestDriver testDriver = new TopologyTestDriver(streamsBuilder.build(), properties)) {
-            TestInputTopic<String, TransferStatus> inputTopic = testDriver.createInputTopic(RouterTopicNames.OUTBOUND_TRANSFER_DATA_TOPIC, stringSerde.serializer(), new JsonSerializer<>());
-
-            String key1 = String.valueOf(123L);
-            String key2 = String.valueOf(456L);
-            String key3 = String.valueOf(456L);
-            inputTopic.pipeInput(key1, TransferStatus.FAIL);
-            inputTopic.pipeInput(key2, TransferStatus.PROCESSING);
-            inputTopic.pipeInput(key3, TransferStatus.PERSISTED);
-
-            final KeyValueStore<String, String> keyValueStore = testDriver.getKeyValueStore(TransferFundsProcessor.STORE);
-
-            assertThat(keyValueStore.get(key1)).isEqualTo(TransferStatus.FAIL.name());
-            assertThat(keyValueStore.get(key2)).isEqualTo(TransferStatus.PERSISTED.name());
-
-        }
-
-
-    }
-
-
-
-    @Autowired
-    TransferStatusService service;
-
-    @Test
-    void canQueryForTransferStatus() throws Exception {
-        String xml = "<TransferMessage>" +
-                "<messageId>1000000</messageId>" +
-                "<debtor><accountNumber>123</accountNumber><routingNumber>111</routingNumber></debtor>" +
-                "<creditor><accountNumber>567</accountNumber>" +
-                "<routingNumber>900</routingNumber>" +
-                "</creditor>" +
-                "<date>12-12-2020</date>" +
-                "<amount>10.00</amount>" +
-                "<memo>here you go friend</memo>" +
-                "</TransferMessage>";
+        container.setBeanName("balanceTest-111");
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
 
         Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
         ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
         KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
-        template.setDefaultTopic(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC);
-        template.sendDefault(xml);
+        template.setDefaultTopic("balance.update.request");
+        template.sendDefault(balanceMessageXML_111);
         template.flush();
 
-        Thread.sleep(1000);
 
-        assertThat(service.getStatus(String.valueOf(1000000L))).isEqualTo(TransferStatus.FAIL.name());
+        ConsumerRecord<String, String> record = records.poll(5, TimeUnit.SECONDS);
+        assertThat(record).isNotNull();
+        assertThat(record.value()).isEqualTo(balanceMessageXML_111);
+
+        container.stop();
+
+    }
+
+
+    @Test
+    void onBalanceMessagesWith_222_routesToCorrectBank() throws InterruptedException {
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps("test-balance-222", "false", embeddedKafkaBroker);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
+        ContainerProperties containerProperties = new ContainerProperties("balance.update.request.222");
+        KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(cf, containerProperties);
+        final BlockingQueue<ConsumerRecord<String, String>> records = new LinkedBlockingQueue<>();
+        container.setupMessageListener((MessageListener<String, String>) record -> {
+            log.info("TEST CONSUMER :" + record);
+            records.add(record);
+        });
+
+        container.setBeanName("balanceTest-222");
+        container.start();
+        ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic());
+
+        Map<String, Object> producerProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
+        ProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(producerProps);
+        KafkaTemplate<String,String> template = new KafkaTemplate<>(pf);
+        template.setDefaultTopic("balance.update.request");
+        template.sendDefault(balanceMessageXML_222);
+        template.flush();
+
+
+        ConsumerRecord<String, String> record = records.poll(5, TimeUnit.SECONDS);
+        assertThat(record).isNotNull();
+        assertThat(record.value()).isEqualTo(balanceMessageXML_222);
+
+        container.stop();
 
     }
 
@@ -575,11 +582,10 @@ class TransferFundsProcessorTest {
 
 
 
-
-
-
-
-
+    @Test
+    void contextLoads()  {
+        Assertions.assertTimeout(Duration.ofSeconds(5),() -> RouterStreamsApplication.main(new String[]{}));
+    }
 
 
 }
