@@ -1,8 +1,4 @@
 spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-
-
   cloud:
     stream:
       function:
@@ -52,6 +48,7 @@ spring:
                 applicationId: routerApp-processingTransferMetricHandlerDouble
             consumer-properties:
               max.poll.interval.ms: 10000
+            brokers: localhost:9092
 
 
 

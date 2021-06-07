@@ -14,7 +14,6 @@ import tech.nermindedovic.library.pojos.BalanceMessage;
 import java.util.function.Function;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class BalanceMessageProcessor {
 

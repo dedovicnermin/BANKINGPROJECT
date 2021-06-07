@@ -13,7 +13,6 @@ import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
 import java.util.function.Function;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class BalanceProcessor {
 

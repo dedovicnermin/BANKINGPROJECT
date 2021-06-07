@@ -18,7 +18,6 @@ import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import java.util.function.Function;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class TransferMetricsProcessor {
 

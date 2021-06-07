@@ -14,7 +14,6 @@ import java.util.function.Function;
 
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class ErrorProcessor {
 

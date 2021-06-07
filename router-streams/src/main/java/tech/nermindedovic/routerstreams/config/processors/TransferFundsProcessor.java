@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class TransferFundsProcessor {
 

@@ -2,6 +2,7 @@ package tech.nermindedovic.routerstreams.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serde;
+
 import org.jdom2.input.SAXBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +11,11 @@ import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.business.domain.PaymentData;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
 
+
+
 @Configuration
 public class BeanConfig {
+
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -38,6 +42,8 @@ public class BeanConfig {
     public Serde<TransferStatus> transferStatusSerde() {
         return new CustomSerdes.TransferStatusSerde();
     }
+
+
 
 
 }
