@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.library.pojos.TransferStatus;
-import tech.nermindedovic.library.pojos.TransferValidation;
+
 
 
 @Component
@@ -33,16 +33,6 @@ public class BankBinder {
 
     public TransferMessage toTransferMessage(final String xml) throws JsonProcessingException {
         return xmlMapper.readValue(xml, TransferMessage.class);
-    }
-
-
-    public TransferValidation toTransferValidation(final String json) throws JsonProcessingException {
-        return jsonMapper.readValue(json, TransferValidation.class);
-    }
-
-
-    public String toJson(final TransferValidation transferValidation) throws JsonProcessingException {
-        return jsonMapper.writeValueAsString(transferValidation);
     }
 
 

@@ -17,8 +17,10 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
-
-
+import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+import tech.nermindedovic.library.pojos.TransferStatus;
+import tech.nermindedovic.library.pojos.TransferValidation;
 
 
 import java.util.HashMap;
@@ -31,7 +33,7 @@ public class ConsumerConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    // TODO: make a private static class for all Persistence app utils. (i.e. generic balanceMessage on fails, error messages)
+
 
     /**
      * Config for consumers
@@ -41,7 +43,7 @@ public class ConsumerConfiguration {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+//        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "${spring.kafka.consumer.groupId}");
 
@@ -53,7 +55,9 @@ public class ConsumerConfiguration {
      */
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
+        Map<String, Object> configs = consumerConfigs();
+        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(configs);
     }
 
     /**
@@ -90,14 +94,54 @@ public class ConsumerConfiguration {
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configs.put(ProducerConfig.RETRIES_CONFIG, 5);
-
-        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configs));
+        Map<String, Object> templateConfig = getTemplateConfig();
+        templateConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(templateConfig));
     }
+
+
+
+
+    @Bean
+    public ConsumerFactory<String, TransferValidation> validationConsumerFactory() {
+        Map<String, Object> configs = consumerConfigs();
+        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), new JsonDeserializer<>(TransferValidation.class));
+    }
+
+    @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, TransferValidation>> validationListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TransferValidation> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(validationConsumerFactory());
+        factory.setReplyTemplate(validationKafkaTemplate());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+        return factory;
+    }
+
+
+
+    @Bean
+    public KafkaTemplate<String, TransferValidation> validationKafkaTemplate() {
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(getTemplateConfig()));
+    }
+
+    @Bean
+    public KafkaTemplate<String, TransferStatus> statusKafkaTemplate() {
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(getTemplateConfig()));
+    }
+
+
+    private Map<String,Object> getTemplateConfig() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.put(ProducerConfig.RETRIES_CONFIG, 5);
+        return config;
+    }
+
+
 
 
 }

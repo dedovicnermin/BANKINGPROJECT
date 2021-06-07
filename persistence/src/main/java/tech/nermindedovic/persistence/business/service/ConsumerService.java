@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
+import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.persistence.business.components.MsgProcessor;
 import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 
@@ -53,12 +54,12 @@ public class ConsumerService {
 
     /**
      * PRE-CONDITION: leg1 / leg2 of router validation.
-     * @param validationRecord of messageId:TransferValidation
+     * @param validation : TransferValidation
      */
-    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "${spring.kafka.consumer.groupId}")
+    @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "validationListenerContainerFactory")
     @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
-    public String validateAccount(@NotNull final ConsumerRecord<String, String> validationRecord) {
-        return processor.processTransferValidation(validationRecord.key(), validationRecord.value());
+    public TransferValidation validateAccount(@NotNull TransferValidation validation) {
+        return processor.processTransferValidation(validation);
     }
 
 

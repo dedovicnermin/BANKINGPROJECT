@@ -93,7 +93,7 @@ public class PersistenceService {
 
 
 
-    public void processTransferValidation(@NotNull final TransferValidation transferValidation) {
+    public TransferValidation processTransferValidation(@NotNull final TransferValidation transferValidation) {
         switch (transferValidation.getCurrentLeg()) {
             case 1:
                 validateNativeUser(transferValidation, transferValidation.getDebtorAccount().getAccountNumber(), true);
@@ -105,6 +105,7 @@ public class PersistenceService {
                 transferValidation.setCurrentLeg(0);
                 break;
         }
+        return transferValidation;
     }
 
 

@@ -10,6 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import tech.nermindedovic.library.pojos.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
+import tech.nermindedovic.persistence.business.service.TemplateFactory;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 
@@ -21,7 +22,7 @@ public class MsgProcessor {
     // == dependency ==
     private final PersistenceService persistenceService;
     private final BankBinder bankBinder;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final TemplateFactory factory;
 
 
     @Value("${persistence-topics.OUTBOUND_TRANSFER_ERRORS:funds.transfer.error}")
@@ -35,18 +36,19 @@ public class MsgProcessor {
     private long routingNumber;
 
     // == constructor ==
-    public MsgProcessor(final PersistenceService persistenceService, final KafkaTemplate<String,String> kafkaTemplate, final BankBinder bankBinder) {
+    public MsgProcessor(final PersistenceService persistenceService, final TemplateFactory factory, final BankBinder bankBinder) {
         this.persistenceService = persistenceService;
-        this.kafkaTemplate = kafkaTemplate;
+        this.factory = factory;
         this.bankBinder = bankBinder;
     }
 
     /**
      * bind string to pojo. Enrich pojo. bind to string and return.
+     *
      * @param xml of type BalanceMessage
      * @return xml of BalanceMessage response
      */
-    public String processBalanceRequest(final String xml)  {
+    public String processBalanceRequest(final String xml) {
         try {
             BalanceMessage balanceMessage = bankBinder.toBalanceMessage(xml);
             persistenceService.validateBalanceMessage(balanceMessage);
@@ -57,34 +59,30 @@ public class MsgProcessor {
     }
 
 
-
-
     /**
      * Called when routing numbers in transfer message match
      * bind string to TransferMessage. attempt to persist transaction. else produce error message
-     * @param xml of type TransferMessage
      *
+     * @param xml of type TransferMessage
      */
-    public void processTransferRequest(final String key, final String xml)  {
+    public void processTransferRequest(final String key, final String xml) {
         try {
             TransferMessage transferMessage = bankBinder.toTransferMessage(xml);
             persistenceService.validateAndProcessTransferMessage(transferMessage);
             updateState(key, TransferStatus.PERSISTED);
         } catch (JsonProcessingException | InvalidTransferMessageException e) {
-            produceErrorMessage("PERSISTENCE --- "+e.getMessage());
+            produceErrorMessage("PERSISTENCE --- " + e.getMessage());
             updateState(key, TransferStatus.FAIL);
         }
     }
 
 
-
-
     /**
      * bind string to TransferMessage. attempt to persist transaction. else produce error message
-     * @param xml of type TransferMessage
      *
+     * @param xml of type TransferMessage
      */
-    public void processTransferRequestTwoBanks(final String xml)  {
+    public void processTransferRequestTwoBanks(final String xml) {
         try {
             TransferMessage transferMessage = bankBinder.toTransferMessage(xml);
             long accountNumberReference = retrieveNativeAccount(transferMessage);
@@ -100,6 +98,7 @@ public class MsgProcessor {
 
     /**
      * Get the account belonging to this bank (routing number 111 || 222)
+     *
      * @param transferMessage holding account info
      * @return account number
      */
@@ -113,20 +112,15 @@ public class MsgProcessor {
 
     /**
      * validating native account. To be sent to Router app.
-     * @param key messageId
-     * @param json transferValidation
-     * @return return transferValidation:JSON
+     * @param validation transferValidation
+     * @return return transferValidation
      */
-    public String processTransferValidation(String key, String json) {
-        try {
-            TransferValidation validation = bankBinder.toTransferValidation(json);
-            persistenceService.processTransferValidation(validation);
-            return bankBinder.toJson(validation);
-        } catch (JsonProcessingException e) {
-            updateState(key, TransferStatus.FAIL);
-            return json;
-        }
+
+    public TransferValidation processTransferValidation(TransferValidation validation) {
+        return persistenceService.processTransferValidation(validation);
     }
+
+
 
 
     /**
@@ -135,8 +129,9 @@ public class MsgProcessor {
      * @param status status of transfer
      */
     private void updateState(String messageId, TransferStatus status)  {
+        KafkaTemplate<String, TransferStatus> kafkaTemplate = factory.getStatusTemplate();
         if (transferStatusTopic == null) transferStatusTopic = "router.validate.transfer";
-        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, bankBinder.toJson(status)));
+        kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status));
     }
 
     private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {
@@ -145,7 +140,8 @@ public class MsgProcessor {
 
 
     private void produceErrorMessage(String errorMessage) {
-        log.error("producing error message to funds.transfer.error");
+        KafkaTemplate<String, String> kafkaTemplate = factory.getStringTemplate();
+        log.info("producing error message to funds.transfer.error");
         if (errorTopic == null) errorTopic = "funds.transfer.error";
         kafkaTemplate.send(errorTopic, errorMessage);
     }
