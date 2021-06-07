@@ -53,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
 })
 @ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, brokerProperties = { "request.timeout.ms=1000", "max.poll.interval.ms=5000", "reconnect.backoff.ms=5000" }, controlledShutdown = true, zkConnectionTimeout = 2000, zkSessionTimeout = 2000)
+@EmbeddedKafka(partitions = 1, brokerProperties = { "request.timeout.ms=1000", "max.poll.interval.ms=5000", "reconnect.backoff.ms=10000" }, controlledShutdown = true, zkConnectionTimeout = 2000, zkSessionTimeout = 2000)
 @DirtiesContext
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -584,7 +584,7 @@ class RouterStreamsIntegrationTest {
 
     @Test
     void contextLoads()  {
-        Assertions.assertTimeout(Duration.ofSeconds(5),() -> RouterStreamsApplication.main(new String[]{}));
+        Assertions.assertTimeout(Duration.ofSeconds(10),() -> RouterStreamsApplication.main(new String[]{}));
     }
 
 
