@@ -1,6 +1,8 @@
 package tech.nermindedovic.routerstreams.config.processors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.KStream;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.TransferValidation;
@@ -12,26 +14,45 @@ import java.util.function.Function;
 
 
 @Configuration
+@EnableAutoConfiguration
+@Slf4j
 public class ErrorProcessor {
 
     //  TESTED : 👍🏼
 
+
+    /**
+     * IN: router.trsf.error.handler
+     * OUT: funds.transfer.error
+     * @return KStream
+     */
     @Bean
     public Function<KStream<String, PaymentData>, KStream<String, String>> transferErrorHandler() {
-        return input -> input
-                .selectKey((key, val) -> getMessageIdOrNull(val))
-                .filter((key, val) -> key != null)
-                .mapValues(paymentData -> RouterAppUtils.TRANSFER_ERROR_PREFIX + paymentData.getTransferMessageXml())
-                .through(RouterTopicNames.TRANSFER_STATUS_FAILED_HANDLER, RouterAppUtils.producedWithStringSerdes);
+        return input -> {
+            KStream<String, String> stream = input
+                    .selectKey((key, val) -> getMessageIdOrNull(val))
+                    .filter((key, val) -> key != null)
+                    .mapValues(paymentData -> RouterAppUtils.TRANSFER_ERROR_PREFIX + paymentData.getTransferMessageXml());
+            stream.to(RouterTopicNames.TRANSFER_STATUS_FAILED_HANDLER, RouterAppUtils.producedWithStringSerdes);
+            return stream;
+        };
     }
 
-
-    // KEY ALREADY ASSIGNED AT THIS POINT
+    /**
+     * IN: router.validation.error.handler
+     * OUT: funds.transfer.error
+     * @return KStream
+     * KEY ALREADY ASSIGNED AT THIS POINT
+     */
     @Bean
     public Function<KStream<String, TransferValidation>, KStream<String, String>> validationErrorHandler() {
-        return input -> input
-                .mapValues(transferValidation -> RouterAppUtils.VALIDATION_ERROR_PREFIX + transferValidation.getTransferMessage())
-                .through(RouterTopicNames.TRANSFER_STATUS_FAILED_HANDLER, RouterAppUtils.producedWithStringSerdes);
+        return input -> {
+            KStream<String, String> stream = input
+                    .peek((key, val) -> log.info("validationErrorHandler(48)--KEY:" + key + ", VALUE:" + val))
+                    .mapValues(transferValidation -> RouterAppUtils.VALIDATION_ERROR_PREFIX + transferValidation.getTransferMessage());
+            stream.to(RouterTopicNames.TRANSFER_STATUS_FAILED_HANDLER, RouterAppUtils.producedWithStringSerdes);
+            return stream;
+        };
     }
 
 
