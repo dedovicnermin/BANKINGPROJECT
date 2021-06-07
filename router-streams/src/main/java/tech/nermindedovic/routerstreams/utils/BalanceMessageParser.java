@@ -7,7 +7,7 @@ import org.jdom2.Element;
 import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.springframework.stereotype.Component;
-import tech.nermindedovic.routerstreams.exception.InvalidRoutingNumberException;
+
 
 
 import java.io.ByteArrayInputStream;
@@ -40,11 +40,9 @@ public class BalanceMessageParser {
             return "0";
         }
         final Element root = messageDocument.getRootElement();
-
-
         String value = root.getChild(ROUTING_NUMBER).getValue();
         return validRoutes.contains(Long.parseLong(value)) ? value : "0";
-//        return value;
+
 
     }
 

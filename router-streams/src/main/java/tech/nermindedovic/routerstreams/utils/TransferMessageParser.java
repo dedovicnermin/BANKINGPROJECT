@@ -1,5 +1,6 @@
 package tech.nermindedovic.routerstreams.utils;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
@@ -28,7 +29,6 @@ public class TransferMessageParser {
     private static final String AMOUNT           = "amount";
 
     final SAXBuilder builder;
-
     public TransferMessageParser(final SAXBuilder saxBuilder)  {
         this.builder = saxBuilder;
     }
@@ -38,19 +38,15 @@ public class TransferMessageParser {
         try {
             messageDocument = builder.build(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         } catch (JDOMException | IOException e) {
-            e.printStackTrace();
-            PaymentData paymentData = new PaymentData();
-            paymentData.setTransferMessageXml(xml);
-            return paymentData;
+            return createErrorResponse(xml);
         }
-        Element root = messageDocument.getRootElement();
-        return createPaymentData(root);
+        return createValidResponse(messageDocument, xml);
     }
 
 
 
 
-    private PaymentData createPaymentData(Element root) {
+    private PaymentData createPaymentData(Element root, String xml) {
         PaymentData paymentData = new PaymentData();
         Element debtor = root.getChild(DEBTOR);
         Element creditor = root.getChild(CREDITOR);
@@ -60,6 +56,7 @@ public class TransferMessageParser {
         retrieveAccounts(paymentData, debtor, creditor);
         paymentData.setMessageId(Long.parseLong(messageId.getValue()));
         paymentData.setAmount(new BigDecimal(amount.getValue()));
+        paymentData.setTransferMessageXml(xml);
 
         return paymentData;
     }
@@ -81,6 +78,20 @@ public class TransferMessageParser {
         Element creditorAN = creditor.getChild(ACCOUNT_NUMBER);
         Element creditorRN = creditor.getChild(ROUTING_NUMBER);
         return new Creditor(Long.parseLong(creditorAN.getValue()), Long.parseLong(creditorRN.getValue()));
+    }
+
+
+    private PaymentData createValidResponse(Document document, String xml) {
+        Element rootElement = document.getRootElement();
+        return createPaymentData(rootElement, xml);
+
+
+    }
+
+    private PaymentData createErrorResponse(String xml) {
+        PaymentData data = new PaymentData();
+        data.setTransferMessageXml(xml);
+        return data;
     }
 
 
