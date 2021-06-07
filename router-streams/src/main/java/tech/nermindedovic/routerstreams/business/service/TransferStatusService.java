@@ -6,6 +6,7 @@ import org.springframework.cloud.stream.binder.kafka.streams.InteractiveQuerySer
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 @RestController
 public class TransferStatusService {
@@ -18,9 +19,9 @@ public class TransferStatusService {
 
     @GetMapping("transfer/{key}")
     public String getStatus(@PathVariable final String key) {
-        final ReadOnlyKeyValueStore<String, String> store = iqService.getQueryableStore("transfer.status.store", QueryableStoreTypes.keyValueStore());
+        final ReadOnlyKeyValueStore<String, String> store = iqService.getQueryableStore(RouterTopicNames.TRANSFER_STATUS_STORE, QueryableStoreTypes.keyValueStore());
         String s = store.get(key);
-        if (s.isEmpty() || s.equals("null")) {
+        if (s == null || s.isEmpty()) {
             return String.format("No records with ID (%s)", key);
         }
         return s;

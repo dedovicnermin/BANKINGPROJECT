@@ -1,8 +1,6 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
-
-
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
   cloud:
     stream:
       function:
@@ -15,6 +13,8 @@ spring:
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               max.poll.interval.ms: 10000
+              reconnect.backoff.ms: 10000
+              request.timeout.ms: 10000
             min-partition-count: 1
             application-id: ROUTING-APP
             deserialization-exception-handler: logandcontinue
@@ -52,15 +52,6 @@ spring:
                 applicationId: routerApp-processingTransferMetricHandlerDouble
             consumer-properties:
               max.poll.interval.ms: 10000
-
-
-
-
-
-
-
-
-
       bindings:
         balanceRequestProcessor-in-0:
           destination: balance.update.request
@@ -166,4 +157,6 @@ server:
   port: 7082
 
 
+logging:
+  level: debug
 

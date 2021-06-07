@@ -1,35 +1,48 @@
 package tech.nermindedovic.routerstreams.utils;
 
 
+import org.jdom2.input.SAXBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import tech.nermindedovic.routerstreams.config.BeanConfig;
-import tech.nermindedovic.routerstreams.exception.InvalidRoutingNumberException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = {BalanceMessageParser.class, BeanConfig.class})
+
 @ExtendWith(MockitoExtension.class)
 class BalanceMessageParserTest {
 
-    @Autowired
-    BalanceMessageParser balanceMessageParser;
+    SAXBuilder builder = new SAXBuilder();
+    BalanceMessageParser balanceMessageParser = new BalanceMessageParser(builder);
+
+    final static String ERROR_RETURN = "0";
 
     @Test
-    void onInvalidRoute_willThrowInvalidRoutingNumberException() {
+    void onInvalidRoute_willReturn0() {
         String invalidRouteXML = "<BalanceMessage><accountNumber>123</accountNumber><routingNumber>542</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
-
-        assertThrows(InvalidRoutingNumberException.class, () -> balanceMessageParser.getRoute(invalidRouteXML));
+        assertThat(balanceMessageParser.getRoute(invalidRouteXML)).isEqualTo(ERROR_RETURN);
     }
 
 
     @Test
-    void onValidRoute_willCorrectlyOutputRoute() {
-        String validRouteXML = "<BalanceMessage><accountNumber>123</accountNumber><routingNumber>111</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
-        assertDoesNotThrow(() -> balanceMessageParser.getRoute(validRouteXML));
+    void onInvalidXML_willReturn0() {
+        String invalidXML = "<XML_BAD>";
+        assertThat(balanceMessageParser.getRoute(invalidXML)).isEqualTo(ERROR_RETURN);
     }
+
+
+    @Test
+    void onValidXML_withValidRoute_returnsCorrectRouting() {
+        String balanceMsgXML = "<BalanceMessage><accountNumber>123</accountNumber><routingNumber>111</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
+        String balanceMsgXML2 = "<BalanceMessage><accountNumber>123</accountNumber><routingNumber>222</routingNumber><balance></balance><errors>false</errors></BalanceMessage>";
+        assertThat(balanceMessageParser.getRoute(balanceMsgXML)).isEqualTo("111");
+        assertThat(balanceMessageParser.getRoute(balanceMsgXML2)).isEqualTo("222");
+    }
+
+
+
+
+
+
 
 }
