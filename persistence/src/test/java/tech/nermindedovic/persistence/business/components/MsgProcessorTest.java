@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import tech.nermindedovic.library.pojos.*;
 import tech.nermindedovic.persistence.business.service.PersistenceService;
+import tech.nermindedovic.persistence.business.service.TemplateFactory;
 import tech.nermindedovic.persistence.exception.InvalidTransferMessageException;
 
 import java.math.BigDecimal;
@@ -26,9 +27,12 @@ class MsgProcessorTest {
     PersistenceService persistenceService;
 
     @Mock
-    KafkaTemplate<String, String> kafkaTemplate;
+    KafkaTemplate<String, String> stringTemplate;
 
 
+
+    @Mock
+    TemplateFactory templateFactory;
 
     @Mock
     BankBinder bankBinder;
@@ -67,10 +71,11 @@ class MsgProcessorTest {
         //then
         assertThat(msgProcessor.processBalanceRequest(balanceXML)).isEqualTo(expected);
     }
+
     ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void processTransferValidation() throws JsonProcessingException {
+    void processTransferValidation()  {
         //given valid TransferValidation
 
         TransferValidation transferValidation = TransferValidation.builder()
@@ -81,27 +86,29 @@ class MsgProcessorTest {
                 .transferMessage("A transferMessage")
                 .amount(BigDecimal.TEN)
                 .build();
-        String json = mapper.writeValueAsString(transferValidation);
 
-        when(bankBinder.toTransferValidation(json)).thenReturn(transferValidation);
-        doNothing().when(persistenceService).processTransferValidation(transferValidation);
-        when(bankBinder.toJson(transferValidation)).thenReturn(json);
-
-        assertThat(msgProcessor.processTransferValidation(String.valueOf(transferValidation.getMessageId()),json)).isEqualTo(json);
+        TransferValidation expected = TransferValidation.builder()
+                .messageId(5445L)
+                .currentLeg(2)
+                .creditorAccount(new Creditor(123, 111))
+                .debtorAccount(new Debtor(456, 222))
+                .transferMessage("A transferMessage")
+                .amount(BigDecimal.TEN)
+                .build();
+        when(persistenceService.processTransferValidation(transferValidation)).thenReturn(expected);
+        assertThat(msgProcessor.processTransferValidation(transferValidation)).isEqualTo(expected);
 
     }
 
 
     @Test
-    void processTransferValidation_fail() throws JsonProcessingException {
+    void processTransferValidation_fail()  {
 
         TransferValidation transferValidation = new TransferValidation();
-        String json = mapper.writeValueAsString(transferValidation);
-        when(bankBinder.toTransferValidation(json)).thenThrow(JsonProcessingException.class);
+        transferValidation.setCurrentLeg(0);
+        when(msgProcessor.processTransferValidation(transferValidation)).thenReturn(transferValidation);
+        assertThat(msgProcessor.processTransferValidation(transferValidation)).isEqualTo(transferValidation);
 
-        when(bankBinder.toJson(any(TransferStatus.class))).thenReturn(String.format("{\n" + "   \"TransferStatus\": \"%s\"" + "\n}", TransferStatus.FAIL));
-
-        assertThat(msgProcessor.processTransferValidation("123", json)).isEqualTo(json);
     }
 
 
@@ -109,9 +116,9 @@ class MsgProcessorTest {
     void processTransferRequest_TwoBanks_onBindingFail_willSendToErrorTopic() throws JsonProcessingException {
         String xml = "XML that is invalid";
         when(bankBinder.toTransferMessage(xml)).thenThrow(JsonProcessingException.class);
-
+        when(templateFactory.getStringTemplate()).thenReturn(stringTemplate);
         msgProcessor.processTransferRequestTwoBanks(xml);
-        verify(kafkaTemplate,times(1)).send("funds.transfer.error","PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
+        verify(stringTemplate,times(1)).send("funds.transfer.error","PERSISTENCE --- Unable to bind XML to TransferMessagePOJO");
     }
 
     @Test
@@ -133,10 +140,10 @@ class MsgProcessorTest {
 
         when(bankBinder.toTransferMessage(xml)).thenReturn(transferMessage);
         doThrow(InvalidTransferMessageException.class).when(persistenceService).processTwoBankTransferMessage(transferMessage, debtorAN, true);
-
+        when(templateFactory.getStringTemplate()).thenReturn(stringTemplate);
         msgProcessor.processTransferRequestTwoBanks(xml);
 
-        verify(kafkaTemplate, times(1)).send("funds.transfer.error", "PERSISTENCE --- TransferMessage already exists");
+        verify(stringTemplate, times(1)).send("funds.transfer.error", "PERSISTENCE --- TransferMessage already exists");
 
     }
 

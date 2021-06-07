@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @Table(name = "ACCOUNTS")
 @Data
 @Generated
-@AllArgsConstructor
 @NoArgsConstructor
 public class Account {
 

@@ -26,6 +26,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.nermindedovic.library.pojos.*;
+import tech.nermindedovic.persistence.PersistenceApplication;
 import tech.nermindedovic.persistence.data.entity.Account;
 import tech.nermindedovic.persistence.data.entity.Transaction;
 import tech.nermindedovic.persistence.data.repository.AccountRepository;
@@ -607,6 +608,16 @@ class KafkaIntegrationTest {
         ConsumerRecord<String, String> consumed = records.poll(1000, TimeUnit.MILLISECONDS);
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo("<BalanceMessage><accountNumber>0</accountNumber><routingNumber>0</routingNumber><balance></balance><errors>true</errors></BalanceMessage>");
+    }
+
+
+
+
+
+
+    @Test
+    void contextLoads() {
+        Assertions.assertTimeout(Duration.ofSeconds(10),() -> PersistenceApplication.main(new String[]{}));
     }
 
 
