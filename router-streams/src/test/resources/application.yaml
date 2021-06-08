@@ -156,7 +156,8 @@ server:
 
 
 logging:
-  level: debug
+  level:
+    org.apache.kafka: OFF
 
 
 

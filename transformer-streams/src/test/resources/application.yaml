@@ -57,6 +57,10 @@ spring:
 server:
   port: 7081
 
+logging:
+  level:
+    org.apache.kafka: OFF
+
 schema-endpoint: mock://unused:8081
 
 

@@ -36,3 +36,8 @@ persistence-topics:
 
 
 routing-number: 111
+
+
+logging:
+  level:
+    org.apache.kafka: OFF

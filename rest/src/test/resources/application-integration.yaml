@@ -28,6 +28,9 @@ banking:
 router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
 
+logging:
+  level:
+    org.apache.kafka: OFF
 
 
 
