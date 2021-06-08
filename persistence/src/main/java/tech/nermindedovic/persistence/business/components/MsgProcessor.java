@@ -102,7 +102,7 @@ public class MsgProcessor {
      * @param transferMessage holding account info
      * @return account number
      */
-    private long retrieveNativeAccount(TransferMessage transferMessage) {
+    private long retrieveNativeAccount(final TransferMessage transferMessage) {
         Creditor creditor = transferMessage.getCreditor();
         Debtor debtor = transferMessage.getDebtor();
         if (creditor.getRoutingNumber() == routingNumber) return creditor.getAccountNumber();
@@ -112,12 +112,13 @@ public class MsgProcessor {
 
     /**
      * validating native account. To be sent to Router app.
+     * @param key messageId
      * @param validation transferValidation
-     * @return return transferValidation
      */
 
-    public TransferValidation processTransferValidation(TransferValidation validation) {
-        return persistenceService.processTransferValidation(validation);
+    public void processTransferValidation(final String key, final TransferValidation validation) {
+        TransferValidation validationReturn = persistenceService.processTransferValidation(validation);
+        factory.getValidationTemplate().send("router.validate.transfer", key, validationReturn);
     }
 
 
@@ -128,18 +129,18 @@ public class MsgProcessor {
      * @param messageId transfer ID
      * @param status status of transfer
      */
-    private void updateState(String messageId, TransferStatus status)  {
+    private void updateState(final String messageId, final TransferStatus status)  {
         KafkaTemplate<String, TransferStatus> kafkaTemplate = factory.getStatusTemplate();
         if (transferStatusTopic == null) transferStatusTopic = "router.validate.transfer";
         kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status));
     }
 
-    private boolean isDebtor(TransferMessage transferMessage, long accountNumber) {
+    private boolean isDebtor(final TransferMessage transferMessage, final long accountNumber) {
         return transferMessage.getDebtor().getAccountNumber() == accountNumber;
     }
 
 
-    private void produceErrorMessage(String errorMessage) {
+    private void produceErrorMessage(final String errorMessage) {
         KafkaTemplate<String, String> kafkaTemplate = factory.getStringTemplate();
         log.info("producing error message to funds.transfer.error");
         if (errorTopic == null) errorTopic = "funds.transfer.error";

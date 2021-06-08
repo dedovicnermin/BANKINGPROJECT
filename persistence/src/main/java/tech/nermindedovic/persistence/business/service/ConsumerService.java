@@ -57,9 +57,10 @@ public class ConsumerService {
      * @param validation : TransferValidation
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "validationListenerContainerFactory")
-    @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
-    public TransferValidation validateAccount(@NotNull TransferValidation validation) {
-        return processor.processTransferValidation(validation);
+//    @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
+    public void validateAccount(@NotNull ConsumerRecord<String, TransferValidation> validation) {
+        log.info("RECEIVED VALIDATION: " + validation.value());
+        processor.processTransferValidation(validation.key(), validation.value());
     }
 
 
@@ -70,8 +71,9 @@ public class ConsumerService {
      * @param xml of TransferMessage
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")
-    public void handleSingleUserFundsTransferRequest(@NotNull final String xml) {
-        processor.processTransferRequestTwoBanks(xml);
+    public void handleSingleUserFundsTransferRequest(@NotNull final ConsumerRecord<String, String> xml) {
+        log.info("RECEIVED TWO BANK TRANSFER: " + xml.value());
+        processor.processTransferRequestTwoBanks(xml.value());
     }
 
 

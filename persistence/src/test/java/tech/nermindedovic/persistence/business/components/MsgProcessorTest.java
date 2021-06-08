@@ -29,6 +29,9 @@ class MsgProcessorTest {
     @Mock
     KafkaTemplate<String, String> stringTemplate;
 
+    @Mock
+    KafkaTemplate<String, TransferValidation> validationTemplate;
+
 
 
     @Mock
@@ -87,29 +90,14 @@ class MsgProcessorTest {
                 .amount(BigDecimal.TEN)
                 .build();
 
-        TransferValidation expected = TransferValidation.builder()
-                .messageId(5445L)
-                .currentLeg(2)
-                .creditorAccount(new Creditor(123, 111))
-                .debtorAccount(new Debtor(456, 222))
-                .transferMessage("A transferMessage")
-                .amount(BigDecimal.TEN)
-                .build();
-        when(persistenceService.processTransferValidation(transferValidation)).thenReturn(expected);
-        assertThat(msgProcessor.processTransferValidation(transferValidation)).isEqualTo(expected);
+        when(templateFactory.getValidationTemplate()).thenReturn(validationTemplate);
+        msgProcessor.processTransferValidation("5445", transferValidation);
+
+        verify(templateFactory, times(1)).getValidationTemplate();
+
 
     }
 
-
-    @Test
-    void processTransferValidation_fail()  {
-
-        TransferValidation transferValidation = new TransferValidation();
-        transferValidation.setCurrentLeg(0);
-        when(msgProcessor.processTransferValidation(transferValidation)).thenReturn(transferValidation);
-        assertThat(msgProcessor.processTransferValidation(transferValidation)).isEqualTo(transferValidation);
-
-    }
 
 
     @Test
