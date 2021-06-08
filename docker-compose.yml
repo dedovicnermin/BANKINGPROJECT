@@ -102,8 +102,6 @@ services:
       - schema-registry
     ports:
       - "8083:8083"
-    volumes:
-      - ./bin/connect-plugins:/shared-folder
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
@@ -135,14 +133,15 @@ services:
       - kafka
       - kafka2
       - kafka3
+      - schema-registry
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
-      - ROUTER-ENDPOINT=router-streams:8082
+      - ROUTER-ENDPOINT=router-streams:7082
       - SERVER_PORT=8080
       - ELASTIC-ENDPOINT=elasticsearch:9200
       - BANKING_PARTITIONS=3
       - BANKING_REPLICAS=2
-      - SCHEMA-ENDPOINT=http://schema-registry:8081
+      - SCHEMA-ENDPOINT=schema-registry:8081
     ports:
       - "8080:8080"
     depends_on:
@@ -173,6 +172,7 @@ services:
       - kafka2
       - kafka3
       - rest
+      - schema-registry
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
       - SERVER_PORT=7081
@@ -193,9 +193,10 @@ services:
       - kafka2
       - kafka3
     ports:
-      - "8082:8082"
+      - "7082:7082"
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092,kafka2:29093,kafka3:29094
+      - SERVER_PORT=7082
     depends_on:
       - kafka
       - kafka2
