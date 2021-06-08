@@ -1,4 +1,6 @@
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
   cloud:
     function:
       definition: processTransfer;processBalanceLeg1;processBalanceLeg2
@@ -13,13 +15,14 @@ spring:
                 applicationId: transformerApp-processBalanceL1
               processBalanceLeg2:
                 applicationId: transformerApp-processBalanceL2
-            brokers: localhost:9092
             configuration:
               default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               schema.registry.url: ${schema-endpoint}
               specific.avro.reader: true
             deserialization-exception-handler: sendtodlq
+            auto-add-partitions: true
+            min-partition-count: 3
           bindings:
             processTransfer-in-0:
               consumer:
