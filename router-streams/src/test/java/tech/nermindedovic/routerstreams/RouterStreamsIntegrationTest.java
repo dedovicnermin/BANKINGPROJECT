@@ -5,7 +5,7 @@ package tech.nermindedovic.routerstreams;
 
 
 
-import kafka.server.KafkaServer;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -31,7 +32,8 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import org.springframework.test.context.ActiveProfiles;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferValidation;
@@ -48,38 +50,23 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 @Slf4j
-@SpringBootTest(properties = {
-        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
-})
-@ExtendWith(SpringExtension.class)
-@EmbeddedKafka(partitions = 1, brokerProperties = { "request.timeout.ms=1000", "max.poll.interval.ms=5000", "reconnect.backoff.ms=10000" }, controlledShutdown = true, zkConnectionTimeout = 2000, zkSessionTimeout = 2000)
-@DirtiesContext
+@ActiveProfiles("integration")
+@SpringBootTest(classes = RouterStreamsApplication.class)
+@EmbeddedKafka(partitions = 1, brokerProperties = { "request.timeout.ms=1000", "max.poll.interval.ms=5000", "reconnect.backoff.ms=10000", "delivery.timeout.ms=10000", "max.poll.records=1"}, controlledShutdown = true, zkConnectionTimeout = 30, zkSessionTimeout = 30)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ExtendWith(MockitoExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RouterStreamsIntegrationTest {
+
+    @Autowired
+    ApplicationContext applicationContext;
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @SpyBean
     RouterJsonMapper mapper;
-
-    @BeforeAll
-    void configure() {
-        System.setProperty("spring.kafka.bootstrap-servers", embeddedKafkaBroker.getBrokersAsString());
-        embeddedKafkaBroker.setAdminTimeout(1000);
-    }
-
-    @AfterAll
-    void shutDown () {
-        embeddedKafkaBroker.getKafkaServers().forEach(KafkaServer::shutdown);
-        embeddedKafkaBroker.getKafkaServers().forEach(KafkaServer::awaitShutdown);
-        embeddedKafkaBroker.getZooKeeperClient().close();
-        embeddedKafkaBroker.destroy();
-
-
-    }
 
     String xmlWith1InvalidRoute = "<TransferMessage>" +
             "<messageId>8785179</messageId>" +
@@ -126,6 +113,8 @@ class RouterStreamsIntegrationTest {
         container.stop();
         records.clear();
 
+        container.stop(false);
+
 
     }
 
@@ -169,7 +158,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).containsSequence("ERROR");
 
-        container.stop();
+        container.stop(false);
     }
 
 
@@ -218,7 +207,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(xmlWithMatchingRoutes_111);
 
-        container.stop();
+        container.stop(false);
 
     }
 
@@ -268,7 +257,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(xmlWithMatchingRoutes_222);
 
-        container.stop();
+        container.stop(false);
 
     }
 
@@ -323,7 +312,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(mapper.toJsonString(transferValidation));
 
-        container.stop();
+        container.stop(false);
 
     }
 
@@ -372,7 +361,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).isEqualTo(mapper.toJsonString(transferValidation));
 
-        container.stop();
+        container.stop(false);
 
 
     }
@@ -447,8 +436,8 @@ class RouterStreamsIntegrationTest {
         assertThat(bankB_record).isNotNull();
         assertThat(bankB_record.value()).isEqualTo(xmlWithDiffRoutes);
 
-        container.stop();
-        container2.stop();
+        container.stop(false);
+        container2.stop(false);
 
     }
 
@@ -492,7 +481,7 @@ class RouterStreamsIntegrationTest {
         assertThat(consumed).isNotNull();
         assertThat(consumed.value()).contains("ERROR");
 
-        container.stop();
+        container.stop(false);
 
 
     }
@@ -537,7 +526,7 @@ class RouterStreamsIntegrationTest {
         assertThat(record).isNotNull();
         assertThat(record.value()).isEqualTo(balanceMessageXML_111);
 
-        container.stop();
+        container.stop(false);
 
     }
 
@@ -572,7 +561,7 @@ class RouterStreamsIntegrationTest {
         assertThat(record).isNotNull();
         assertThat(record.value()).isEqualTo(balanceMessageXML_222);
 
-        container.stop();
+        container.stop(false);
 
     }
 
@@ -583,6 +572,7 @@ class RouterStreamsIntegrationTest {
 
 
     @Test
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void contextLoads()  {
         Assertions.assertTimeout(Duration.ofSeconds(10),() -> RouterStreamsApplication.main(new String[]{}));
     }

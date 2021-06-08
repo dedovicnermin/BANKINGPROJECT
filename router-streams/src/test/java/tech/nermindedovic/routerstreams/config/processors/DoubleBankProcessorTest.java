@@ -16,7 +16,6 @@ import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.business.domain.PaymentData;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
@@ -29,12 +28,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class DoubleBankProcessorTest {
 
-    @Mock RouterJsonMapper mapper;
+
     @Mock TransferMessageParser parser;
 
-    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER;
+    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER;
     private final Properties props = new Properties();
-    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);
+    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(parser);
 
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, PaymentData> testInputTopic;

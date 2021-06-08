@@ -2,7 +2,6 @@ package tech.nermindedovic.routerstreams.config.processors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.KStream;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.TransferValidation;
@@ -14,7 +13,6 @@ import java.util.function.Function;
 
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class ErrorProcessor {
 
@@ -48,7 +46,6 @@ public class ErrorProcessor {
     public Function<KStream<String, TransferValidation>, KStream<String, String>> validationErrorHandler() {
         return input -> {
             KStream<String, String> stream = input
-                    .peek((key, val) -> log.info("validationErrorHandler(48)--KEY:" + key + ", VALUE:" + val))
                     .mapValues(transferValidation -> RouterAppUtils.VALIDATION_ERROR_PREFIX + transferValidation.getTransferMessage());
             stream.to(RouterTopicNames.TRANSFER_STATUS_FAILED_HANDLER, RouterAppUtils.producedWithStringSerdes);
             return stream;

@@ -4,13 +4,14 @@ package tech.nermindedovic.routerstreams.config.processors;
 import lombok.extern.slf4j.Slf4j;
 
 
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 
-import org.apache.kafka.streams.KeyValue;
+
 import org.apache.kafka.streams.kstream.*;
 
 
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.Creditor;
@@ -18,15 +19,12 @@ import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
 import tech.nermindedovic.routerstreams.utils.RouterAppUtils;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 import tech.nermindedovic.routerstreams.business.domain.*;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
-
-
-import java.util.Set;
+import java.time.Duration;
 
 
 import java.util.function.BiFunction;
@@ -37,17 +35,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class TransferFundsProcessor {
 
 
-    
+    private final Serde<TransferValidation> validationSerde = new CustomSerdes.TransferValidationSerde();
     // == CONSTRUCTOR ==
-    private  final RouterJsonMapper mapper;         // will have to remove. requiring rest to accept and send json : TransferValidation
+
     private final TransferMessageParser parser;
-    public TransferFundsProcessor( final RouterJsonMapper routerJsonMapper, final TransferMessageParser transferMessageParser) {
-        this.mapper = routerJsonMapper;
+    public TransferFundsProcessor(final TransferMessageParser transferMessageParser) {
         this.parser = transferMessageParser;
     }
 
@@ -58,7 +54,7 @@ public class TransferFundsProcessor {
 
 
 
-    /**
+    /**3p
      * parse incoming transfer message.
      * Ensure it has information for a payment party object
      * delegate on number of valid routing numbers
@@ -116,17 +112,13 @@ public class TransferFundsProcessor {
     @Bean
     @SuppressWarnings("unchecked")
     public Function<KStream<String, PaymentData>, KStream<String, String>[]> singleBankProcessor() {
-        final Predicate<String, String> route111 = (key, xml) -> key.equals("111");
-        final Predicate<String, String> route222 = (key, xml) -> key.equals("222");
+        final Predicate<String, String> route111 = (key, xml) -> xml.contains("111");
+        final Predicate<String, String> route222 = (key, xml) -> xml.contains("222");
 
         return input -> {
-            final KStream<String, PaymentData> paymentDataKStream = input
-                    .selectKey((key, val) -> val.getMessageId().toString());
-
-            paymentDataKStream.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
-
-            return paymentDataKStream
-                    .map((key, value) -> KeyValue.pair(""+value.getDebtorAccount().getRoutingNumber(), value.getTransferMessageXml()))
+            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
+            return input
+                    .mapValues(PaymentData::getTransferMessageXml)
                     .branch(route111, route222);
         };
 
@@ -151,7 +143,7 @@ public class TransferFundsProcessor {
     @Bean
     public Function<KStream<String, PaymentData>, KStream<String, TransferValidation>> doubleBankProcessor() {
         return input -> {
-            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
+            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
             return input.mapValues(this::createValidationFromPaymentData);
         };
     }
@@ -190,7 +182,7 @@ public class TransferFundsProcessor {
         Predicate<String, TransferValidation> secondLeg111  = (key, val) -> val.getCurrentLeg() == 2 && val.getCreditorAccount().getRoutingNumber() == 111L;    //toCreditorBank - 111
         Predicate<String, TransferValidation> secondLeg222  = (key, val) -> val.getCurrentLeg() == 2 && val.getCreditorAccount().getRoutingNumber() == 222L;    //toCreditorBank - 222
         Predicate<String, TransferValidation> thirdLeg      = (key, val) -> val.getCurrentLeg() == 3;
-        return input -> input.peek((k,v)-> log.info("\n" + v + "about to send\n")).branch(errorLeg, firstLeg111, firstLeg222, secondLeg111, secondLeg222, thirdLeg);
+        return input -> input.branch(errorLeg, firstLeg111, firstLeg222, secondLeg111, secondLeg222, thirdLeg);
     }
 
 
@@ -205,15 +197,17 @@ public class TransferFundsProcessor {
      */
 
     @Bean
-    public BiFunction<KStream<String, TransferValidation>, KTable<String, String>, KStream<String, TransferValidation>> validatedEnrichmentProcessor() {
-        return (validatedStream, transferXmlTable ) -> validatedStream
-                .selectKey((k, v) -> v.getMessageId().toString())
-                .peek((k,v)-> log.info("validatedEncrichmentProcessor: " + k + ", " + v))
-                .join(transferXmlTable, (transferValidation, s) -> {
-                    transferValidation.setTransferMessage(s);
-                    return transferValidation;
-                }).peek((k,v)-> log.info("validatedEncrichmentProcessor: " + k + ", " + v));
+    public BiFunction<KStream<String, TransferValidation>, KStream<String, String>, KStream<String, TransferValidation>> validatedEnrichmentProcessor() {
+        return (left, right) -> left
+                    .leftJoin(right,
+                            (validation, xml) -> { validation.setTransferMessage(xml); return validation; },
+                            JoinWindows.of(Duration.ofSeconds(10)),
+                            StreamJoined.with(Serdes.String(), validationSerde, Serdes.String()));
     }
+
+
+
+
 
 
 
@@ -227,6 +221,7 @@ public class TransferFundsProcessor {
      *
      *          || -  funds.transfer.single.111
      * OUT: ----   -  router.metrics.handler-persist
+     *             -  router.validation.error.handler
      *          || -  funds.transfer.single.222
      * @return accept
      */
@@ -235,14 +230,15 @@ public class TransferFundsProcessor {
     public Consumer<KStream<String, TransferValidation>> validatedProcessor() {
         String routing111 = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX + "111";
         String routing222 = RouterTopicNames.OUTBOUND_FUNDS_SINGLE_ACCOUNT_PREFIX + "222";
-        Predicate<String, TransferValidation> has111Route = (key, val) -> val.getDebtorAccount().getRoutingNumber() == 111L || val.getCreditorAccount().getRoutingNumber() == 111L;
-        Predicate<String, TransferValidation> has222Route = (key, val) -> val.getDebtorAccount().getRoutingNumber() == 222L || val.getCreditorAccount().getRoutingNumber() == 222L;
+        Predicate<String, TransferValidation> noXMLFound  = (key, val) -> val.getTransferMessage() == null;
+        Predicate<String, TransferValidation> has111Route = (key, val) -> (val.getDebtorAccount().getRoutingNumber() == 111L || val.getCreditorAccount().getRoutingNumber() == 111L) && val.getTransferMessage() != null;
+        Predicate<String, TransferValidation> has222Route = (key, val) -> (val.getDebtorAccount().getRoutingNumber() == 222L || val.getCreditorAccount().getRoutingNumber() == 222L) && val.getTransferMessage() != null;
 
         return input -> {
-            input.peek((k,v) -> log.info(k + "\n" + v));
+            input.filter(noXMLFound).to(RouterTopicNames.VALIDATION_ERROR_HANDLER_TOPIC, Produced.with(Serdes.String(), validationSerde));
             input.filter(has111Route).mapValues(TransferValidation::getTransferMessage).to(routing111, RouterAppUtils.producedWithStringSerdes);
             input.filter(has222Route).mapValues(TransferValidation::getTransferMessage).to(routing222, RouterAppUtils.producedWithStringSerdes);
-            input.mapValues(TransferValidation::getTransferMessage).to(RouterTopicNames.TRANSFER_STATUS_SUCCESS_HANDLER, RouterAppUtils.producedWithStringSerdes);
+            input.filterNot(noXMLFound).mapValues(TransferValidation::getTransferMessage).to(RouterTopicNames.TRANSFER_STATUS_SUCCESS_HANDLER, RouterAppUtils.producedWithStringSerdes);
         };
     }
 
@@ -289,10 +285,8 @@ public class TransferFundsProcessor {
 
 
     private int getRoutingSet(PaymentData paymentData) {
-        Set<Long> collect = Stream.of(paymentData.getDebtorAccount().getRoutingNumber(), paymentData.getCreditorAccount().getRoutingNumber())
-                .collect(Collectors.toSet());
-        log.info("GET ROUTING SET SIZE: " + collect.size());
-        return collect.size();
+        return Stream.of(paymentData.getDebtorAccount().getRoutingNumber(), paymentData.getCreditorAccount().getRoutingNumber())
+                .collect(Collectors.toSet()).size();
     }
 
 

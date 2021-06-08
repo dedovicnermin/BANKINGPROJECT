@@ -3,12 +3,8 @@ package tech.nermindedovic.routerstreams.config.processors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Named;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.TransferStatus;
@@ -18,7 +14,6 @@ import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import java.util.function.Function;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class TransferMetricsProcessor {
 
@@ -38,29 +33,16 @@ public class TransferMetricsProcessor {
 
 
     /**
-     * IN: router.metrics.handler.single-processing
+     * IN: router.metrics.handler-processing
      * OUT: funds.transfer.status
      * @return KStream
      */
     @Bean
     public Function<KStream<String, PaymentData>, KStream<String, TransferStatus>> processingTransferMetricHandler() {
         return input -> input
-                .peek((k,v) -> log.info("processingTransferMetricHandler--key:" + k + ", value:" + v))
                 .mapValues(val -> TransferStatus.PROCESSING);
     }
 
-
-    /**
-     * IN: router.metrics.handler.double-processing
-     * OUT: funds.transfer.status
-     * @return KStream
-     */
-    @Bean
-    public Function<KStream<String, PaymentData>, KStream<String, TransferStatus>> processingTransferMetricHandlerDouble() {
-        return input -> input
-                .peek((k,v) -> log.info("processingTransferMetricHandler--key:" + k + ", value:" + v))
-                .mapValues(val -> TransferStatus.PROCESSING);
-    }
 
 
     /**
@@ -90,17 +72,16 @@ public class TransferMetricsProcessor {
     //transferXmlStore == store name
 
     /**
-     * IN: transfer.xml.store.register
-     * TABLE: transfer.xml.store.table
-     * STORE: transfer.xml.store
-     * OUT: transfer.xml.store.output
-     * @return KTable
+     * IN: transfer.xml.register
+     * OUT: transfer.xml.output
+     * @return KStream
      */
     @Bean
-    public Function<KStream<String, PaymentData>, KTable<String, String>> storeTransferMessageXml() {
-        return stream -> stream
-                .mapValues(PaymentData::getTransferMessageXml)
-                .peek((k,v)-> log.info("storeTransferMessageXML: " + k + ", " + v))
-                .toTable(Named.as(RouterTopicNames.TRANSFER_XML_TABLE_TOPIC), Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(RouterTopicNames.TRANSFER_XML_STORE_NAME).withKeySerde(Serdes.String()).withValueSerde(Serdes.String()));
+    public Function<KStream<String, PaymentData>, KStream<String, String>> storeTransferMessageXml() {
+        return input -> input.mapValues(PaymentData::getTransferMessageXml);
     }
+
+
+
+
 }

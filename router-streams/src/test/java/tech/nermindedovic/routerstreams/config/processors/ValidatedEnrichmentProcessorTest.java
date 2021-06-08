@@ -6,7 +6,6 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
@@ -27,15 +25,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class ValidatedEnrichmentProcessorTest {
 
-    @Mock RouterJsonMapper mapper;
+
     @Mock TransferMessageParser parser;
 
     private static final String IN1 = RouterTopicNames.VALIDATED_PREPARE_FANOUT_TOPIC,
                                 IN2 = RouterTopicNames.TRANSFER_XML_STORE_OUTPUT,
                                 OUT = RouterTopicNames.VALIDATED_FANOUT_TOPIC;
 
+
     private final Properties props = new Properties();
-    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);
+    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(parser);
 
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, TransferValidation> inputTopic;
@@ -59,7 +58,7 @@ class ValidatedEnrichmentProcessorTest {
     void setup() {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, TransferValidation> stream1 = builder.stream(IN1, Consumed.with(stringSerde, validationSerde));
-        KTable<String, String> stream2 = builder.table(IN2, Consumed.with(stringSerde, stringSerde));
+        KStream<String, String> stream2 = builder.stream(IN2, Consumed.with(stringSerde, stringSerde));
         KStream<String, TransferValidation> apply = transferFundsProcessor.validatedEnrichmentProcessor().apply(stream1, stream2);
         apply.to(OUT, Produced.with(stringSerde, validationSerde));
         Topology topology = builder.build();
@@ -89,10 +88,12 @@ class ValidatedEnrichmentProcessorTest {
 
         //XML gets stored before this processor is called.
         inputStoreTopic.pipeInput(msgId.toString(), transferXML);
-        inputTopic.pipeInput(validation);
+        inputTopic.pipeInput(msgId.toString(), validation);
         validation.setTransferMessage(transferXML);
         assertThat(outputTopic.readValue()).isEqualTo(validation);
     }
+
+
 
 
 

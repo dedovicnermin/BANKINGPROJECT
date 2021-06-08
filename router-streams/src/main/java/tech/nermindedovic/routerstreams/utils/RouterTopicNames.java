@@ -50,18 +50,16 @@ public final class RouterTopicNames {
 
 
     public static final String TRANSFER_STATUS_FAILED_HANDLER = "router.metrics.handler-failed";
-    public static final String TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER = "router.metrics.handler.single-processing";
-    public static final String TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER = "router.metrics.handler.double-processing";
+    public static final String TRANSFER_STATUS_PROCESSING_HANDLER = "router.metrics.handler-processing";
+
     public static final String TRANSFER_STATUS_SUCCESS_HANDLER = "router.metrics.handler-persist";
 
     public static final String VALIDATED_PREPARE_FANOUT_TOPIC = "router.validated.prepare.fanout";
     public static final String VALIDATED_FANOUT_TOPIC = "router.validated.fanout";
 
 
-    public static final String TRANSFER_XML_REGISTER = "transfer.xml.store.register";
-    public static final String TRANSFER_XML_TABLE_TOPIC = "transfer.xml.store.table";
-    public static final String TRANSFER_XML_STORE_NAME = "transfer.xml.store";
-    public static final String TRANSFER_XML_STORE_OUTPUT = "transfer.xml.store.output";
+    public static final String TRANSFER_XML_REGISTER = "transfer.xml.register";
+    public static final String TRANSFER_XML_STORE_OUTPUT = "transfer.xml.output";
 
 
 

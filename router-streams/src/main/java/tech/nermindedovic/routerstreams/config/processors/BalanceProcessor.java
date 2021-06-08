@@ -3,7 +3,6 @@ package tech.nermindedovic.routerstreams.config.processors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Predicate;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
@@ -13,15 +12,14 @@ import tech.nermindedovic.routerstreams.utils.BalanceMessageParser;
 import java.util.function.Function;
 
 @Configuration
-@EnableAutoConfiguration
 @Slf4j
 public class BalanceProcessor {
 
     //  TESTED : 👍🏼
 
-    public final Predicate<String, String> isRoute111 = (key,val) -> key.equals("111");
-    public final Predicate<String, String> isRoute222 = (key,val) -> key.equals("222");
-    public final Predicate<String, String> isUnknownRoute = (key, val) -> true;
+    private static final Predicate<String, String> isRoute111 = (key,val) -> key.equals("111");
+    private static final Predicate<String, String> isRoute222 = (key,val) -> key.equals("222");
+    private static final Predicate<String, String> isUnknownRoute = (key, val) -> true;
 
     private final BalanceMessageParser parser;
     public BalanceProcessor(final BalanceMessageParser balanceMessageParser) {
