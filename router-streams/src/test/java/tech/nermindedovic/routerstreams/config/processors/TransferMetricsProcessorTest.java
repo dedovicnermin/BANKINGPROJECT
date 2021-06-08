@@ -229,8 +229,8 @@ class TransferMetricsProcessorTest {
     private void setUpStoreTransferMessageXML() {
         StreamsBuilder builder = new StreamsBuilder();
         final KStream<String, PaymentData> stream = builder.stream(RouterTopicNames.TRANSFER_XML_REGISTER, Consumed.with(stringSerde, paymentDataSerde));
-        final KTable<String, String> apply = transferMetricsProcessor.storeTransferMessageXml().apply(stream);
-        apply.toStream().to(RouterTopicNames.TRANSFER_XML_STORE_OUTPUT);
+        final KStream<String, String> apply = transferMetricsProcessor.storeTransferMessageXml().apply(stream);
+        apply.to(RouterTopicNames.TRANSFER_XML_STORE_OUTPUT);
         Topology topology = builder.build();
 
         testDriver = new TopologyTestDriver(topology,props);

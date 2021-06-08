@@ -16,7 +16,6 @@ import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.routerstreams.business.domain.PaymentData;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
@@ -31,10 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProcessInitialTransferTest {
-
-
-    @Mock
-    RouterJsonMapper mapper;
 
     @Mock
     TransferMessageParser parser;
@@ -64,7 +59,7 @@ class ProcessInitialTransferTest {
     void setup() {
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, String> stream = builder.stream(RouterTopicNames.INBOUND_INITIAL_TRANSFER_TOPIC, Consumed.with(stringSerde, stringSerde));
-        KStream<String, PaymentData>[] outboundStreams = new TransferFundsProcessor(mapper, parser).processInitialTransfer().apply(stream);
+        KStream<String, PaymentData>[] outboundStreams = new TransferFundsProcessor(parser).processInitialTransfer().apply(stream);
 
         outboundStreams[0].to(RouterTopicNames.TRANSFER_ERROR_HANDLER_TOPIC, Produced.with(stringSerde, paymentDataSerde));
         outboundStreams[1].to(RouterTopicNames.TRANSFER_SINGLEBANK_PROCESSOR, Produced.with(stringSerde, paymentDataSerde));

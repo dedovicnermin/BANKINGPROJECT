@@ -14,7 +14,6 @@ import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
@@ -28,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 class ValidationProcessorTest {
 
-    @Mock RouterJsonMapper mapper;
     @Mock TransferMessageParser parser;
 
     private static final String IN = RouterTopicNames.INBOUND_VALIDATION_TOPIC,
@@ -38,7 +36,7 @@ class ValidationProcessorTest {
                                 OUT_LEG3  = RouterTopicNames.VALIDATED_PREPARE_FANOUT_TOPIC;
 
     private final Properties props = new Properties();
-    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);
+    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(parser);
 
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, TransferValidation> testInputTopic;

@@ -3,12 +3,8 @@ package tech.nermindedovic.routerstreams.config.processors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KTable;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Named;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.TransferStatus;
@@ -90,16 +86,16 @@ public class TransferMetricsProcessor {
 
     /**
      * IN: transfer.xml.store.register
-     * TABLE: transfer.xml.store.table
      * STORE: transfer.xml.store
      * OUT: transfer.xml.store.output
-     * @return KTable
+     * @return KStream
      */
     @Bean
-    public Function<KStream<String, PaymentData>, KTable<String, String>> storeTransferMessageXml() {
-        return stream -> stream
-                .mapValues(PaymentData::getTransferMessageXml)
-                .peek((k,v)-> log.info("storeTransferMessageXML: " + k + ", " + v))
-                .toTable(Named.as(RouterTopicNames.TRANSFER_XML_TABLE_TOPIC), Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as(RouterTopicNames.TRANSFER_XML_STORE_NAME).withKeySerde(Serdes.String()).withValueSerde(Serdes.String()));
+    public Function<KStream<String, PaymentData>, KStream<String, String>> storeTransferMessageXml() {
+        return input -> input.mapValues(PaymentData::getTransferMessageXml);
     }
+
+
+
+
 }

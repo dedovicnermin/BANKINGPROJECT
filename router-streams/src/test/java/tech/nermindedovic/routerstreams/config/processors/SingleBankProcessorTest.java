@@ -14,7 +14,6 @@ import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.routerstreams.business.domain.PaymentData;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
-import tech.nermindedovic.routerstreams.utils.RouterJsonMapper;
 import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 import tech.nermindedovic.routerstreams.utils.TransferMessageParser;
 
@@ -29,8 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SingleBankProcessorTest {
 
-    @Mock
-    RouterJsonMapper mapper;
+
 
     @Mock
     TransferMessageParser parser;
@@ -43,7 +41,7 @@ class SingleBankProcessorTest {
     private static final String OUT_METRIC = RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER;
 
     private final Properties props = new Properties();
-    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(mapper, parser);
+    private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(parser);
     private TopologyTestDriver testDriver;
     private TestInputTopic<String, PaymentData> testInputTopic;
     private TestOutputTopic<String, String> testOutputTopic111;
@@ -87,6 +85,7 @@ class SingleBankProcessorTest {
         testDriver.close();
     }
 
+    // processInitialTransfer will have already assigned a key, hence why we pass one in on input.
 
     @Test
     void givenPaymentData_containingOnlyRoute111_willRouteToBank111() {
@@ -95,7 +94,7 @@ class SingleBankProcessorTest {
         String transferXML = "<TEST_XML>";
         PaymentData paymentData = new PaymentData(1L, BigDecimal.TEN, new Debtor(213414L, 111L), new Creditor(23452L, 111L), transferXML);
 
-        testInputTopic.pipeInput(paymentData);
+        testInputTopic.pipeInput(expectedMetricKey,paymentData);
         TestRecord<String, PaymentData> actualMetricOutput = testStatusMetricOutput.readRecord();
 
         assertThat(testOutputTopic111.readValue()).contains(transferXML);
@@ -111,7 +110,7 @@ class SingleBankProcessorTest {
         String transferXML = "<TEST_XML/>";
         PaymentData paymentData = new PaymentData(2L, BigDecimal.TEN, new Debtor(213414L, 222L), new Creditor(23452L, 222L), transferXML);
 
-        testInputTopic.pipeInput(paymentData);
+        testInputTopic.pipeInput(expectedMetricKey ,paymentData);
         TestRecord<String, PaymentData> actualMetricOutput = testStatusMetricOutput.readRecord();
 
         assertThat(testOutputTopic222.readValue()).contains(transferXML);
