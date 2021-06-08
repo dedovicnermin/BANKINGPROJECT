@@ -117,7 +117,7 @@ public class TransferFundsProcessor {
         final Predicate<String, String> route222 = (key, xml) -> key.equals("222");
 
         return input -> {
-            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
+            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
             return input
                     .map((key, value) -> KeyValue.pair(""+value.getDebtorAccount().getRoutingNumber(), value.getTransferMessageXml()))
                     .branch(route111, route222);
@@ -144,7 +144,7 @@ public class TransferFundsProcessor {
     @Bean
     public Function<KStream<String, PaymentData>, KStream<String, TransferValidation>> doubleBankProcessor() {
         return input -> {
-            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
+            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
             return input.mapValues(this::createValidationFromPaymentData);
         };
     }
@@ -183,7 +183,7 @@ public class TransferFundsProcessor {
         Predicate<String, TransferValidation> secondLeg111  = (key, val) -> val.getCurrentLeg() == 2 && val.getCreditorAccount().getRoutingNumber() == 111L;    //toCreditorBank - 111
         Predicate<String, TransferValidation> secondLeg222  = (key, val) -> val.getCurrentLeg() == 2 && val.getCreditorAccount().getRoutingNumber() == 222L;    //toCreditorBank - 222
         Predicate<String, TransferValidation> thirdLeg      = (key, val) -> val.getCurrentLeg() == 3;
-        return input -> input.peek((k,v)-> log.info("\n" + v + "about to send\n")).branch(errorLeg, firstLeg111, firstLeg222, secondLeg111, secondLeg222, thirdLeg);
+        return input -> input.branch(errorLeg, firstLeg111, firstLeg222, secondLeg111, secondLeg222, thirdLeg);
     }
 
 
@@ -222,6 +222,7 @@ public class TransferFundsProcessor {
      *
      *          || -  funds.transfer.single.111
      * OUT: ----   -  router.metrics.handler-persist
+     *             -  router.validation.error.handler
      *          || -  funds.transfer.single.222
      * @return accept
      */
@@ -235,7 +236,6 @@ public class TransferFundsProcessor {
         Predicate<String, TransferValidation> has222Route = (key, val) -> (val.getDebtorAccount().getRoutingNumber() == 222L || val.getCreditorAccount().getRoutingNumber() == 222L) && val.getTransferMessage() != null;
 
         return input -> {
-            input.peek((k,v) -> log.info("IN FINAL STAGE OF VALIDATION" +k + "\n" + v));
             input.filter(noXMLFound).to(RouterTopicNames.VALIDATION_ERROR_HANDLER_TOPIC, Produced.with(Serdes.String(), validationSerde));
             input.filter(has111Route).mapValues(TransferValidation::getTransferMessage).to(routing111, RouterAppUtils.producedWithStringSerdes);
             input.filter(has222Route).mapValues(TransferValidation::getTransferMessage).to(routing222, RouterAppUtils.producedWithStringSerdes);

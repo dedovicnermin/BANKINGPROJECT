@@ -2,24 +2,24 @@ spring:
   cloud:
     stream:
       function:
-        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedEnrichmentProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;storeTransferMessageXml;balanceRequestProcessor;processingTransferMetricHandlerDouble
+        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedEnrichmentProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;storeTransferMessageXml;balanceRequestProcessor
       kafka:
         streams:
           binder:
             configuration:
               default:
-                session.timeout.ms: 10000
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              state-store-retry:
+                backoff-period: 5000
               max.poll.interval.ms: 1000
               reconnect.backoff.ms: 1000
               request.timeout.ms: 1000
               max.poll.records: 1
-
-            min-partition-count: 1
-            application-id: ROUTING-APP
             deserialization-exception-handler: logandcontinue
             auto-create-topics: true
+            brokers: ${spring.embedded.kafka.brokers}
+            consider-down-when-any-partition-has-no-leader: true
             functions:
               balanceRequestProcessor:
                 applicationId: routerApp-balanceRequestProcessor
@@ -51,11 +51,9 @@ spring:
                 applicationId: routerApp-storeTransferMessageXml
               processingTransferMetricHandlerDouble:
                 applicationId: routerApp-processingTransferMetricHandlerDouble
-            consumer-properties:
-              max.poll.interval.ms: 10000
-              max.poll.records: 1
-            health-timeout: 5
-            brokers: ${spring.embedded.kafka.brokers}
+
+
+
       bindings:
         balanceRequestProcessor-in-0:
           destination: balance.update.request
@@ -105,14 +103,14 @@ spring:
         validatedEnrichmentProcessor-in-0:
           destination: router.validated.prepare.fanout
         validatedEnrichmentProcessor-in-1:
-          destination: transfer.xml.store.output
+          destination: transfer.xml.output
         validatedEnrichmentProcessor-out-0:
           destination: router.validated.fanout
 
         storeTransferMessageXml-in-0:
-          destination: transfer.xml.store.register
+          destination: transfer.xml.register
         storeTransferMessageXml-out-0:
-          destination: transfer.xml.store.output
+          destination: transfer.xml.output
 
         validatedProcessor-in-0:
           destination: router.validated.fanout
@@ -123,14 +121,10 @@ spring:
           destination: funds.transfer.status
 
         processingTransferMetricHandler-in-0:
-          destination: router.metrics.handler.single-processing
+          destination: router.metrics.handler-processing
         processingTransferMetricHandler-out-0:
           destination: funds.transfer.status
 
-        processingTransferMetricHandlerDouble-in-0:
-          destination: router.metrics.handler.double-processing
-        processingTransferMetricHandlerDouble-out-0:
-          destination: funds.transfer.status
 
         persistedTransferMetricHandler-in-0:
           destination: router.metrics.handler-persist
@@ -163,4 +157,13 @@ server:
 
 logging:
   level: debug
+
+
+
+
+
+
+
+
+
 

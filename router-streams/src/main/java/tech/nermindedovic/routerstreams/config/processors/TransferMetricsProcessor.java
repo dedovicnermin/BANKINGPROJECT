@@ -33,29 +33,16 @@ public class TransferMetricsProcessor {
 
 
     /**
-     * IN: router.metrics.handler.single-processing
+     * IN: router.metrics.handler-processing
      * OUT: funds.transfer.status
      * @return KStream
      */
     @Bean
     public Function<KStream<String, PaymentData>, KStream<String, TransferStatus>> processingTransferMetricHandler() {
         return input -> input
-                .peek((k,v) -> log.info("processingTransferMetricHandler--key:" + k + ", value:" + v))
                 .mapValues(val -> TransferStatus.PROCESSING);
     }
 
-
-    /**
-     * IN: router.metrics.handler.double-processing
-     * OUT: funds.transfer.status
-     * @return KStream
-     */
-    @Bean
-    public Function<KStream<String, PaymentData>, KStream<String, TransferStatus>> processingTransferMetricHandlerDouble() {
-        return input -> input
-                .peek((k,v) -> log.info("processingTransferMetricHandler--key:" + k + ", value:" + v))
-                .mapValues(val -> TransferStatus.PROCESSING);
-    }
 
 
     /**
@@ -85,9 +72,8 @@ public class TransferMetricsProcessor {
     //transferXmlStore == store name
 
     /**
-     * IN: transfer.xml.store.register
-     * STORE: transfer.xml.store
-     * OUT: transfer.xml.store.output
+     * IN: transfer.xml.register
+     * OUT: transfer.xml.output
      * @return KStream
      */
     @Bean

@@ -181,14 +181,14 @@ class TransferMetricsProcessorTest {
 
     private void setUpProcessingHandler() {
         StreamsBuilder builder = new StreamsBuilder();
-        final KStream<String, PaymentData> stream = builder.stream(RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER, Consumed.with(stringSerde, paymentDataSerde));
+        final KStream<String, PaymentData> stream = builder.stream(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Consumed.with(stringSerde, paymentDataSerde));
         final KStream<String, TransferStatus> returnedStream = transferMetricsProcessor.processingTransferMetricHandler().apply(stream);
         returnedStream.to(RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, Produced.with(stringSerde, transferStatusSerde));
         Topology topology = builder.build();
 
         testDriver = new TopologyTestDriver(topology, props);
 
-        processingMetricHandlerInput = testDriver.createInputTopic(RouterTopicNames.TRANSFER_STATUS_PROCESSING_SINGLE_HANDLER, stringSerde.serializer(), paymentDataSerde.serializer());
+        processingMetricHandlerInput = testDriver.createInputTopic(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, stringSerde.serializer(), paymentDataSerde.serializer());
         metricHandlerOutput = testDriver.createOutputTopic(RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, stringSerde.deserializer(), transferStatusSerde.deserializer());
     }
 

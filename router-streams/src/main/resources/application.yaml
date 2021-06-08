@@ -1,4 +1,6 @@
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
   cloud:
     stream:
       function:
@@ -6,15 +8,14 @@ spring:
       kafka:
         streams:
           binder:
+            deserialization-exception-handler: logandcontinue
+            auto-create-topics: true
+            auto-add-partitions: true
+            min-partition-count: 3
             configuration:
               default:
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-              max.poll.interval.ms: 10000
-            min-partition-count: 1
-            application-id: ROUTING-APP
-            deserialization-exception-handler: logandcontinue
-            auto-create-topics: true
             functions:
               balanceRequestProcessor:
                 applicationId: routerApp-balanceRequestProcessor
@@ -46,16 +47,6 @@ spring:
                 applicationId: routerApp-storeTransferMessageXml
               processingTransferMetricHandlerDouble:
                 applicationId: routerApp-processingTransferMetricHandlerDouble
-            consumer-properties:
-              max.poll.interval.ms: 10000
-            brokers: localhost:9092
-
-
-
-
-
-
-
 
 
       bindings:

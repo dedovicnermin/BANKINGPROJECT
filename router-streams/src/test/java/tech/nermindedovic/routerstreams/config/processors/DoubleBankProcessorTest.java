@@ -31,7 +31,7 @@ class DoubleBankProcessorTest {
 
     @Mock TransferMessageParser parser;
 
-    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_DOUBLE_HANDLER;
+    private static final String IN = RouterTopicNames.TRANSFER_DOUBLEBANK_PROCESSOR, OUT = RouterTopicNames.INBOUND_VALIDATION_TOPIC, METRIC_OUT = RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER;
     private final Properties props = new Properties();
     private final TransferFundsProcessor transferFundsProcessor = new TransferFundsProcessor(parser);
 
