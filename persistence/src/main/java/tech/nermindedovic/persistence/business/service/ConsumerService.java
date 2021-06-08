@@ -12,6 +12,7 @@ import tech.nermindedovic.persistence.kafka.PersistenceTopicNames;
 import javax.validation.constraints.NotNull;
 
 
+
 @Service
 @Slf4j
 public class ConsumerService {
@@ -46,7 +47,7 @@ public class ConsumerService {
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_REQUEST, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleFundsTransferRequest(@NotNull ConsumerRecord<String, String> transferRecord) {
-        processor.processTransferRequest(transferRecord.key(),transferRecord.value());
+        processor.processTransferRequest(transferRecord.key(), transferRecord.value());
     }
 
 
@@ -57,7 +58,6 @@ public class ConsumerService {
      * @param validation : TransferValidation
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_VALIDATION, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "validationListenerContainerFactory")
-//    @SendTo(PersistenceTopicNames.OUTBOUND_ROUTER_VALIDATION)
     public void validateAccount(@NotNull ConsumerRecord<String, TransferValidation> validation) {
         log.info("RECEIVED VALIDATION: " + validation.value());
         processor.processTransferValidation(validation.key(), validation.value());
@@ -72,7 +72,6 @@ public class ConsumerService {
      */
     @KafkaListener(topics = PersistenceTopicNames.INBOUND_TRANSFER_SINGLE_USER, groupId = "${spring.kafka.consumer.groupId}", containerFactory = "nonReplying_ListenerContainerFactory")
     public void handleSingleUserFundsTransferRequest(@NotNull final ConsumerRecord<String, String> xml) {
-        log.info("RECEIVED TWO BANK TRANSFER: " + xml.value());
         processor.processTransferRequestTwoBanks(xml.value());
     }
 

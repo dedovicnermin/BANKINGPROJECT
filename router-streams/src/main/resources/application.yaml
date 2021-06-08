@@ -4,7 +4,7 @@ spring:
   cloud:
     stream:
       function:
-        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedEnrichmentProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;storeTransferMessageXml;balanceRequestProcessor;processingTransferMetricHandlerDouble
+        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedEnrichmentProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;storeTransferMessageXml;balanceRequestProcessor
       kafka:
         streams:
           binder:
@@ -45,8 +45,7 @@ spring:
                 applicationId: routerApp-validationErrorHandler
               storeTransferMessageXml:
                 applicationId: routerApp-storeTransferMessageXml
-              processingTransferMetricHandlerDouble:
-                applicationId: routerApp-processingTransferMetricHandlerDouble
+
 
 
       bindings:
@@ -98,14 +97,14 @@ spring:
         validatedEnrichmentProcessor-in-0:
           destination: router.validated.prepare.fanout
         validatedEnrichmentProcessor-in-1:
-          destination: transfer.xml.store.output
+          destination: transfer.xml.output
         validatedEnrichmentProcessor-out-0:
           destination: router.validated.fanout
 
         storeTransferMessageXml-in-0:
-          destination: transfer.xml.store.register
+          destination: transfer.xml.register
         storeTransferMessageXml-out-0:
-          destination: transfer.xml.store.output
+          destination: transfer.xml.output
 
         validatedProcessor-in-0:
           destination: router.validated.fanout
@@ -116,14 +115,10 @@ spring:
           destination: funds.transfer.status
 
         processingTransferMetricHandler-in-0:
-          destination: router.metrics.handler.single-processing
+          destination: router.metrics.handler-processing
         processingTransferMetricHandler-out-0:
           destination: funds.transfer.status
 
-        processingTransferMetricHandlerDouble-in-0:
-          destination: router.metrics.handler.double-processing
-        processingTransferMetricHandlerDouble-out-0:
-          destination: funds.transfer.status
 
         persistedTransferMetricHandler-in-0:
           destination: router.metrics.handler-persist

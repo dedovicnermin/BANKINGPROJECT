@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 
-import org.apache.kafka.streams.KeyValue;
+
 import org.apache.kafka.streams.kstream.*;
 
 
@@ -25,7 +25,6 @@ import tech.nermindedovic.routerstreams.utils.RouterTopicNames;
 
 
 import java.time.Duration;
-import java.util.Set;
 
 
 import java.util.function.BiFunction;
@@ -113,13 +112,13 @@ public class TransferFundsProcessor {
     @Bean
     @SuppressWarnings("unchecked")
     public Function<KStream<String, PaymentData>, KStream<String, String>[]> singleBankProcessor() {
-        final Predicate<String, String> route111 = (key, xml) -> key.equals("111");
-        final Predicate<String, String> route222 = (key, xml) -> key.equals("222");
+        final Predicate<String, String> route111 = (key, xml) -> xml.contains("111");
+        final Predicate<String, String> route222 = (key, xml) -> xml.contains("222");
 
         return input -> {
             input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
             return input
-                    .map((key, value) -> KeyValue.pair(""+value.getDebtorAccount().getRoutingNumber(), value.getTransferMessageXml()))
+                    .mapValues(PaymentData::getTransferMessageXml)
                     .branch(route111, route222);
         };
 
@@ -286,10 +285,8 @@ public class TransferFundsProcessor {
 
 
     private int getRoutingSet(PaymentData paymentData) {
-        Set<Long> collect = Stream.of(paymentData.getDebtorAccount().getRoutingNumber(), paymentData.getCreditorAccount().getRoutingNumber())
-                .collect(Collectors.toSet());
-        log.info("GET ROUTING SET SIZE: " + collect.size());
-        return collect.size();
+        return Stream.of(paymentData.getDebtorAccount().getRoutingNumber(), paymentData.getCreditorAccount().getRoutingNumber())
+                .collect(Collectors.toSet()).size();
     }
 
 
