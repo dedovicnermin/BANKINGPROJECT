@@ -21,7 +21,8 @@ banking:
 
 router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
-schema-endpoint: http://127.0.0.1:8081
+schema-endpoint: localhost:8081
+ksql-endpoint: localhost:8088
 
 
 
