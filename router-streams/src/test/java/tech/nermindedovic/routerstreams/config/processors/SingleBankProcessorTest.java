@@ -91,7 +91,7 @@ class SingleBankProcessorTest {
     void givenPaymentData_containingOnlyRoute111_willRouteToBank111() {
 
         String expectedMetricKey = "1";
-        String transferXML = "<TEST_XML 111>";
+        String transferXML = "<TransferMessage><messageId>1232213</messageId><debtor><accountNumber>1</accountNumber><routingNumber>111</routingNumber></debtor><creditor><accountNumber>3</accountNumber><routingNumber>111</routingNumber></creditor><date>12-12-2020</date><amount>19.29</amount><memo>test memo</memo>";
         PaymentData paymentData = new PaymentData(1L, BigDecimal.TEN, new Debtor(213414L, 111L), new Creditor(23452L, 111L), transferXML);
 
         testInputTopic.pipeInput(expectedMetricKey,paymentData);
@@ -107,7 +107,7 @@ class SingleBankProcessorTest {
     @Test
     void givenPaymentData_containingOnlyRoute222_willRouteToBank222() {
         String expectedMetricKey = "2";
-        String transferXML = "<TEST_XML 222/>";
+        String transferXML = "<TransferMessage><messageId>3453</messageId><debtor><accountNumber>2231</accountNumber><routingNumber>222</routingNumber></debtor><creditor><accountNumber>45</accountNumber><routingNumber>222</routingNumber></creditor><date>12-12-2020</date><amount>19.29</amount><memo>test memo</memo>";
         PaymentData paymentData = new PaymentData(2L, BigDecimal.TEN, new Debtor(213414L, 222L), new Creditor(23452L, 222L), transferXML);
 
         testInputTopic.pipeInput(expectedMetricKey ,paymentData);
