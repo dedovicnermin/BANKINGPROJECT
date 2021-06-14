@@ -123,6 +123,34 @@ services:
       CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
 
 
+  ksql:
+    image: confluentinc/ksqldb-server:0.18.0
+    hostname: ksql
+    container_name: ksql
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_QUERIES_FILE:
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+
+
+  # Access the cli by running:
+  # > docker compose exec ksql-cli ksql  http://ksql:8088
+  ksql-cli:
+    image: confluentinc/ksqldb-cli:latest
+    container_name: ksql-cli
+    depends_on:
+      - ksql
+    entrypoint: /bin/sh
+    tty: true
+
   rest:
     image: rest:latest
     container_name: rest
@@ -142,15 +170,13 @@ services:
       - BANKING_PARTITIONS=3
       - BANKING_REPLICAS=2
       - SCHEMA-ENDPOINT=schema-registry:8081
+      - KSQL-ENDPOINT=ksql:8088
     ports:
       - "8080:8080"
     depends_on:
       - kafka
       - kafka2
       - kafka3
-
-
-
 
 
 
@@ -323,20 +349,12 @@ services:
       SERVER_NAME: kibana
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
 
-#KAFKA_CREATE_TOPICS_SEPERATOR: "$$'\n'"
-  #      KAFKA_CREATE_TOPICS: "balance.transformer.request:3:2
-  #      balance.transformer.response:3:2
-  #      balance.update.request:3:2
-  #      balance.update.request.111:3:2
-  #      balance.update.request.222:3:2
-  #      balance.update.response:3:2
-  #      funds.transfer.111:3:2
-  #      funds.transfer.222:3:2
-  #      funds.transfer.error:3:1
-  #      funds.transfer.single.111:3:2
-  #      funds.transfer.single.222:3:2
-  #      funds.transfer.status:3:2
-  #      funds.transformer.request:3:2
-  #      funds.validate.111:3:2
-  #      funds.validate.222:3:2
-  #      router.validate.transfer:3:2"
+#--Get all data into a STREAM with a single partition, using the `KEYCOL` field described earlier
+#CREATE STREAM ksql_songplaycounts30streampart AS SELECT * FROM ksql_songplaycounts30stream WHERE ROWTIME is not null PARTITION BY KEYCOL;
+
+#  --Join the plays with song as we will use it later for charting
+#  --Also create a fixed key `KEYCOL` for global view across multiple partitions (https://github.com/confluentinc/ksql/issues/1053)
+#  CREATE STREAM ksql_songplays AS
+#    SELECT plays.SONG_ID AS ID, ALBUM, ARTIST, NAME, GENRE, DURATION, 1 AS KEYCOL
+#    FROM ksql_playevents_min_duration plays
+#      LEFT JOIN ksql_song songs ON plays.SONG_ID = songs.ID;
