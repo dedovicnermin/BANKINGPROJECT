@@ -149,11 +149,11 @@
 			<url>https://ksqldb-maven.s3.amazonaws.com/maven/</url>
 		</repository>
 
-<!--		<repository>-->
-<!--			<id>confluent</id>-->
-<!--			<name>Confluent</name>-->
-<!--			<url>https://jenkins-confluent-packages-beta-maven.s3.amazonaws.com/7.0.0-beta210423230724/2/maven/</url>-->
-<!--		</repository>-->
+		<repository>
+			<id>Confluent</id>
+			<name>Confluent</name>
+			<url>https://jenkins-confluent-packages-beta-maven.s3.amazonaws.com/7.0.0-beta210423230724/2/maven/</url>
+		</repository>
 	</repositories>
 
 
