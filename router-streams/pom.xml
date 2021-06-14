@@ -102,6 +102,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<version>2.4.4</version>
 				<configuration>
+					<mainClass>tech.nermindedovic.routerstreams.RouterStreamsApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
