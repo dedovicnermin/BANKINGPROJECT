@@ -131,7 +131,7 @@ public class MsgProcessor {
      */
     private void updateState(final String messageId, final TransferStatus status)  {
         KafkaTemplate<String, TransferStatus> kafkaTemplate = factory.getStatusTemplate();
-        if (transferStatusTopic == null) transferStatusTopic = "router.validate.transfer";
+        if (transferStatusTopic == null) transferStatusTopic = "funds.transfer.status";
         kafkaTemplate.send(new ProducerRecord<>(transferStatusTopic, messageId, status));
     }
 
