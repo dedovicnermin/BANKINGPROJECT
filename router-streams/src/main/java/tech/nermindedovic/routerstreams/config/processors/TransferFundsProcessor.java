@@ -112,8 +112,8 @@ public class TransferFundsProcessor {
     @Bean
     @SuppressWarnings("unchecked")
     public Function<KStream<String, PaymentData>, KStream<String, String>[]> singleBankProcessor() {
-        final Predicate<String, String> route111 = (key, xml) -> xml.contains("111");
-        final Predicate<String, String> route222 = (key, xml) -> xml.contains("222");
+        final Predicate<String, String> route111 = (key, xml) -> xml.contains("<routingNumber>111</routingNumber>");
+        final Predicate<String, String> route222 = (key, xml) -> xml.contains("<routingNumber>222</routingNumber>");
 
         return input -> {
             input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));

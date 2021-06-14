@@ -1,6 +1,8 @@
 package tech.nermindedovic.rest.api;
 
 
+import io.confluent.ksql.api.client.Client;
+import io.confluent.ksql.api.client.ClientOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,9 @@ public class WebClientConfig extends AbstractElasticsearchConfiguration {
     @Value("${elastic-endpoint:localhost:9200}")
     private String elasticEndpoint;
 
+    @Value("${ksql-endpoint:localhost:8088}")
+    private String ksqlEndpoint;
+
 
     @Bean
     public WebClient routerApiClient() {
@@ -38,6 +43,23 @@ public class WebClientConfig extends AbstractElasticsearchConfiguration {
 
         return RestClients.create(clientConfiguration).rest();
     }
+
+
+
+    @Bean
+    public Client ksqlClient() {
+        log.info(ksqlEndpoint);
+        String[] split = ksqlEndpoint.split(":");
+        ClientOptions options = ClientOptions.create()
+                .setHost(split[0])
+                .setPort(Integer.parseInt(split[1]));
+        return Client.create(options);
+    }
+
+
+
+
+
 
 
 

@@ -1,0 +1,170 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: processInitialTransfer;singleBankProcessor;doubleBankProcessor;validationProcessor;validatedEnrichmentProcessor;validatedProcessor;transferErrorHandler;validationErrorHandler;failedTransferMetricHandler;processingTransferMetricHandler;persistedTransferMetricHandler;upsertMetric;storeTransferMessageXml;balanceRequestProcessor
+      kafka:
+        streams:
+          binder:
+            configuration:
+              default:
+                key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              state-store-retry:
+                backoff-period: 5000
+              max.poll.interval.ms: 1000
+              reconnect.backoff.ms: 1000
+              request.timeout.ms: 1000
+              max.poll.records: 1
+            deserialization-exception-handler: logandcontinue
+            auto-create-topics: true
+            brokers: ${spring.embedded.kafka.brokers}
+            consider-down-when-any-partition-has-no-leader: true
+            functions:
+              balanceRequestProcessor:
+                applicationId: routerApp-balanceRequestProcessor
+              processInitialTransfer:
+                applicationId: routerApp-processInitialTransfer
+              singleBankProcessor:
+                applicationId: routerApp-singleBankProcessor
+              doubleBankProcessor:
+                applicationId: routerApp-doubleBankProcessor
+              validationProcessor:
+                applicationId: routerApp-validationProcessor
+              validatedEnrichmentProcessor:
+                applicationId: routerApp-validatedEnrichmentProcessor
+              validatedProcessor:
+                applicationId: routerApp-validatedProcessor
+              failedTransferMetricHandler:
+                applicationId: routerApp-failedTransferMetricHandler
+              processingTransferMetricHandler:
+                applicationId: routerApp-processingTransferMetricHandler
+              persistedTransferMetricHandler:
+                applicationId: routerApp-persistedTransferMetricHandler
+              upsertMetric:
+                applicationId: routerApp-upsertMetric
+              transferErrorHandler:
+                applicationId: routerApp-transferErrorHandler
+              validationErrorHandler:
+                applicationId: routerApp-validationErrorHandler
+              storeTransferMessageXml:
+                applicationId: routerApp-storeTransferMessageXml
+              processingTransferMetricHandlerDouble:
+                applicationId: routerApp-processingTransferMetricHandlerDouble
+
+
+
+      bindings:
+        balanceRequestProcessor-in-0:
+          destination: balance.update.request
+        balanceRequestProcessor-out-0:
+          destination: balance.update.request.111
+        balanceRequestProcessor-out-1:
+          destination: balance.update.request.222
+        balanceRequestProcessor-out-2:
+          destination: balance.update.response
+
+        processInitialTransfer-in-0:
+          destination: funds.transfer.request
+        processInitialTransfer-out-0:
+          destination: router.trsf.error.handler
+        processInitialTransfer-out-1:
+          destination: router.trsf.singlebank.processor
+        processInitialTransfer-out-2:
+          destination: router.trsf.doublebank.processor
+
+        singleBankProcessor-in-0:
+          destination: router.trsf.singlebank.processor
+        singleBankProcessor-out-0:
+          destination: funds.transfer.111
+        singleBankProcessor-out-1:
+          destination: funds.transfer.222
+
+        doubleBankProcessor-in-0:
+          destination: router.trsf.doublebank.processor
+        doubleBankProcessor-out-0:
+          destination: router.validate.transfer
+
+        validationProcessor-in-0:
+          destination: router.validate.transfer
+        validationProcessor-out-0:
+          destination: router.validation.error.handler
+        validationProcessor-out-1:
+          destination: funds.validate.111
+        validationProcessor-out-2:
+          destination: funds.validate.222
+        validationProcessor-out-3:
+          destination: funds.validate.111
+        validationProcessor-out-4:
+          destination: funds.validate.222
+        validationProcessor-out-5:
+          destination: router.validated.prepare.fanout
+
+        validatedEnrichmentProcessor-in-0:
+          destination: router.validated.prepare.fanout
+        validatedEnrichmentProcessor-in-1:
+          destination: transfer.xml.output
+        validatedEnrichmentProcessor-out-0:
+          destination: router.validated.fanout
+
+        storeTransferMessageXml-in-0:
+          destination: transfer.xml.register
+        storeTransferMessageXml-out-0:
+          destination: transfer.xml.output
+
+        validatedProcessor-in-0:
+          destination: router.validated.fanout
+
+        failedTransferMetricHandler-in-0:
+          destination: router.metrics.handler-failed
+        failedTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
+        processingTransferMetricHandler-in-0:
+          destination: router.metrics.handler-processing
+        processingTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
+
+        persistedTransferMetricHandler-in-0:
+          destination: router.metrics.handler-persist
+        persistedTransferMetricHandler-out-0:
+          destination: funds.transfer.status
+
+        upsertMetric-in-0:
+          destination: funds.transfer.status
+        upsertMetric-out-0:
+          destination: transfer.status
+
+        transferErrorHandler-in-0:
+          destination: router.trsf.error.handler
+        transferErrorHandler-out-0:
+          destination: funds.transfer.error
+
+        validationErrorHandler-in-0:
+          destination: router.validation.error.handler
+        validationErrorHandler-out-0:
+          destination: funds.transfer.error
+
+
+
+
+
+
+server:
+  port: 7082
+
+
+logging:
+  level:
+    org.apache.kafka: OFF
+
+
+
+
+
+
+
+
+
+
