@@ -11,7 +11,6 @@ spring:
             deserialization-exception-handler: logandcontinue
             auto-create-topics: true
             auto-add-partitions: true
-            min-partition-count: 3
             configuration:
               default:
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde

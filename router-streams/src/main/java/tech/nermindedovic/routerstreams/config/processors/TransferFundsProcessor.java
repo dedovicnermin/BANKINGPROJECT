@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
+import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
 import tech.nermindedovic.routerstreams.config.serdes.CustomSerdes;
 import tech.nermindedovic.routerstreams.utils.RouterAppUtils;
@@ -116,7 +117,8 @@ public class TransferFundsProcessor {
         final Predicate<String, String> route222 = (key, xml) -> xml.contains("<routingNumber>222</routingNumber>");
 
         return input -> {
-            input.to(RouterTopicNames.TRANSFER_STATUS_PROCESSING_HANDLER, Produced.with(Serdes.String(), new CustomSerdes.PaymentDataSerde()));
+            input.mapValues(value -> TransferStatus.PROCESSING).to(RouterTopicNames.INBOUND_TRANSFER_DATA_TOPIC, Produced.with(Serdes.String(), new CustomSerdes.TransferStatusSerde()));
+
             return input
                     .mapValues(PaymentData::getTransferMessageXml)
                     .branch(route111, route222);
