@@ -136,20 +136,10 @@ services:
       KSQL_LISTENERS: http://0.0.0.0:8088
       KSQL_BOOTSTRAP_SERVERS: kafka:29092,kafka2:29093,kafka3:29094
       KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      KSQL_KSQL_QUERIES_FILE:
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
 
 
-  # Access the cli by running:
-  # > docker compose exec ksql-cli ksql  http://ksql:8088
-  ksql-cli:
-    image: confluentinc/ksqldb-cli:latest
-    container_name: ksql-cli
-    depends_on:
-      - ksql
-    entrypoint: /bin/sh
-    tty: true
 
   rest:
     image: rest:latest
@@ -177,6 +167,8 @@ services:
       - kafka
       - kafka2
       - kafka3
+      - schema-registry
+      - ksql
 
 
 
@@ -349,12 +341,3 @@ services:
       SERVER_NAME: kibana
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
 
-#--Get all data into a STREAM with a single partition, using the `KEYCOL` field described earlier
-#CREATE STREAM ksql_songplaycounts30streampart AS SELECT * FROM ksql_songplaycounts30stream WHERE ROWTIME is not null PARTITION BY KEYCOL;
-
-#  --Join the plays with song as we will use it later for charting
-#  --Also create a fixed key `KEYCOL` for global view across multiple partitions (https://github.com/confluentinc/ksql/issues/1053)
-#  CREATE STREAM ksql_songplays AS
-#    SELECT plays.SONG_ID AS ID, ALBUM, ARTIST, NAME, GENRE, DURATION, 1 AS KEYCOL
-#    FROM ksql_playevents_min_duration plays
-#      LEFT JOIN ksql_song songs ON plays.SONG_ID = songs.ID;
