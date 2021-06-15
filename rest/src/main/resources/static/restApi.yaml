@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
   title: "Banking Project API"
-  description: "A multi-module maven project with micro-services leveraging event-driven programming. Main goal of the application is to resemble a real-time banking/payment application. Notable applications that reflect the goal of the project include Zelle or Venmo, in which payments are correctly routed and updated into valid accounts. This project relies on leveraging `Spring Boot, Spring Cloud, Kafka API, and Kafka Streams API` to achieve event-driven functionality."
-  version: "0.0.1"
+  description: "A multi-module maven project with micro-services leveraging event-driven programming. Main goal of the application is to resemble a real-time banking/payment application. Notable applications that reflect the goal of the project include Zelle or Venmo, in which payments are correctly routed and updated into valid accounts. This project relies on leveraging `Spring Boot, Spring Cloud, Kafka API, Kafka Streams API, Kafka Connect, and KSQL` to achieve event-driven functionality."
+  version: "1.0.0"
   contact:
-    name: "BANKING PROJECT API"
-    url: "http://localhost:8080/swagger-ui/"
     email: "dedovicnermin@outlook.com"
+    url: "https://github.com/dedovicnermin"
+
 
 
 
