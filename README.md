@@ -20,9 +20,11 @@
 - Kibana
 - Apache Avro
 - KSQL 
+- Testcontainers
+
 
 ### Endpoints:
-> - Swagger UI: http://localhost:8080/swagger-ui/
+> - Swagger UI: http://localhost:8080/swagger-ui/   (definitions for KSQL/Elastic on top right)
 > - Kafka Topics UI: http://localhost:8079/
 > - Kafka Connect UI: http://localhost:8086/
 > - Kibana: http://localhost:5601/
