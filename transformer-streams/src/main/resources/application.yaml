@@ -20,13 +20,10 @@ spring:
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               schema.registry.url: ${schema-endpoint}
               specific.avro.reader: true
-            deserialization-exception-handler: sendtodlq
+            deserialization-exception-handler: logandcontinue
             auto-add-partitions: true
             min-partition-count: 3
-          bindings:
-            processTransfer-in-0:
-              consumer:
-                dlqName: funds.transfer.error
+
 
 
 
