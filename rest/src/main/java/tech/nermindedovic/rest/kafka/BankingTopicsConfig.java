@@ -126,7 +126,7 @@ public class BankingTopicsConfig {
     @Bean
     public NewTopic fundsTransferError() {
         return TopicBuilder.name("funds.transfer.error")
-                .partitions(partitions)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -159,8 +159,8 @@ public class BankingTopicsConfig {
     @Bean
     public NewTopic fundsTransferStatus() {
         return TopicBuilder.name("funds.transfer.status")
-                .partitions(partitions)
-                .replicas(replicas)
+                .partitions(1)
+                .replicas(1)
                 .compact()
                 .build();
     }

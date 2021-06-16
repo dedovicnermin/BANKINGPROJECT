@@ -169,7 +169,7 @@ class KafkaIntegrationTest {
         producer.flush();
 
         //check error consumer is empty
-        ConsumerRecord<String, String> potentialError = error_records.poll(10000, TimeUnit.MILLISECONDS);
+        ConsumerRecord<String, String> potentialError = error_records.poll(5000, TimeUnit.MILLISECONDS);
         assertThat(potentialError).isNull();
 
 

@@ -16,8 +16,6 @@ import java.util.function.Function;
 @Slf4j
 public class ErrorProcessor {
 
-    //  TESTED : 👍🏼
-
 
     /**
      * IN: router.trsf.error.handler

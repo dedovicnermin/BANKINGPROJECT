@@ -1,0 +1,62 @@
+openapi: 3.0.0
+info:
+  description: Query streams and tables using KSQL. Batch creation of streams/tables can be found in bash directory - create-connectors-avro.
+  version: "1.0.0"
+  title: BANKINGPROJECT - KSQL Client API
+  contact:
+    email: dedovicnermin@outlook.com
+    url: https://github.com/dedovicnermin
+tags:
+  - name: Kafka Topics
+    description: Retrieve all Kafka topics along with their partition count.
+  - name: Error Count
+    description: Retrieve count of errors passed through rest application error consumer.
+  - name: Bank (111) Persisted Count
+    description: Retrieve count of successfully processed transfers persisted into Bank1.
+  - name: Bank (222) Persisted Count
+    description: Retrieve count of successfully processed transfers persisted into Bank2.
+paths:
+  /ksql/topics:
+    get:
+      tags:
+        - Kafka Topics
+      summary: Queries all kafka topics currently in movement.
+      operationId: getKafkaTopics
+      responses:
+        '200':
+          description: Successful response from KSQL Client.
+        '400':
+          description: Failed to get a response from KSQL Client.
+  /ksql/error-count:
+    get:
+      tags:
+        - Error Count
+      summary: Pull query retrieving error count.
+      operationId: getErrorCount
+      responses:
+        '200':
+          description: Successful response from KSQL Client.
+        '400':
+          description: Failed to get a response from KSQL Client.
+  /ksql/bank1/persisted-count:
+    get:
+      tags:
+        - Bank (111) Persisted Count
+      summary: Pull query retrieving bank1 persisted count.
+      operationId: getBank1PCount
+      responses:
+        '200':
+          description: Successful response from KSQL Client.
+        '400':
+          description: Failed to get a response from KSQL Client.
+  /ksql/bank2/persisted-count:
+    get:
+      tags:
+        - Bank (222) Persisted Count
+      summary: Pull query retrieving bank2 persisted count.
+      operationId: getBank2PCount
+      responses:
+        '200':
+          description: Successful response from KSQL Client.
+        '400':
+          description: Failed to get a response from KSQL Client.

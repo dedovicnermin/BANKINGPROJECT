@@ -39,8 +39,6 @@ services:
       - schema-registry
     ports:
       - "8083:8083"
-    volumes:
-      - ./bin/connect-plugins:/shared-folder
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka:9092
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
@@ -75,7 +73,21 @@ services:
       CONNECT_URL: http://connect:8083
       PROXY: "true"
 
-
+  ksql:
+    image: confluentinc/ksqldb-server:0.18.0
+    hostname: ksql
+    container_name: ksql
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
 
 
   kafka-rest-proxy:
@@ -152,11 +164,16 @@ services:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
       - ROUTER-ENDPOINT=router-streams:7082
       - ELASTIC-ENDPOINT=elasticsearch:9200
+      - SERVER_PORT=8080
+      - SCHEMA-ENDPOINT=schema-registry:8081
+      - KSQL-ENDPOINT=ksql:8088
     ports:
       - "8080:8080"
     depends_on:
       - kafka
       - connect
+      - schema-registry
+      - ksql
 
 
 
@@ -176,6 +193,7 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
       - SERVER_PORT=7081
+      - SCHEMA-ENDPOINT=http://schema-registry:8081
 
 
   router-streams:

@@ -24,6 +24,18 @@ import java.util.function.Predicate;
 @Slf4j
 public class SpringFoxConfig {
 
+    private static final String SWAGGER_VERSION = "3.0";
+
+    private static final String REST_DEFINITION = "BANKING DEFINITION";
+    private static final String REST_LOCATION = "/restApi.yaml";
+
+    private static final String KSQL_DEFINITION = "KSQL DEFINITION";
+    private static final String KSQL_LOCATION = "/ksqlApi.yaml";
+
+    private static final String ELASTIC_DEFINITION = "ELASTICSEARCH DEFINITION";
+    private static final String ELASTIC_LOCATION = "/elasticApi.yaml";
+
+
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
@@ -42,14 +54,27 @@ public class SpringFoxConfig {
     @Bean
     public SwaggerResourcesProvider swaggerResourcesProvider() {
         return () -> {
-            SwaggerResource wsResource = new SwaggerResource();
-            wsResource.setName("BANKING DEFINITION");
-            wsResource.setSwaggerVersion("3.0");
-            wsResource.setLocation("/openapi.yaml");
             List<SwaggerResource> resources = new ArrayList<>();
-            resources.add(wsResource);
+
+            SwaggerResource restApi = createResource(REST_DEFINITION, REST_LOCATION);
+            SwaggerResource ksqlApi = createResource(KSQL_DEFINITION, KSQL_LOCATION);
+            SwaggerResource elasticApi = createResource(ELASTIC_DEFINITION, ELASTIC_LOCATION);
+
+            resources.add(restApi);
+            resources.add(ksqlApi);
+            resources.add(elasticApi);
+
             return resources;
         };
+    }
+
+
+    private SwaggerResource createResource(final String definition, final String location) {
+        SwaggerResource swaggerResource = new SwaggerResource();
+        swaggerResource.setName(definition);
+        swaggerResource.setSwaggerVersion(SWAGGER_VERSION);
+        swaggerResource.setLocation(location);
+        return swaggerResource;
     }
 
 

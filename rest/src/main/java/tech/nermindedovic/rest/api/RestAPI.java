@@ -4,15 +4,13 @@ package tech.nermindedovic.rest.api;
 import lombok.extern.slf4j.Slf4j;
 
 
-
-import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.TransferMessage;
-import tech.nermindedovic.rest.api.elastic.BankTransaction;
+
 
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
@@ -30,15 +28,12 @@ public class RestAPI {
     private final BalanceProducer balanceProducer;
     private final TransferFundsProducer transferFundsProducer;
     private final WebClient webClient;
-    private final TransactionSearchService elasticService;
 
 
-
-    public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer, final WebClient webClient, final TransactionSearchService transactionSearchService) {
+    public RestAPI(final BalanceProducer balanceProducer, final TransferFundsProducer transferFundsProducer, final WebClient webClient) {
         this.balanceProducer = balanceProducer;
         this.transferFundsProducer = transferFundsProducer;
         this.webClient = webClient;
-        this.elasticService = transactionSearchService;
     }
 
 
@@ -68,11 +63,6 @@ public class RestAPI {
         else return "ID " + key + " is not valid";
     }
 
-
-    @GetMapping(value = "transactions")
-    public SearchHits<BankTransaction> getAllTransactions() {
-        return elasticService.retrieveAllTransactions();
-    }
 
 
 
