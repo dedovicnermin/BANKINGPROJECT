@@ -16,8 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -30,21 +28,15 @@ import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+
 import tech.nermindedovic.library.pojos.BalanceMessage;
 import tech.nermindedovic.library.pojos.Creditor;
 import tech.nermindedovic.library.pojos.Debtor;
 import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.Topics;
 import tech.nermindedovic.rest.api.RestAPI;
-import tech.nermindedovic.rest.api.TransactionSearchService;
+import tech.nermindedovic.rest.api.elastic.ElasticService;
 import tech.nermindedovic.rest.api.WebClientConfig;
-import tech.nermindedovic.rest.api.elastic.BankTransaction;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.balance.BalanceTestConfig;
 import tech.nermindedovic.rest.kafka.transfer.MockSerdeConfig;
@@ -62,25 +54,17 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 
 @SpringBootTest(
-        classes = {RestAPI.class, WebClientConfig.class, TransactionSearchService.class,  BalanceProducer.class, TransferFundsProducer.class, KafkaProperties.class, TransferErrorConsumer.class}
+        classes = {RestAPI.class, WebClientConfig.class, ElasticService.class,  BalanceProducer.class, TransferFundsProducer.class, KafkaProperties.class, TransferErrorConsumer.class}
 )
 @EmbeddedKafka(partitions = 1, topics = {Topics.BALANCE_OUTBOUND, Topics.BALANCE_INBOUND, Topics.TRANSFER_OUTBOUND, Topics.TRANSFER_ERROR}, controlledShutdown = true)
 @Import({MockSerdeConfig.class, BalanceTestConfig.class})
 @ActiveProfiles("integration")
 @DirtiesContext
-@Testcontainers
 @EnableKafka
+@TestInstance(value = TestInstance.Lifecycle.PER_CLASS)
 class RestIntegrationTest {
 
-    // ELASTIC TEST CONFIG
-    private static final String ELASTIC_VERSION = "7.9.3";
-    @Container
-    static ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss" + ":" + ELASTIC_VERSION);
-    @DynamicPropertySource
-    static void props(DynamicPropertyRegistry registry) {
-        registry.add("elastic-endpoint", elasticsearchContainer::getHttpHostAddress);
-    }
-    @Autowired ElasticsearchRestTemplate template;
+
 
     @Autowired
     RestAPI restAPI;
@@ -96,19 +80,6 @@ class RestIntegrationTest {
     // FOR ERRORS TEST
     BlockingQueue<ConsumerRecord<String, TransferMessage>> consumed;
     KafkaMessageListenerContainer<String, TransferMessage> listenerContainer;
-
-    @BeforeAll
-    static void setupElastic() {
-        elasticsearchContainer.start();
-        elasticsearchContainer.waitingFor(new WaitAllStrategy(WaitAllStrategy.Mode.WITH_MAXIMUM_OUTER_TIMEOUT));
-    }
-
-
-    @AfterAll
-    static void destroy() {
-        elasticsearchContainer.stop();
-    }
-
 
 
 
@@ -202,14 +173,7 @@ class RestIntegrationTest {
 
 
 
-    // ELASTIC TEST
-    @Test
-    void restCallWillExecute_whenQueryingElastic() {
-        Assertions.assertThat(elasticsearchContainer.isRunning()).isTrue();
-        template.indexOps(BankTransaction.class).create();
-        Assertions.assertThat(restAPI.getAllTransactions()).isNotNull();
-        Assertions.assertThat(restAPI.getAllTransactions()).isInstanceOf(SearchHits.class);
-    }
+
 
 
 

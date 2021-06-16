@@ -32,6 +32,9 @@ public class SpringFoxConfig {
     private static final String KSQL_DEFINITION = "KSQL DEFINITION";
     private static final String KSQL_LOCATION = "/ksqlApi.yaml";
 
+    private static final String ELASTIC_DEFINITION = "ELASTICSEARCH DEFINITION";
+    private static final String ELASTIC_LOCATION = "/elasticApi.yaml";
+
 
     @Bean
     public Docket api() {
@@ -55,8 +58,12 @@ public class SpringFoxConfig {
 
             SwaggerResource restApi = createResource(REST_DEFINITION, REST_LOCATION);
             SwaggerResource ksqlApi = createResource(KSQL_DEFINITION, KSQL_LOCATION);
+            SwaggerResource elasticApi = createResource(ELASTIC_DEFINITION, ELASTIC_LOCATION);
+
             resources.add(restApi);
             resources.add(ksqlApi);
+            resources.add(elasticApi);
+
             return resources;
         };
     }

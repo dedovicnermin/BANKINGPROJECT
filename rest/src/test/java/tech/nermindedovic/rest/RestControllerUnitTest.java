@@ -18,7 +18,6 @@ import tech.nermindedovic.library.pojos.TransferMessage;
 import tech.nermindedovic.rest.api.RestAPI;
 
 
-import tech.nermindedovic.rest.api.TransactionSearchService;
 import tech.nermindedovic.rest.kafka.balance.BalanceProducer;
 import tech.nermindedovic.rest.kafka.transfer.TransferFundsProducer;
 
@@ -53,8 +52,7 @@ class RestControllerUnitTest {
     @MockBean
     WebClient webClient;
 
-    @MockBean
-    TransactionSearchService transactionSearchService;
+
 
 
 

@@ -11,6 +11,6 @@ class SpringFoxConfigTest {
     void swaggerResourcesProvider() {
         SpringFoxConfig config = new SpringFoxConfig();
         SwaggerResourcesProvider resourcesProvider = config.swaggerResourcesProvider();
-        assertThat(resourcesProvider.get().size()).isEqualTo(2);
+        assertThat(resourcesProvider.get().size()).isEqualTo(3);
     }
 }

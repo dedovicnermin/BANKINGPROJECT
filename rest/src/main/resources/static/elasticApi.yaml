@@ -1,0 +1,100 @@
+openapi: 3.0.0
+info:
+  description: Elasticsearch API using Spring-Data. Queries for transactions from the 'postgres.bank.transactions' index.
+  version: "1.0.0"
+  title: Elasticsearch API
+  contact:
+    email: dedovicnermin@outlook.com
+    url: 'https://github.com/dedovicnermin'
+tags:
+  - name: Transactions
+    description: Retrieve the latest transactions (50 limit).
+  - name: Specific Transaction
+    description: Retrieve a specific transaction.
+  - name: Biggest Transfer
+    description: Retrieve the transaction with the most amount transferred.
+  - name: Smallest Transfer
+    description: Retrieve the transaction with the least amount transferred.
+  - name: Transactions GT(x)
+    description: Retrieve transactions with amount greater than x
+  - name: Transactions LT(x)
+    description: Retrieve transaction with amount less than x
+
+paths:
+  /elastic/transactions:
+    get:
+      tags:
+        - Transactions
+      operationId: getAllTransactions
+      description: |
+        Maximum 50 transaction documents returned.
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
+        '400':
+          description: Bad input parameter
+  /elastic/transactions/{id}:
+    get:
+      tags:
+        - Specific Transaction
+      operationId: getSpecificTransaction
+      description: |
+        Retrieve a specific transaction based on id passed, otherwise returns not found message.
+      parameters:
+        - name: id
+          in: path
+          description: 'Associated with a `TransferMessage` sent.'
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
+        '400':
+          description: Bad input parameter
+  /elastic/transactions/max:
+    get:
+      tags:
+        - Biggest Transfer
+      operationId: getTransactionWithMaxAmount
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
+  /elastic/transactions/min:
+    get:
+      tags:
+        - Smallest Transfer
+      operationId: getTransactionWithMinAmount
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
+  /elastic/transactions/gt:
+    get:
+      tags:
+        - Transactions GT(x)
+      operationId: transactionsWithAmountGT
+      parameters:
+        - in: query
+          name: data
+          description: pass in a numeric amount
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
+  /elastic/transactions/lt:
+    get:
+      tags:
+        - Transactions LT(x)
+      operationId: transactionsWithAmountLT
+      parameters:
+        - in: query
+          name: data
+          description: pass in a numeric amount
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful fetch to elasticsearch
