@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,11 +35,23 @@ public class BankingTopicsConfig {
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
+//        String[] split = bootstrapServers.split(":");
+//        log.info(Arrays.toString(split));
+//        log.info(split[0]);
+//        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, split[0] + ":9092");
+
         if (!bootstrapServers.equals("localhost:9099")) {
             configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         }
         configs.put(AdminClientConfig.RETRIES_CONFIG, 5);
         configs.put(AdminClientConfig.CLIENT_ID_CONFIG, "restKafkaAdmin");
+        configs.put("ssl.endpoint.identification.algorithm", "");
+        configs.put("security.protocol", "SSL");
+        configs.put("ssl.truststore.location", "/tmp/kafka.client.truststore.jks");
+        configs.put("ssl.truststore.password", "123456");
+        configs.put("ssl.key.password", "123456");
+        configs.put("ssl.keystore.password", "123456");
+        configs.put("ssl.keystore.location", "/tmp/kafka.client.keystore.jks");
 
 
         return new KafkaAdmin(configs);

@@ -1,0 +1,66 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    ssl:
+      key-password: clientpass
+      key-store-location: /certs/client.transformer.keystore.jks
+      key-store-password: clientpass
+      trust-store-location: /certs/client.transformer.truststore.jks
+      trust-store-password: clientpass
+  cloud:
+    function:
+      definition: processTransfer;processBalanceLeg1;processBalanceLeg2
+    stream:
+      kafka:
+        streams:
+          binder:
+            functions:
+              processTransfer:
+                applicationId: transformerApp-processTransfer
+              processBalanceLeg1:
+                applicationId: transformerApp-processBalanceL1
+              processBalanceLeg2:
+                applicationId: transformerApp-processBalanceL2
+            configuration:
+              default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              schema.registry.url: ${schema-endpoint}
+              specific.avro.reader: true
+            deserialization-exception-handler: logandcontinue
+            auto-add-partitions: true
+            min-partition-count: 3
+
+
+
+
+
+
+
+      bindings:
+        processTransfer-in-0:
+          destination: funds.transformer.request
+        processTransfer-out-0:
+          destination: funds.transfer.request
+        processBalanceLeg1-in-0:
+          destination: balance.transformer.request
+        processBalanceLeg1-out-0:
+          destination: balance.update.request
+        processBalanceLeg2-in-0:
+          destination: balance.update.response
+        processBalanceLeg2-out-0:
+          destination: balance.transformer.response
+
+
+
+logging:
+  level:
+    web: debug
+
+
+server:
+  port: 7081
+
+schema-endpoint: http://127.0.0.1:8081
+
+
+

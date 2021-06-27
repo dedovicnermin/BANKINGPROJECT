@@ -1,0 +1,41 @@
+
+server:
+  port: 8083
+spring:
+  datasource:
+    password: postgres
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/BANK
+    username: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+  kafka:
+    bootstrap-servers: localhost:9092
+    ssl:
+      key-password: clientpass
+      trust-store-location: /certs/client.persistence.truststore.jks
+      trust-store-password: clientpass
+      key-store-location: /certs/client.persistence.keystore.jks
+      key-store-password: clientpass
+    consumer:
+      groupId: persistence
+
+
+
+
+
+
+persistence-topics:
+  INBOUND_TRANSFER_REQUEST: funds.transfer.111
+  INBOUND_TRANSFER_VALIDATION: funds.validate.111
+  INBOUND_TRANSFER_SINGLE_USER: funds.transfer.single.111
+  INBOUND_BALANCE_REQUEST: balance.update.request.111
+  OUTBOUND_TRANSFER_ERRORS: funds.transfer.error
+  OUTBOUND_TRANSFER_STATUS: funds.transfer.status
+  OUTBOUND_ROUTER_VALIDATION: router.validate.transfer
+  OUTBOUND_BALANCE_RESPONSE: balance.update.response
+
+routing-number: 111
