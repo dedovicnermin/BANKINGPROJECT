@@ -33,3 +33,9 @@ persistence-topics:
   OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
 routing-number: 111
+
+
+truststore: /tmp/kafka.persistence.truststore.jks
+keystore: /tmp/kafka.persistence.keystore.jks
+security-password: '123456'
+ssl-enabled: false

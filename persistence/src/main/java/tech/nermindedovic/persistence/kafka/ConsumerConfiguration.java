@@ -19,6 +19,7 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import tech.nermindedovic.library.kafka.KafkaSecurityUtils;
 import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
 
@@ -46,14 +47,7 @@ public class ConsumerConfiguration {
     @Value("${security-password}")
     private String sslPassword;
 
-    private static final String SSL = "SSL";
-    private static final String PROTOCOL_PROP = "security.protocol";
-    private static final String TRUSTSTORE_LOCATION_PROP = "ssl.truststore.location";
-    private static final String KEYSTORE_LOCATION_PROP = "ssl.keystore.location";
-    private static final String KEY_PASS_PROP = "ssl.key.password";
-    private static final String KEYSTORE_PASS_PROP = "ssl.keystore.password";
-    private static final String TRUSTSTORE_PASS_PROP = "ssl.truststore.password";
-    private static final String ENDPOINT_IDENTITY_PROP = "ssl.endpoint.identification.algorithm";
+
 
 
     /**
@@ -67,13 +61,7 @@ public class ConsumerConfiguration {
         configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "${spring.kafka.consumer.groupId}");
         if (sslEnabled) {
-            configs.put(PROTOCOL_PROP, SSL);
-            configs.put(TRUSTSTORE_LOCATION_PROP, truststoreLocation);
-            configs.put(TRUSTSTORE_PASS_PROP, sslPassword);
-            configs.put(KEY_PASS_PROP, sslPassword);
-            configs.put(KEYSTORE_PASS_PROP, sslPassword);
-            configs.put(KEYSTORE_LOCATION_PROP, keystoreLocation);
-            configs.put(ENDPOINT_IDENTITY_PROP, "");
+            configs.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
         }
 
         return configs;
@@ -167,6 +155,9 @@ public class ConsumerConfiguration {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         config.put(ProducerConfig.RETRIES_CONFIG, 5);
+        if (sslEnabled) {
+            config.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
         return config;
     }
 
