@@ -1,0 +1,292 @@
+version: '3'
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    container_name: kafka
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,SSL://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,SSL://kafka:9093
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/private/ssl/kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: '123456'
+      KAFKA_SSL_KEYSTORE_LOCATION: /var/private/ssl/kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_PASSWORD: '123456'
+      KAFKA_SSL_KEY_PASSWORD: '123456'
+      # KAFKA_SECURITY_INTER_BROKER_PROTOCOL=SSL IF YOU WANT TO ENABLE SSL FOR INTER-BROKER CONNECTION
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+    volumes:
+      - ./ssl:/var/private/ssl
+
+
+
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    hostname: schema-registry
+    container_name: schema-registry
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+
+
+#  connect:
+#    image: custom-confluent-image
+#    build: .
+#    hostname: connect
+#    container_name: connect
+#    restart: unless-stopped
+#    depends_on:
+#      - schema-registry
+#    ports:
+#      - "8083:8083"
+#    environment:
+#      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+#      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+#      CONNECT_REST_PORT: 8083
+#      CONNECT_GROUP_ID: compose-connect-group
+#      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+#      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+#      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+#      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+#      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+#      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+#      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+#      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+#      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+#      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
+#
+#  ksql:
+#    image: confluentinc/ksqldb-server:0.18.0
+#    hostname: ksql
+#    container_name: ksql
+#    depends_on:
+#      - kafka
+#      - schema-registry
+#    ports:
+#      - "8088:8088"
+#    environment:
+#      KSQL_LISTENERS: http://0.0.0.0:8088
+#      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+#      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+#      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+#      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+#
+#
+
+
+
+  rest:
+    image: rest:latest
+    container_name: rest
+    build:
+      context: rest
+      dockerfile: Dockerfile
+    links:
+      - kafka
+      - schema-registry
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9093
+      - ROUTER-ENDPOINT=router-streams:7082
+      - SERVER_PORT=8080
+      - ELASTIC-ENDPOINT=elasticsearch:9200
+      - SCHEMA-ENDPOINT=schema-registry:8081
+      - KSQL-ENDPOINT=ksql:8088
+      - SPRING_PROFILES_ACTIVE=security
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+      - schema-registry
+      - ksql
+
+
+
+
+
+  transformer-streams:
+    image: transformer-streams:latest
+    container_name: transformer-streams
+    build:
+      context: transformer-streams
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    ports:
+      - "7081:7081"
+    depends_on:
+      - kafka
+      - rest
+      - schema-registry
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9093
+      - SERVER_PORT=7081
+      - SCHEMA-ENDPOINT=schema-registry:8081
+      - SPRING_PROFILES_ACTIVE=security
+
+#
+
+#
+#
+#  router-streams:
+#    image: router-streams:latest
+#    container_name: router-streams
+#    build:
+#      context: router-streams
+#      dockerfile: Dockerfile
+#    links:
+#      - kafka
+#    ports:
+#      - "7082:7082"
+#    volumes:
+#      - ./ssl/router:/certs
+#    environment:
+#      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
+#      - SERVER_PORT=7082
+#      - SPRING_PROFILES_ACTIVE=security
+#    depends_on:
+#      - kafka
+#      - rest
+
+
+
+
+#
+#  db:
+#    image: postgres
+#    container_name: db
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=BANK
+#    volumes:
+#      - ./bash/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+#      - ./bash/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+#      - /var/lib/postgresql/data
+#
+#
+
+
+#
+#  persistence:
+#    image: persistence:latest
+#    container_name: persistence
+#    build:
+#      context: persistence
+#      dockerfile: Dockerfile
+#    links:
+#      - kafka
+#      - db
+#    ports:
+#      - "7083:7083"
+#    volumes:
+#      - ./ssl/persistence:/certs
+#    environment:
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/BANK
+#      - SPRING_PROFILES_ACTIVE=security
+#      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+#      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
+#      - SERVER_PORT=7083
+#    depends_on:
+#      - kafka
+#      - db
+#      - rest
+#
+#
+#
+#
+#  dbTwo:
+#    image: postgres
+#    container_name: dbTwo
+#    ports:
+#      - "5442:5442"
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
+#      - POSTGRES_DB=BANK2
+#    volumes:
+#      - ./bash/bank2/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+#      - ./bash/bank2/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+#      - /var/lib/postgresql/dataTwo
+#
+#
+#
+#  persistence2:
+#    image: persistence:latest
+#    container_name: persistence2
+#    links:
+#      - dbTwo
+#      - kafka
+#      - kafka2
+#      - kafka3
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=security2
+#      - SPRING_DATASOURCE_URL=jdbc:postgresql://dbTwo:5432/BANK2
+#      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+#      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
+#    volumes:
+#      - ./ssl/persistence2:/certs
+#    build:
+#      context: persistence
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8084:8084"
+#    depends_on:
+#      - kafka
+#      - dbTwo
+#      - rest
+#
+
+
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
+#    container_name: elasticsearch
+#    restart: unless-stopped
+#    ports:
+#      - "9200:9200"
+#      - "9300:9300"
+#    environment:
+#      cluster.name: bank-elastic-cluster
+#      discovery.type: single-node
+#      bootstrap.memory_lock: "true"
+#      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+#    ulimits:
+#      memlock:
+#        soft: -1
+#        hard: -1
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana-oss:7.9.3
+#    container_name: kibana
+#    restart: unless-stopped
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      - elasticsearch
+#    environment:
+#      SERVER_NAME: kibana
+#      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+#
