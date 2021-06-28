@@ -1,12 +1,6 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
-#    ssl:
-#      key-password: clientpass
-#      key-store-location: /certs/client.transformer.keystore.jks
-#      key-store-password: clientpass
-#      trust-store-location: /certs/client.transformer.truststore.jks
-#      trust-store-password: clientpass
+    bootstrap-servers: localhost:9093
   cloud:
     function:
       definition: processTransfer;processBalanceLeg1;processBalanceLeg2
