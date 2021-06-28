@@ -42,25 +42,34 @@ public class BalanceCommConfiguration {
     @Value("${ssl-enabled}")
     private Boolean sslEnabled;
 
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
+    private static final String SSL = "SSL";
+    private static final String PROTOCOL_PROP = "security.protocol";
+    private static final String TRUSTSTORE_LOCATION_PROP = "ssl.truststore.location";
+    private static final String KEYSTORE_LOCATION_PROP = "ssl.keystore.location";
+    private static final String KEY_PASS_PROP = "ssl.key.password";
+    private static final String KEYSTORE_PASS_PROP = "ssl.keystore.password";
+    private static final String TRUSTSTORE_PASS_PROP = "ssl.truststore.password";
+    private static final String ENDPOINT_IDENTITY_PROP = "ssl.endpoint.identification.algorithm";
+
     @Bean
     public Map<String, Object> balanceProducerConfigs() {
-
         Map<String, Object> configs = new HashMap<>();
-        log.info(BROKER);
-        log.info("HEY");
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         configs.put("schema.registry.url", schemaRegistry);
         configs.put(ProducerConfig.RETRIES_CONFIG, 15);
         if (sslEnabled) {
-            configs.put("security.protocol", "SSL");
-            configs.put("ssl.truststore.location", "/tmp/kafka.client.truststore.jks");
-            configs.put("ssl.truststore.password", "123456");
-            configs.put("ssl.key.password", "123456");
-            configs.put("ssl.keystore.password", "123456");
-            configs.put("ssl.keystore.location", "/tmp/kafka.client.keystore.jks");
-            configs.put("ssl.endpoint.identification.algorithm", "");
+            configureSecurity(configs, null);
         }
         return configs;
     }
@@ -73,21 +82,13 @@ public class BalanceCommConfiguration {
 
     @Bean
     public ConsumerFactory<String, BalanceMessage> consumerFactory() {
-        log.info(BROKER);
-        log.info("HEY");
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         if (sslEnabled) {
-            config.put("security.protocol", "SSL");
-            config.put("ssl.truststore.location", "file:///tmp/kafka.client.truststore.jks");
-            config.put("ssl.truststore.password", "123456");
-            config.put("ssl.key.password", "123456");
-            config.put("ssl.keystore.password", "123456");
-            config.put("ssl.keystore.location", "/tmp/kafka.client.keystore.jks");
-            config.put("ssl.endpoint.identification.algorithm", "");
+            configureSecurity(config, null);
         }
 
 
@@ -106,15 +107,8 @@ public class BalanceCommConfiguration {
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
         if (sslEnabled) {
-            properties.put("security.protocol", "SSL");
-            properties.put("ssl.truststore.location", "/tmp/kafka.client.truststore.jks");
-            properties.put("ssl.truststore.password", "123456");
-            properties.put("ssl.key.password", "123456");
-            properties.put("ssl.keystore.password", "123456");
-            properties.put("ssl.keystore.location", "/tmp/kafka.client.keystore.jks");
-            properties.put("ssl.endpoint.identification.algorithm", "");
+            configureSecurity(null, properties);
         }
-
         containerProperties.setKafkaConsumerProperties(properties);
         return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
     }
@@ -123,6 +117,28 @@ public class BalanceCommConfiguration {
     @Bean
     public ReplyingKafkaTemplate<String, AvroBalanceMessage, BalanceMessage> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, AvroBalanceMessage> pf, KafkaMessageListenerContainer<String, BalanceMessage> container) {
         return new ReplyingKafkaTemplate<>(pf, container);
+    }
+
+
+    private void configureSecurity(Map<String, Object> config, Properties properties) {
+        if (properties == null) {
+            config.put(PROTOCOL_PROP, SSL);
+            config.put(TRUSTSTORE_LOCATION_PROP, truststoreLocation);
+            config.put(TRUSTSTORE_PASS_PROP, sslPassword);
+            config.put(KEY_PASS_PROP, sslPassword);
+            config.put(KEYSTORE_PASS_PROP, sslPassword);
+            config.put(KEYSTORE_LOCATION_PROP, keystoreLocation);
+            config.put(ENDPOINT_IDENTITY_PROP, "");
+        } else {
+            properties.put(PROTOCOL_PROP, SSL);
+            properties.put(TRUSTSTORE_LOCATION_PROP, truststoreLocation);
+            properties.put(TRUSTSTORE_PASS_PROP, sslPassword);
+            properties.put(KEY_PASS_PROP, sslPassword);
+            properties.put(KEYSTORE_PASS_PROP, sslPassword);
+            properties.put(KEYSTORE_LOCATION_PROP, keystoreLocation);
+            properties.put(ENDPOINT_IDENTITY_PROP, "");
+        }
+
     }
 
 

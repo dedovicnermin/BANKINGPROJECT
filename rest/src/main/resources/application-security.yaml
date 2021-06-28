@@ -1,0 +1,51 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    ssl:
+      protocol: SSL
+      key-store-location: file://${keystore}
+      key-store-password: ${security-password}
+      trust-store-location: file://${truststore}
+      trust-store-password: ${security-password}
+      key-password: ${security-password}
+    consumer:
+      security:
+        protocol: SSL
+      group-id: rest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      ssl:
+        key-password: ${security-password}
+        protocol: SSL
+        trust-store-password: ${security-password}
+        key-store-password: ${security-password}
+        trust-store-location: file://${truststore}
+        key-store-location: file://${keystore}
+    properties:
+      schema.registry.url: http://${schema-endpoint}
+      specific.avro.reader: true
+      ssl.endpoint.identification.algorithm: ''
+
+
+server:
+  port: 8080
+
+banking:
+  partitions: 1
+  replicas: 1
+
+router-endpoint: localhost:7082
+elastic-endpoint: localhost:9200
+schema-endpoint: localhost:8081
+ksql-endpoint: localhost:8088
+ssl-enabled: true
+
+truststore: /tmp/kafka.rest.truststore.jks
+keystore: /tmp/kafka.rest.keystore.jks
+security-password: '123456'
+
+
+
+
+#properties:
+#      schema.registry.url: ${SCHEMA_REGISTRY_ENDPOINT}
