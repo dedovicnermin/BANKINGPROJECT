@@ -1,12 +1,6 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
-    ssl:
-      key-password: clientpass
-      trust-store-location: /certs/client.router.truststore.jks
-      trust-store-password: clientpass
-      key-store-password: clientpass
-      key-store-location: /certs/client.router.keystore.jks
+    bootstrap-servers: localhost:9093
   cloud:
     stream:
       function:
@@ -21,6 +15,13 @@ spring:
               default:
                 key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
                 value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              security.protocol: SSL
+              ssl.truststore.location: ${truststore}
+              ssl.truststore.password: ${security-password}
+              ssl.keystore.location: ${keystore}
+              ssl.keystore.password: ${security-password}
+              ssl.key.password: ${security-password}
+              ssl.endpoint.identification.algorithm: ''
             functions:
               balanceRequestProcessor:
                 applicationId: routerApp-balanceRequestProcessor
@@ -154,4 +155,6 @@ server:
   port: 7082
 
 
-
+truststore: /tmp/kafka.router.truststore.jks
+keystore: /tmp/kafka.router.keystore.jks
+security-password: '123456'

@@ -147,29 +147,26 @@ services:
       - SCHEMA-ENDPOINT=schema-registry:8081
       - SPRING_PROFILES_ACTIVE=security
 
-#
 
-#
-#
-#  router-streams:
-#    image: router-streams:latest
-#    container_name: router-streams
-#    build:
-#      context: router-streams
-#      dockerfile: Dockerfile
-#    links:
-#      - kafka
-#    ports:
-#      - "7082:7082"
-#    volumes:
-#      - ./ssl/router:/certs
-#    environment:
-#      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
-#      - SERVER_PORT=7082
-#      - SPRING_PROFILES_ACTIVE=security
-#    depends_on:
-#      - kafka
-#      - rest
+
+
+  router-streams:
+    image: router-streams:latest
+    container_name: router-streams
+    build:
+      context: router-streams
+      dockerfile: Dockerfile
+    links:
+      - kafka
+    ports:
+      - "7082:7082"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9093
+      - SERVER_PORT=7082
+      - SPRING_PROFILES_ACTIVE=security
+    depends_on:
+      - kafka
+      - rest
 
 
 
