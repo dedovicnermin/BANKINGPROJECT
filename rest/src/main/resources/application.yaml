@@ -24,6 +24,13 @@ elastic-endpoint: localhost:9200
 schema-endpoint: localhost:8081
 ksql-endpoint: localhost:8088
 
+ssl-enabled: false
+
+truststore: /tmp/kafka.rest.truststore.jks
+keystore: /tmp/kafka.rest.keystore.jks
+security-password: '123456'
+
+
 
 
 
