@@ -33,6 +33,27 @@ public class ConsumerConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${ssl-enabled}")
+    private boolean sslEnabled;
+
+
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
+    private static final String SSL = "SSL";
+    private static final String PROTOCOL_PROP = "security.protocol";
+    private static final String TRUSTSTORE_LOCATION_PROP = "ssl.truststore.location";
+    private static final String KEYSTORE_LOCATION_PROP = "ssl.keystore.location";
+    private static final String KEY_PASS_PROP = "ssl.key.password";
+    private static final String KEYSTORE_PASS_PROP = "ssl.keystore.password";
+    private static final String TRUSTSTORE_PASS_PROP = "ssl.truststore.password";
+    private static final String ENDPOINT_IDENTITY_PROP = "ssl.endpoint.identification.algorithm";
 
 
     /**
@@ -45,6 +66,15 @@ public class ConsumerConfiguration {
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "${spring.kafka.consumer.groupId}");
+        if (sslEnabled) {
+            configs.put(PROTOCOL_PROP, SSL);
+            configs.put(TRUSTSTORE_LOCATION_PROP, truststoreLocation);
+            configs.put(TRUSTSTORE_PASS_PROP, sslPassword);
+            configs.put(KEY_PASS_PROP, sslPassword);
+            configs.put(KEYSTORE_PASS_PROP, sslPassword);
+            configs.put(KEYSTORE_LOCATION_PROP, keystoreLocation);
+            configs.put(ENDPOINT_IDENTITY_PROP, "");
+        }
 
         return configs;
     }

@@ -13,15 +13,17 @@ spring:
       ddl-auto: update
     database: postgresql
   kafka:
-    bootstrap-servers: localhost:9092
-    ssl:
-      key-password: clientpass
-      trust-store-location: /certs/client.persistence.truststore.jks
-      trust-store-password: clientpass
-      key-store-location: /certs/client.persistence.keystore.jks
-      key-store-password: clientpass
+    bootstrap-servers: localhost:9093
     consumer:
       groupId: persistence
+    properties:
+      security.protocol: SSL
+      ssl.truststore.location: ${truststore}
+      ssl.truststore.password: ${security-password}
+      ssl.keystore.location: ${keystore}
+      ssl.keystore.password: ${security-password}
+      ssl.key.password: ${security-password}
+      ssl.endpoint.identification.algorithm: ''
 
 
 
@@ -39,3 +41,8 @@ persistence-topics:
   OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
 routing-number: 111
+
+truststore: /tmp/kafka.persistence.truststore.jks
+keystore: /tmp/kafka.persistence.keystore.jks
+security-password: '123456'
+ssl-enabled: true
