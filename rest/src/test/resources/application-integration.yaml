@@ -27,6 +27,11 @@ banking:
 
 router-endpoint: localhost:7082
 elastic-endpoint: localhost:9200
+ssl-enabled: false
+truststore: /tmp/kafka.rest.truststore.jks
+keystore: /tmp/kafka.rest.keystore.jks
+security-password: '123456'
+
 
 logging:
   level:

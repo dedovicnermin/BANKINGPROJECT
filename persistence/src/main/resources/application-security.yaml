@@ -1,27 +1,33 @@
+
+server:
+  port: 8083
 spring:
   datasource:
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-    url: jdbc:h2:mem:jpa_jbd
+    password: postgres
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/BANK
+    username: postgres
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-    show-sql: true
+      ddl-auto: update
+    database: postgresql
   kafka:
+    bootstrap-servers: localhost:9093
     consumer:
-      auto-offset-reset: latest
       groupId: persistence
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    properties:
+      security.protocol: SSL
+      ssl.truststore.location: ${truststore}
+      ssl.truststore.password: ${security-password}
+      ssl.keystore.location: ${keystore}
+      ssl.keystore.password: ${security-password}
+      ssl.key.password: ${security-password}
+      ssl.endpoint.identification.algorithm: ''
 
-  test:
-    topic: embedded-test-topic
+
+
+
 
 
 persistence-topics:
@@ -34,13 +40,9 @@ persistence-topics:
   OUTBOUND_ROUTER_VALIDATION: router.validate.transfer
   OUTBOUND_BALANCE_RESPONSE: balance.update.response
 
-
 routing-number: 111
+
 truststore: /tmp/kafka.persistence.truststore.jks
 keystore: /tmp/kafka.persistence.keystore.jks
 security-password: '123456'
-ssl-enabled: false
-
-logging:
-  level:
-    org.apache.kafka: OFF
+ssl-enabled: true

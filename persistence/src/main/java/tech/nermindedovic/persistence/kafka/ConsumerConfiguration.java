@@ -19,6 +19,7 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import tech.nermindedovic.library.kafka.KafkaSecurityUtils;
 import tech.nermindedovic.library.pojos.TransferStatus;
 import tech.nermindedovic.library.pojos.TransferValidation;
 
@@ -33,6 +34,20 @@ public class ConsumerConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${ssl-enabled}")
+    private boolean sslEnabled;
+
+
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
+
 
 
     /**
@@ -45,6 +60,9 @@ public class ConsumerConfiguration {
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, "${spring.kafka.consumer.groupId}");
+        if (sslEnabled) {
+            configs.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
 
         return configs;
     }
@@ -137,6 +155,9 @@ public class ConsumerConfiguration {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         config.put(ProducerConfig.RETRIES_CONFIG, 5);
+        if (sslEnabled) {
+            config.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
         return config;
     }
 

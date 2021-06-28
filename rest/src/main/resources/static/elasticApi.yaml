@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: Elasticsearch API using Spring-Data. Queries for transactions from the 'postgres.bank.transactions' index.
   version: "1.0.0"
-  title: Elasticsearch API
+  title: BANKINGPROJECT - Elasticsearch API
   contact:
     email: dedovicnermin@outlook.com
     url: 'https://github.com/dedovicnermin'

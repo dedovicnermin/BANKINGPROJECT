@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
+import tech.nermindedovic.library.kafka.KafkaSecurityUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,16 +31,32 @@ public class BankingTopicsConfig {
     @Value("${banking.replicas:2}")
     private int replicas;
 
+    @Value("${ssl-enabled}")
+    private boolean sslEnabled;
+
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
+
         if (!bootstrapServers.equals("localhost:9099")) {
             configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         }
         configs.put(AdminClientConfig.RETRIES_CONFIG, 5);
         configs.put(AdminClientConfig.CLIENT_ID_CONFIG, "restKafkaAdmin");
 
+        if (sslEnabled) {
+            configs.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
 
         return new KafkaAdmin(configs);
     }

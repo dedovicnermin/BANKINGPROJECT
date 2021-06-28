@@ -2,6 +2,7 @@ package tech.nermindedovic.rest.kafka.balance;
 
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -18,6 +19,7 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import tech.nermindedovic.AvroBalanceMessage;
+import tech.nermindedovic.library.kafka.KafkaSecurityUtils;
 import tech.nermindedovic.library.pojos.BalanceMessage;
 
 
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 
 @Configuration
+@Slf4j
 public class BalanceCommConfiguration {
 
     @Value("${spring.kafka.bootstrap-servers}")
@@ -37,6 +40,20 @@ public class BalanceCommConfiguration {
     @Value("${spring.kafka.properties.schema.registry.url:http://127.0.0.1:8081}")
     private String schemaRegistry;
 
+    @Value("${ssl-enabled}")
+    private boolean sslEnabled;
+
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
+
+
     @Bean
     public Map<String, Object> balanceProducerConfigs() {
         Map<String, Object> configs = new HashMap<>();
@@ -45,6 +62,9 @@ public class BalanceCommConfiguration {
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         configs.put("schema.registry.url", schemaRegistry);
         configs.put(ProducerConfig.RETRIES_CONFIG, 15);
+        if (sslEnabled) {
+            configs.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
         return configs;
     }
 
@@ -61,6 +81,11 @@ public class BalanceCommConfiguration {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        if (sslEnabled) {
+            config.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
+
+
 
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(BalanceMessage.class));
     }
@@ -70,11 +95,15 @@ public class BalanceCommConfiguration {
         ContainerProperties containerProperties = new ContainerProperties("balance.transformer.response");
         containerProperties.setGroupId(GROUP);
         Properties properties = new Properties();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKER);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         properties.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BalanceMessage.class);
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        if (sslEnabled) {
+            properties.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
         containerProperties.setKafkaConsumerProperties(properties);
         return new KafkaMessageListenerContainer<>(consumerFactory, containerProperties);
     }
@@ -84,6 +113,9 @@ public class BalanceCommConfiguration {
     public ReplyingKafkaTemplate<String, AvroBalanceMessage, BalanceMessage> balanceMessageReplyingKafkaTemplate(ProducerFactory<String, AvroBalanceMessage> pf, KafkaMessageListenerContainer<String, BalanceMessage> container) {
         return new ReplyingKafkaTemplate<>(pf, container);
     }
+
+
+
 
 
 

@@ -1,0 +1,66 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9093
+  cloud:
+    function:
+      definition: processTransfer;processBalanceLeg1;processBalanceLeg2
+    stream:
+      kafka:
+        streams:
+          binder:
+            functions:
+              processTransfer:
+                applicationId: transformerApp-processTransfer
+              processBalanceLeg1:
+                applicationId: transformerApp-processBalanceL1
+              processBalanceLeg2:
+                applicationId: transformerApp-processBalanceL2
+            configuration:
+              default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              schema.registry.url: ${schema-endpoint}
+              specific.avro.reader: true
+              security.protocol: SSL
+              ssl.truststore.location: ${truststore}
+              ssl.truststore.password: ${security-password}
+              ssl.keystore.location: ${keystore}
+              ssl.keystore.password: ${security-password}
+              ssl.key.password: ${security-password}
+              ssl.endpoint.identification.algorithm: ''
+            deserialization-exception-handler: logandcontinue
+            auto-add-partitions: true
+            min-partition-count: 3
+
+
+
+      bindings:
+        processTransfer-in-0:
+          destination: funds.transformer.request
+        processTransfer-out-0:
+          destination: funds.transfer.request
+        processBalanceLeg1-in-0:
+          destination: balance.transformer.request
+        processBalanceLeg1-out-0:
+          destination: balance.update.request
+        processBalanceLeg2-in-0:
+          destination: balance.update.response
+        processBalanceLeg2-out-0:
+          destination: balance.transformer.response
+
+
+
+logging:
+  level:
+    web: debug
+
+
+server:
+  port: 7081
+
+schema-endpoint: http://127.0.0.1:8081
+
+truststore: /tmp/kafka.transformer.truststore.jks
+keystore: /tmp/kafka.transformer.keystore.jks
+security-password: '123456'
+
+

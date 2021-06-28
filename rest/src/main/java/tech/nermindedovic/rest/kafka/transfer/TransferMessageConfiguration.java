@@ -14,6 +14,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import tech.nermindedovic.AvroTransferMessage;
+import tech.nermindedovic.library.kafka.KafkaSecurityUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,22 @@ public class TransferMessageConfiguration {
     @Value("${spring.kafka.properties.schema.registry.url:http://127.0.0.1:8081}")
     private String schemaRegistry;
 
+    @Value("${ssl-enabled}")
+    private boolean sslEnabled;
+
+
+    @Value("${truststore}")
+    private String truststoreLocation;
+
+    @Value("${keystore}")
+    private String keystoreLocation;
+
+    @Value("${security-password}")
+    private String sslPassword;
+
+
+
+
     @Bean
     public Map<String, Object> transferProducerConfig() {
         Map<String, Object> props = new HashMap<>();
@@ -36,6 +53,9 @@ public class TransferMessageConfiguration {
         props.put("schema.registry.url", schemaRegistry);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         props.put(ProducerConfig.RETRIES_CONFIG, 15);
+        if (sslEnabled) {
+            props.putAll(KafkaSecurityUtils.getSecurityConfiguration(keystoreLocation, truststoreLocation, sslPassword));
+        }
         return props;
     }
 

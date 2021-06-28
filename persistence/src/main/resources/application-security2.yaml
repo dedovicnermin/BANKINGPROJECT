@@ -12,9 +12,17 @@ spring:
       ddl-auto: update
     database: postgresql
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9093
     consumer:
       groupId: persistence2
+    properties:
+      security.protocol: SSL
+      ssl.truststore.location: ${truststore}
+      ssl.truststore.password: ${security-password}
+      ssl.keystore.location: ${keystore}
+      ssl.keystore.password: ${security-password}
+      ssl.key.password: ${security-password}
+      ssl.endpoint.identification.algorithm: ''
 
 
 
@@ -37,4 +45,4 @@ routing-number: 222
 truststore: /tmp/kafka.persistence2.truststore.jks
 keystore: /tmp/kafka.persistence2.keystore.jks
 security-password: '123456'
-ssl-enabled: false
+ssl-enabled: true
