@@ -278,33 +278,17 @@ xlii. import the CA public key and signed ksql public key into the ksql keystore
 
 
 
-
-
-
-
-
-
-
-
 ==========================================================================================================================================
-# TEMPLATE
-create <> trust store and add CA to it.
--   keytool -keystore kafka.<>.truststore.jks -alias $CAA -import -file ca-cert -storepass $PASS -keypass $PASS -noprompt
+# ONCE DONE:
 
-
-create <> certificate/keystore.
--   keytool -genkey -keystore kafka.<>.keystore.jks -validity 365 -storepass $PASS -dname "CN=localhost" -alias $<specific client alias : rest/transformer/etc> -storetype pkcs12
-
-
-cert request file for <> public key && sign the request with CA.
--   keytool -keystore kafka.<>.keystore.jks -certreq -file cert-<>-request -alias $<> -storepass $PASS -keypass $PASS
--   openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-<<>>-request -out cert-<<>>-signed -days 365 -CAcreateserial -passin pass:$PASS
+> For all stores associated with a microservice (rest, transformer-streams, router-streams, persistence), copy trust/key stores into the /ssl directory for each microservice directory.
 
 
 
-import the CA public key and signed <> public key into the <> keystore.
--   keytool -keystore kafka.<>.keystore.jks -alias $CAA -import -file ca-cert -storepass $PASS -keypass $PASS -noprompt
--   keytool -keystore kafka.<>.keystore.jks -import -file cert-<>-signed -alias $<> -storepass $PASS -keypass $PASS -noprompt
+
+
+
+
 
 
 
