@@ -20,6 +20,12 @@ spring:
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               schema.registry.url: ${schema-endpoint}
               specific.avro.reader: true
+              schema.registry.ssl.endpoint.identification.algorithm: ''
+              schema.registry.ssl.key.password: ${security-password}
+              schema.registry.ssl.keystore.location: ${keystore}
+              schema.registry.ssl.keystore.password: ${security-password}
+              schema.registry.ssl.truststore.location: ${truststore}
+              schema.registry.ssl.truststore.password: ${security-password}
               security.protocol: SSL
               ssl.truststore.location: ${truststore}
               ssl.truststore.password: ${security-password}
@@ -27,9 +33,9 @@ spring:
               ssl.keystore.password: ${security-password}
               ssl.key.password: ${security-password}
               ssl.endpoint.identification.algorithm: ''
+
             deserialization-exception-handler: logandcontinue
             auto-add-partitions: true
-            min-partition-count: 3
 
 
 
