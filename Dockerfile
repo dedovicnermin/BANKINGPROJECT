@@ -1,4 +1,8 @@
 FROM confluentinc/cp-kafka-connect:5.4.4
+VOLUME /tmp
 ENV CONNECT_PLUGIN_PATH="/usr/share/java,/usr/share/confluent-hub-components"
 RUN confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.1.1
 RUN confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:11.0.4
+COPY ssl/kafka.connect.truststore.jks /tmp
+COPY ssl/kafka.connect.keystore.jks /tmp
+

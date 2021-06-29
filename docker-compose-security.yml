@@ -33,9 +33,12 @@ services:
 
 
   schema-registry:
-    image: confluentinc/cp-schema-registry
+    image: custom-schemaregistry-image
     hostname: schema-registry
     container_name: schema-registry
+    build:
+      context: .
+      dockerfile: Dockerfile-schemaregistry
     restart: unless-stopped
     depends_on:
       - zookeeper
@@ -44,9 +47,27 @@ services:
       - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9093
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: SSL
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.schema.truststore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: '123456'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: /tmp/kafka.schema.keystore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_PASSWORD: '123456'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEY_PASSWORD: '123456'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+
+
+      SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.schema.truststore.jks
+      SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: '123456'
+      SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: /tmp/kafka.schema.keystore.jks
+      SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: '123456'
+      SCHEMA_REGISTRY_SSL_KEY_PASSWORD: '123456'
+      SCHEMA_REGISTRY_SSL_CLIENT_AUTH: "true"
+#      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: ''
+
+
 
 
   connect:
@@ -60,7 +81,8 @@ services:
     ports:
       - "8083:8083"
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9093
+      CONNECT_LISTENERS: "http://0.0.0.0:8083"
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: compose-connect-group
@@ -79,10 +101,48 @@ services:
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_ZOOKEEPER_CONNECT: zookeeper:2181
 
+      #connect worker
+      CONNECT_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+      CONNECT_SECURITY_PROTOCOL: SSL
+      CONNECT_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.connect.truststore.jks
+      CONNECT_SSL_TRUSTSTORE_PASSWORD: '123456'
+      CONNECT_SSL_KEYSTORE_LOCATION: /tmp/kafka.connect.keystore.jks
+      CONNECT_SSL_KEYSTORE_PASSWORD: '123456'
+
+      #connect producer
+      CONNECT_PRODUCER_SECURITY_PROTOCOL: SSL
+      CONNECT_PRODUCER_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.connect.truststore.jks
+      CONNECT_PRODUCER_SSL_TRUSTSTORE_PASSWORD: '123456'
+      CONNECT_PRODUCER_SSL_KEYSTORE_LOCATION: /tmp/kafka.connect.keystore.jks
+      CONNECT_PRODUCER_SSL_KEYSTORE_PASSWORD: '123456'
+      CONNECT_PRODUCER_SSL_KEY_PASSWORD: '123456'
+      CONNECT_PRODUCER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+
+      #connect consumer
+      CONNECT_CONSUMER_SECURITY_PROTOCOL: SSL
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.connect.truststore.jks
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_PASSWORD: '123456'
+      CONNECT_CONSUMER_SSL_KEYSTORE_LOCATION: /tmp/kafka.connect.keystore.jks
+      CONNECT_CONSUMER_SSL_KEYSTORE_PASSWORD: '123456'
+      CONNECT_CONSUMER_SSL_KEY_PASSWORD: '123456'
+      CONNECT_CONSUMER_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+      # required for Schema Registry
+      KAFKA_OPTS: -Djavax.net.ssl.trustStore=/tmp/kafka.connect.truststore.jks
+        -Djavax.net.ssl.trustStorePassword=123456
+        -Djavax.net.ssl.keyStore=/tmp/kafka.connect.keystore.jks
+        -Djavax.net.ssl.keyStorePassword=123456
+
+
+
+
+
   ksql:
-    image: confluentinc/ksqldb-server:0.18.0
+    image: custom-ksql-image
     hostname: ksql
     container_name: ksql
+    build:
+      context: .
+      dockerfile: Dockerfile-ksql
     depends_on:
       - kafka
       - schema-registry
@@ -90,10 +150,21 @@ services:
       - "8088:8088"
     environment:
       KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_BOOTSTRAP_SERVERS: kafka:9092
+      KSQL_BOOTSTRAP_SERVERS: kafka:9093
       KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+
+      KSQL_SECURITY_PROTOCOL: SSL
+      KSQL_SSL_TRUSTSTORE_LOCATION: /tmp/kafka.ksql.truststore.jks
+      KSQL_SSL_TRUSTSTORE_PASSWORD: '123456'
+      KSQL_SSL_KEYSTORE_LOCATION: /tmp/kafka.ksql.keystore.jks
+      KSQL_SSL_KEYSTORE_PASSWORD: '123456'
+      KSQL_SSL_KEY_PASSWORD: '123456'
+      KSQL_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ''
+
+
+
 
 
 
@@ -115,12 +186,15 @@ services:
       - SCHEMA-ENDPOINT=schema-registry:8081
       - KSQL-ENDPOINT=ksql:8088
       - SPRING_PROFILES_ACTIVE=security
+      - BANKING_PARTITIONS=1
+      - BANKING_REPLICAS=1
     ports:
       - "8080:8080"
     depends_on:
       - kafka
       - schema-registry
       - ksql
+
 
 
 
@@ -143,7 +217,7 @@ services:
     environment:
       - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9093
       - SERVER_PORT=7081
-      - SCHEMA-ENDPOINT=schema-registry:8081
+      - SCHEMA-ENDPOINT=http://schema-registry:8081
       - SPRING_PROFILES_ACTIVE=security
 
 
@@ -182,6 +256,9 @@ services:
       - ./bash/bank/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
       - ./bash/bank/data.sql:/docker-entrypoint-initdb.d/2-data.sql
       - /var/lib/postgresql/data
+
+
+
 
 
 
@@ -253,6 +330,9 @@ services:
 
 
 
+
+
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
     container_name: elasticsearch
@@ -269,6 +349,9 @@ services:
       memlock:
         soft: -1
         hard: -1
+
+
+
 
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:7.9.3

@@ -55,6 +55,7 @@ curl -i -X POST http://localhost:8083/connectors \
 
 printf "\n===== Elastic config - transactions =====\n"
 
+
 echo
 curl -i -X POST http://localhost:8083/connectors \
   -H 'Content-Type: application/json' \
