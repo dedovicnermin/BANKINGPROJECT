@@ -21,6 +21,7 @@
 - Apache Avro
 - KSQL 
 - Testcontainers
+- Security
 
 
 ### Endpoints:
