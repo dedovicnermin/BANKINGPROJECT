@@ -72,7 +72,7 @@ services:
 
   connect:
     image: custom-confluent-image
-    build: .
+    build: Dockerfile-connectSecurity
     hostname: connect
     container_name: connect
     restart: unless-stopped
